@@ -53,7 +53,7 @@ sub _init{
   $gCGIquery->delete('save_object_hash_scratch_file') if
     (defined $gCGIquery->param('Change Class') or
      defined $gCGIquery->param('Display datasets'));
-
+  
   # clean up the log scratch directory for old symlinks
 #  IO_utilities::CleanUpLogScratch();
   IO_utilities::CleanUpScratch();
@@ -116,10 +116,7 @@ sub Parameters{
     $gCGIquery->hidden('display_env_var').
     $gCGIquery->hidden('enable_add_edit_comments').
     $gCGIquery->hidden('save_object_hash_scratch_file').
-    $gCGIquery->hidden('data_class').
-    $gCGIquery->hidden('user_reference_file');
-
-#    $gCGIquery->hidden('user_reference_list');
+    $gCGIquery->hidden('data_class');
 
   return $string;
 }
@@ -136,7 +133,7 @@ sub Store{
   my $scratch_file = $gCGIquery->param('save_object_hash_scratch_file');
   
   # for testing
-  #$self->print_traceback_hidden($scratch_file);
+  #  $self->print_traceback_hidden($scratch_file);
   #------------------------------------------------------------  
  SAVEOBJECTS: {
     

@@ -67,7 +67,6 @@ use strict;
 #         QAdone      enum('Y','N')       not null default 'N',
 #         QAok        enum('Y','N','n/a') not null default 'n/a',
 #         QAdate      datetime            not null,
-#         reference   enum('Y','N')       not null default 'N',
 #         controlFile varchar(128)        not null default 'n/a',
 #         insertTime  timestamp(10)       not null,
 #         qaID        mediumint           not null auto_increment,
@@ -142,7 +141,6 @@ use strict;
 	 QAdone       => 'QAdone',
 	 QAok         => 'QAok',
 	 QAdate       => 'QAdate',
-	 reference    => 'reference',
 	 controlFile  => 'controlFile',
 	 qaID         => 'qaID',
          # the rest or only valid for online
@@ -494,7 +492,7 @@ sub UpdateQASummary{
 		 set $field='$value'
 		 where $QASum{qaID} = '$qaID' };
   
-  return $dbh->do($query);
+  $dbh->do($query);
 }
 #----------
 # delete jobID from QASummary and remove the 
@@ -533,25 +531,25 @@ sub ClearQAMacrosTable{
 # 
 sub FlagQAInProgress{
   my $qaID = shift;
-  return UpdateQASummary($QASum{QAdone},'in progress', $qaID);
+  UpdateQASummary($QASum{QAdone},'in progress', $qaID);
 }
 #----------
 #
 sub FlagQAdone{
   my $qaID = shift;
-  return UpdateQASummary($QASum{QAdone},'Y',$qaID);
+  UpdateQASummary($QASum{QAdone},'Y',$qaID);
 }
 #----------
 #
 sub ResetInProgressFlag{
   my $qaID = shift;
-  return UpdateQASummary($QASum{QAdone}, 'N', $qaID);
+  UpdateQASummary($QASum{QAdone}, 'N', $qaID);
 }
 #----------
 # 
 sub FlagQAAnalyzed{
   my $qaID = shift;
-  return UpdateQASummary($QASum{QAanalyzed},'Y',$qaID);
+  UpdateQASummary($QASum{QAanalyzed},'Y',$qaID);
 }
 #----------
 #
@@ -737,14 +735,12 @@ sub WriteQAMacroSummary{
 	   $QAMacros{ID}         = NULL 
 	 };
   }
-
   print h4("Inserting qa macro summary into db for $fName ($macroName)...\n");
 
   # insert
   my $rows = $dbh->do($query);
 
-  # 0 rows affected is ok.  $rows = undef is bad.
-  if ($rows) { print h4("...done\n")}
+  if ($rows += 0) { print h4("...done\n")}
   else     { print h4("<font color = red> Error. Cannot insert qa info for ",
 		      "$outputFile</font>"); return;}
     
@@ -768,6 +764,47 @@ sub GetQAMacrosSummary{
   my $sth = $dbh->prepare($query);
   $sth->execute;
   return $sth->fetchall_arrayref();
+}
+#----------
+# parse the dataset field for offline MC
+# format: [collision]/[eventGen]/[details]/[eventType]/[geometry]/[junk]
+#         e.g. auau200/venus412/default/b0_3/year_1b/hadronic_on
+
+sub ParseDatasetMC{
+  my $jobID = shift;
+
+  my $query = qq{ select dataset 
+		  from $dbFile.$FileCatalog
+		  where jobID = '$jobID'
+		  limit 1 };
+
+  # retrieve the dataset
+  my $dataset = $dbh->selectrow_array($query);
+  
+  my ($collisionType, $eventGen, $details, $eventType, $geometry, $junk)=
+    split /\//, $dataset, 6;
+
+  return ($collisionType, $eventGen, $details, $eventType, $geometry);
+  
+}
+#----------
+# parse the dataset field for offline real
+# format: [collisionType]/[geometry]/[eventType]
+
+sub ParseDatasetReal{
+  my $jobID = shift;
+
+  my $query = qq{ select dataset 
+		  from $dbFile.$FileCatalog
+		  where jobID = '$jobID'
+		  limit 1 };
+
+  # retrieve the dataset
+  my $dataset = $dbh->selectrow_array($query);
+
+  # collisionType, geometry, eventType
+  return split /\//, $dataset, 3;
+
 }
 #----------
 # 1. deletes the 'old' reports from the databasee

@@ -534,25 +534,6 @@ sub HiddenObjectFile{
 
   return $file;
 }
-#===================================================================
-sub UserReferenceFile{
-  my $self = shift;
-
-  my $file = $gCGIquery->param('user_reference_file');
-
-  my $data_class = $gDataClass_object->DataClass();
-
-  # is filename consistent with current data class?
-  $file =~ /$data_class/ or undef $file;
-
-  $file or do{
-    my $id_string = int(rand(1000000)); 
-    $file = $gDataClass_object->Scratch()."/user_reference.$data_class.$id_string.txt";
-    $gCGIquery->param('user_reference_file', $file);
-  };
-
-  return $file;
-}
 
 #===================================================================
 # brains behind running the list of macros
@@ -791,13 +772,4 @@ sub MemoryFile{
   my $report_dir = $io->Name;
 
   return "$report_dir/memory.txt";
-} 
-#====================================================================
-# used to return the file name of the menu perl storable
-
-sub MenuStorable{
-  my $self = shift;
-
-  return $gDataClass_object->Scratch()."/menu.obj";
-
 } 

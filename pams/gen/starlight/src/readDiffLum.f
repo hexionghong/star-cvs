@@ -14,8 +14,7 @@ c     f is the twoD array of f values
 
       open (unit=20,file='starlight.dat',status='unknown')
 
-c     skip first nine entries, Z, A,Gamma,wmax,wmin,numw,ymax,numw,gg_or_gP
-      read (20,*) dummy
+c     skip first eight entries, Z, A,Gamma,wmax,numw,ymax,numw,gg_or_gP
       read (20,*) dummy
       read (20,*) dummy
       read (20,*) dummy

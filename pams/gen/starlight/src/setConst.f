@@ -9,8 +9,6 @@
 	include 'inputp.inc'
 	include 'bw.inc'
 
-	double precision Wmin_default
-
 c       define constants
 	hbarc = .197327053
       	pi = 3.141592654
@@ -23,39 +21,30 @@ c       define constants
       	mtau = 1.777
         RNuc = 1.2 * A**(1.0/3.0)
 
-c	unless otherwise defined later, default is Wmin=0
-	Wmin_default = 0
-
 c       define masses, widths and spins
         if(ip.eq.11) then 
-	   mass = mel
-c	Wmin is settable in  input file-- default is 0.01; Wmin up
-c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
-	   Wmin_default = 0.01
-	   spin = 0.5
+	   mass = 0.00051099907
 	endif
         if(ip.eq.13) then
-	   mass = mmu
+	   mass = 0.105658389
 	   spin = 0.5
-	   Wmin_default = 2.*mmu
 	endif
         if(ip.eq.15) then
 	   mass = 1.777
 	   spin = 0.5
-	   Wmin_default = 2*mtau
 	endif
         if(ip.eq.115) then
-	   mass = 1.318
+	   mass = 1.3181
            width =  1.04 * 10.0**(-6.)
 	   spin = 2.
 	endif
         if(ip.eq.221) then
-	   mass = 0.54730
+	   mass = 0.54745
            width = 1. * 10.0**(-6.)
 	   spin = 0.
 	endif
         if(ip.eq.225) then
-	   mass = 1.2754
+	   mass = 1.275
            width = 2.6 * 10.0**(-6.)
 	   spin = 2.
 	endif
@@ -90,7 +79,7 @@ c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
            spin = 1.
            bslope=11.0
            f2o4pi=2.02
-           Wmin_default = 2.*mpi
+           Wmin = 2.*mpi
            Wtop = mass + 5.*width
       	endif
       	if (ip.eq.223) then
@@ -99,7 +88,7 @@ c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
            spin = 1.
            bslope=10.0
            f2o4pi=23.13
-           Wmin _default= mass - 5.*width
+           Wmin = mass - 5.*width
            Wtop = mass + 5.*width
       	endif
       	if (ip.eq.333) then
@@ -108,7 +97,7 @@ c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
            spin = 1.
            bslope=7.0
            f2o4pi=13.71
-           Wmin_default = 2.*mK
+           Wmin = 2.*mK
            Wtop = mass + 5.*width
       	endif
        if (ip.eq.443) then
@@ -117,17 +106,12 @@ c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
            spin = 1.
            bslope=4.0
            f2o4pi=10.45
-           Wmin_default = mass - 5.*width
+           Wmin = mass - 5.*width
            Wtop = mass + 5.*width
       	endif
 
-c	set Wmin equal to the default values if Wmin is set 
-c	to -1 in the input file
-	if(Wmin.eq.-1) Wmin = Wmin_default
-
 c	set gamma_ta and gamma_em equal
 	gamma_ta = gamma_em
-
 c	define luminosities, etc.
        	IF(Z.eq.79) THEN
            lum=2.
@@ -172,11 +156,8 @@ c	define rapidities, max photon energy
       	IF( Z.eq.79 .or. Z.eq.53 .or. Z.eq.29 .or. Z.eq.14 .or. 
      &		Z.eq.8 )THEN
 C       >> At RHIC
-c           Ymin  =  -5.6
-c           Ytop  =   5.6
-c	remove hard-wired value
-           Ymin  =  -ymax
-           Ytop  =   ymax
+           Ymin  =  -5.6
+           Ytop  =   5.6
            EgMax =  25.0
       	ENDIF
       	IF( Z.eq.82 .or. Z.eq.20 )THEN

@@ -87,10 +87,6 @@ sub _init{
   $self->TestDefinitionFile($test_file);
   $self->LogReport($log_report);
 
-  # pmj 27/8/00: default is no Multiplicity classes unless explicitly set in new evaluation
-  # this is necessary to handle old data
-  $self->MultClassesActive(0);
-
 }
 
 #=========================================================
@@ -274,13 +270,8 @@ sub RunMacro{
   
   if ($starlib_version =~ /SL/)     { $starlib_version =~ s/SL// }
   elsif ($starlib_version eq "new" || $starlib_version eq "pro" ) { }
-  else                              { $starlib_version = "dev" }
+  else                              { $starlib_version eq "dev" }
   
-  # ad hoc fix 09/05/2000
-  if ($macro_name eq 'bfcread_hist_to_ps'){
-    $starlib_version = 'dev';
-  }
-
   # how many events were requested?
   # for offline real, event requested is meaningless
   my $nevent_requested = $self->LogReport->NEventRequested ||
@@ -413,10 +404,21 @@ sub RunMacro{
     close $fh;
    
   }
-  
+    
   # if output file is postscript, gzip it
   if ( $output_file =~ /\.ps$/ and $macro_name ne 'MemoryUsage') {
-    $self->GZipIt();
+    print "<H4> gzipping file $output_file... </H4> \n";
+
+    # kill gzipped file if it exists
+    my $temp = "$output_file\.gz";
+    -e $temp and unlink ($temp);
+
+    chmod 0666, $output_file;
+    my $status = system("/usr/local/bin/gzip $output_file");
+    $output_file .= ".gz";
+    
+    # need to reset output_file
+    $self->IOMacroReportFilename->Name($output_file);
   }
 
   #--------------------------------------------------------------------------
@@ -424,55 +426,6 @@ sub RunMacro{
   $self->CheckFileMade(@root_output);
   
 }
-#===================================================================
-sub GZipIt{
-  my $self       = shift;
-
-  my $outputFile = $self->IOMacroReportFilename->Name;
-  my @outputAry;
-
-  # special case for bfcread_dst_EventQAhist.
-  # for real data, it writes out multiple ps files
-  # according to the multiplicity class.
-  # e.g. if the output file is "StEvent.ps",
-  # then it also writes out files of the form "StEventLM.ps", for 
-  # low multiplicity, etc.
-
-  # it's probably sufficient just to grab all ps files,
-  # but for now, it only grabs the ps files similar to 
-  # the original output of the macro
-
-  if ($self->MacroName eq 'bfcread_dst_EventQAhist' &&
-      $gDataClass_object->DataClass() =~ /real/ ){
-    # strip off .ps
-    (my $label = basename $outputFile) =~ s/\.ps$//;
-
-    # now find the file names that are similar
-    my $io     = new IO_object("ReportDir",$self->ReportKey);
-    my $dir    = $io->Name();
-    my $DH     = $io->Open();
-    @outputAry = map{ "$dir/$_"} grep { /$label\w{0,2}\.ps$/ } readdir $DH;
-    undef $io;
-  }
-  else { @outputAry = ($outputFile); } # just one output file
-
-  foreach my $outfile ( @outputAry ){
-    print h4("gzipping file $outfile...\n");
-
-    # kill gzipped file if it exists
-    my $gzipped = "$outfile\.gz";
-    -e $gzipped and unlink ($gzipped);
-
-    # gzip 
-    chmod 0666, $outfile;
-    my $status = system("/usr/local/bin/gzip $outfile");
-    
-    # need to reset output_file 
-    $self->IOMacroReportFilename->Name($gzipped)
-      if $outfile eq $outputFile;
-  }
-}
-    
 #===================================================================
 sub CheckFileMade {
   my $self = shift;
@@ -569,40 +522,29 @@ sub Evaluate{
   #-----------------------------------------------------------
   $self->EvaluationFilename($io->Name);
   #-----------------------------------------------------------
-  # set switch to indicate that multiplicity classes are active - this allows
-  # detection of whether QA was run before or after this feature was put in
-
-  $self->MultClassesActive(1);
-
-  my @mult_class_labels = $self->MultClassLabels();
-
+  
   my $macro_with_package = "QA_macro_scalars::$macro_name";
+  my ($run_scalar_hashref, $event_scalar_hashref) 
+    = &$macro_with_package($report_key,$report_name);
 
-  foreach my $mult_label ( @mult_class_labels ){
-
-    my @mult_class_limits = $self->MultClassLimits($mult_label);
-
-    my ($run_scalar_hashref, $event_scalar_hashref) 
-      = &$macro_with_package($report_key,$report_name, $mult_label, @mult_class_limits);
-    
-    $self->EventScalarsHash($mult_label, $event_scalar_hashref);
-    $self->RunScalarsHash($mult_label, $run_scalar_hashref);
  
-    #-----------------------------------------------------------
-    # run-wise tests
-    $self->DoTests($mult_label, $run_scalar_hashref, 'run');
-    
-    # event-wise tests
-    $self->DoTests($mult_label, $event_scalar_hashref, 'event');
+  $self->EventScalarsHash($event_scalar_hashref);
+  $self->RunScalarsHash($run_scalar_hashref);
+  
+ 
+  #-----------------------------------------------------------
+  # run-wise tests
+  $self->DoTests($run_scalar_hashref, 'run');
 
-  }
+  # event-wise tests
+  $self->DoTests($event_scalar_hashref, 'event');
+  #-----------------------------------------------------------
 
 }
 #========================================================================
 sub DoTests{
 
   my $self = shift;
-  my $mult_label = shift;
   my $scalar_ref = shift;
 
   # test types are 'run' and 'event' (run-wise and event-wise tests)
@@ -786,70 +728,6 @@ sub Write{
   }
 
 }
-#=======================================================
-# return multiplicity class labels appropriate to this class of data
-# pmj 26/8/00
-
-sub MultClassLabels{
-  my $self = shift;
-
-  my @labels = ("none");
-  
-  if ($self->MultClassesActive()){
-    if ($gDataClass_object->DataClass() =~ /real/){
-      @labels = MultClassLabelsReal();
-    }
-    else{
-      @labels = MultClassLabelsMc();
-    }
-  }
-
-  return @labels;
-}
-#=======================================================
-sub MultClassesActive{
-  my $self = shift;
-  @_ and $self->{_MultClassesActive} = shift;
-  return $self->{_MultClassesActive};
-}
-#=======================================================
-sub MultClassLabelsReal{
-  my $self = shift;
-  return  ("lm", "mm", "hm");
-}
-#=======================================================
-sub MultClassLabelsMc{
-  my $self = shift;
-  return  ("mc");
-}
-#=======================================================
-# return multiplicity class limits
-# pmj 26/8/00
-
-sub MultClassLimits{
-  my $self = shift;
-  my $label = shift;
-  
-  my $large = 10000;
-
-  my @limits = (0, $large);
-
-  if ($gDataClass_object->DataClass() =~ /real/){
-
-    if ( $label eq "lm" ){
-      @limits = (50, 500);
-    }
-    elsif ( $label eq "mm" ){
-      @limits = (500, 2500);
-    }
-    elsif ( $label eq "hm" ){
-      @limits = (2500, $large);
-    }
-
-  }
-
-  return @limits;
-}
 
 #============== accessors, etc ==========================
 sub LogReport{
@@ -976,33 +854,23 @@ sub MacroComment{
 
 sub RunScalarsHash{
   my $self = shift;
-  my $mult_label = shift;
-
-  # pmj 27/8/00: old style, prior to multiplicity classes
-  $mult_label eq 'none' and return \%{$self->{_RunScalarsHash}};
-
   if (@_) { my $hash_ref = shift;	    
-	    tie %{$self->{$mult_label}->{_RunScalarsHash}}, "Tie::IxHash"; 
-	    %{$self->{$mult_label}->{_RunScalarsHash}} = %$hash_ref;
+	    tie %{$self->{_RunScalarsHash}}, "Tie::IxHash"; 
+	    %{$self->{_RunScalarsHash}} = %$hash_ref;
 	  }
 
-  return \%{$self->{$mult_label}->{_RunScalarsHash}};
+  return \%{$self->{_RunScalarsHash}};
 }
 #--------------------------------------------------------
 
 sub EventScalarsHash{
   my $self = shift;
-  my $mult_label = shift;
-
-  # pmj 27/8/00: old style, prior to multiplicity classes
-  $mult_label eq 'none' and return \%{$self->{_EventScalarsHash}};
-
   if (@_) { my $hash_ref = shift;
-	    tie %{$self->{$mult_label}->{_EventScalarsHash}}, "Tie::IxHash"; 
-	    %{$self->{$mult_label}->{_EventScalarsHash}} = %$hash_ref;
+	    tie %{$self->{_EventScalarsHash}}, "Tie::IxHash"; 
+	    %{$self->{_EventScalarsHash}} = %$hash_ref;
 	  }
 
-  return \%{$self->{$mult_label}->{_EventScalarsHash}};
+  return \%{$self->{_EventScalarsHash}};
 }
 #--------------------------------------------------------
 

@@ -186,9 +186,7 @@ sub DoQA{
     QA_db_utilities::ResetInProgressFlag($self->qaID);
     return;
   };
-
-  my $string = CompareReport_utilities::RunIdentificationString($report_key);
-  print h2("<hr>QA for $string\n");
+  print h2("<hr>QA for report key $report_key\n");
   print "The time is " . localtime(). "\n". br;
   print h3("Using control file $control_file\n");
 
@@ -216,7 +214,7 @@ sub DoQA{
     # evaluate
     $report_obj->EvaluateMacro();
     
-    # add qa macro summary to the database.
+    # add qa macro summary to the database
     # WriteQAMacroSummary returns 0 if something's bad
     QA_db_utilities::WriteQAMacroSummary($self->qaID,$report_obj, $run_option) 
       or $qa_status=0;
@@ -473,7 +471,7 @@ sub ButtonString{
   # summary of log file
   $button_ref = Button_object->new('RunDetails', 'Run Details', 
 				   $report_key);
-  $button_string .= $button_ref->SubmitString;
+  $button_string .= $button_ref   ->SubmitString;
   
   # detailed evaluation of QA if qa if done
   if ( $self->QADone eq 'Y' ){ 
@@ -497,15 +495,11 @@ sub ButtonString{
   $button_string .= "<br>";
 
   # compare similar reports
-  if ( $self->QADone eq 'Y' ){
-    $button_ref = Button_object->new('DoCompareToReference', 
-				     'Compare to reference', $report_key);
-    $button_string .= $button_ref->SubmitString . br;
-    $button_ref = Button_object->new('SetUserReference', 
-				     'Add to references', $report_key);
-    $button_string .= $button_ref->SubmitString . br;
-    
-  }
+  $button_ref = Button_object->new('SetupCompareReport', 'Compare reports', 
+				   $report_key);
+  $button_string .= $button_ref->SubmitString;
+  $button_string .= "<br>";
+
   # comments
   if ( $gCGIquery->param('enable_add_edit_comments') ) {
     $button_ref = Button_object->new('AddComment', 'Add comment', $report_key);
@@ -528,19 +522,13 @@ sub ButtonString{
 
       };
     }
-    elsif ($self->QADone eq 'N'){
+    else{
       $self->OnDisk and do {	
 	$button_ref = Button_object->new('DoQaBatch', 'Do QA (batch)', 
 					 $report_key);
 	$button_string .= $button_ref->SubmitString;
 
       };
-    }
-    elsif ($self->QADone eq 'in progress'){
-      $button_ref = Button_object->new('ResetInProgress', 'Reset in progress', 
-				       $report_key);
-      $button_string .= $button_ref->SubmitString;
-
     }
   }
 
@@ -568,46 +556,29 @@ sub ShowQA{
   my $report_dir = $self->IOReportDirectory->Name;
 
   # title
-  my $string = CompareReport_utilities::RunIdentificationString($report_key);
-  print h2("QA for $string\n"); 
+  print h2("QA for $report_key\n"); 
 
   #--------------------------------------------------------
 
   $self->ShowPsFiles();
+#  $self->ShowScalarsAndTests();
 
   #--------------------------------------------------------
-  # pmj 26/8/00: New logic for presenting scalars and tests:
-  # generate one button per table here so user gets overview and
-  # only selected table gets displayed in secondary window
+  # pmj 24/6/00
+  # new buttons to display scalars and reports in a new browser window
 
-  my $button_string_runscalars = $self->MultClassButtonString('ViewScalarsAndTests', 'run_scalars');
+  my $button_ref = Button_object->new('ViewScalarsAndTests', 'Scalars And Tests', 
+				   $report_key);
+  my $button_string .= $button_ref->SubmitString;
 
-  #---
-  # expert page - show event-wise scalars and all tests
-
-  my $expert_page = $gBrowser_object->ExpertPageFlag; 
-  my $button_string_evtscalars_tests;
-
-  $expert_page and
-    $button_string_evtscalars_tests = $self->MultClassButtonString('ViewScalarsAndTests', 'evtscalars_tests');
-  #---
-
+  
+  my $script_name   = $gCGIquery->script_name;
   my $hidden_string = $gBrowser_object->Hidden->Parameters;
-  
+
   print $gCGIquery->startform(-TARGET=>"ScalarsAndTests"); 
-  
-  print "<hr>",Browser_utilities::ScalarDocumentationString(),"<br>\n";
 
-  print h3("Run-averaged Scalars: \n"); 
-
-  print "$button_string_runscalars";
-
-  if ($expert_page){
-    print h3("<hr>Event-wise Scalars and All Tests: \n"); 
-    print "$button_string_evtscalars_tests";
-  }
-
-  print $hidden_string;
+  print h3("<hr>Scalars and Tests: \n"); 
+  print "View in separate browser window: $button_string.$hidden_string";
   print $gCGIquery->endform;
 }
 #========================================================
@@ -616,81 +587,15 @@ sub ShowQA{
 sub ShowPsFiles{
   my $self = shift;
 
-  my $report_key = $self->ReportKey();
-
-  #-------------------------------------------------------------
-  my @filelist_ordered = $self->GetPSFiles();
-  #-------------------------------------------------------------
-
-  print "<hr>",Browser_utilities::HistogramDocumentationString(),"<br>\n";
-
-  print h4("<font color=red>QA histograms for shift crew:</font> \n"); 
-  #-------------------------------------------------------------
-  print "<font color=green>This run: ",
-  CompareReport_utilities::RunIdentificationString($report_key),
-  "</font><br>\n";
-
-  foreach my $file (@filelist_ordered){
-   $file =~ /Shift/ or next;
-   $self->PrintFilestring("Postscript file", $file);
-  }
-  #-------------------------------------------------------------
-  my $report_key = $self->ReportKey();
-  my @refKeys = CompareReport_utilities::GetReferenceList($report_key);
-
-  foreach my $ref_key (@refKeys){
-
-    my @ref_filelist = $self->GetPSFiles($ref_key);
-
-    scalar @ref_filelist and do{
-      print "<br>Reference run: ",
-      CompareReport_utilities::RunIdentificationString($ref_key),"<br>\n";
-
-      foreach my $file (@ref_filelist){
-	$file =~ /Shift/ or next;
-	$self->PrintFilestring("Postscript file", $file, $ref_key);
-      }
-
-    };
-  }
-
-  #-------------------------------------------------------------
-  print h4("<hr>Other QA histograms for this run: \n"); 
-
-  foreach my $file (@filelist_ordered){
-   $file !~ /Shift/ or next;
-   $self->PrintFilestring("Postscript file", $file);
-  }
-
-  #-------------------------------------------------------------
-
-}
-#========================================================
-# returns ordered list of ps files for specified report key
-# if no argument given, returns ps files for this QA_object;
-
-sub GetPSFiles{
-
-  my $self = shift;
-  my $foreign_report_key = shift;
-
-  #-----------------------------------------------------------
-  
-  my $report_key;
-  if ($foreign_report_key){
-    $report_key = $foreign_report_key;
-
-    # make the QA_objects in case it doesn't exist
-    QA_utilities::make_QA_objects($foreign_report_key);
-  }
-  else{
-    $report_key = $self->ReportKey;
-  }
+  my $report_key = $self->ReportKey;
+  my $report_dir = $self->IOReportDirectory->Name;
 
   #---------------------------------------------------------
-  # get ps files from directory
+  # open the report directory
 
-  my $dh = $QA_object_hash{$report_key}->IOReportDirectory->Open;
+  print h4("<hr>QA histograms: \n"); 
+  
+  my $dh = $self->IOReportDirectory->Open;
   
   # pmj 28/7/00
   # force ordering of ps files
@@ -706,19 +611,18 @@ sub GetPSFiles{
     }
   }
   close $dh;
-  #---------------------------------------------------------
-  # order them
 
   my @filelist_ordered = sort { order_ps_files() } @filelist_unordered;
-  #---------------------------------------------------------
-  return @filelist_ordered;
-}
 
+  #----
+
+  foreach my $file (@filelist_ordered){
+    $self->PrintFilestring("Postscript file", $file);
+  }
+
+}
 #========================================================
 sub order_ps_files{
-
-  $a =~ /Shift/ and return -1;
-  $b =~ /Shift/ and return 1;
 
   $a =~ /QA/ and return -1;
   $b =~ /QA/ and return 1;
@@ -735,19 +639,6 @@ sub order_ps_files{
 sub ShowScalarsAndTests{
   my $self = shift;
 
-  my $file = shift;
-  my $macro_name  = shift;
-  my $mult_class = shift;
-
-  my $flag = shift;
-  #---------------------------------------------------------
-
-  my $ref = retrieve($file) or die "Cannot retrieve $file: $!";
-  my $eval = $$ref;
-
-  my ($mult_low, $mult_high) = $eval->MultClassLimits($mult_class);
-
-  #---------------------------------------------------------
   my $report_key = $self->ReportKey;
   my $report_dir = $self->IOReportDirectory->Name;
   #---------------------------------------------------------
@@ -755,44 +646,100 @@ sub ShowScalarsAndTests{
 
   my $title;
 
-  if (  $gDataClass_object->DataClass =~ /offline_real/ ){
-    $title = "QA Scalars for Run ID ".
+  if (  $gDataClass_object->DataClass =~ /offline/ ){
+    $title = "QA Scalars and Tests for Run ID ".
       $self->LogReport->RunID.", File Seq ".$self->LogReport->FileSeq;
   }
   else{
-    $title = "QA Scalars for $report_key"; 
+    $title = "QA Scalars and Tests for $report_key"; 
   }
 
   print h2($title);
+
+  #---------------------------------------------------------
+  # open the report directory, get evaluation files
+  
+  my $dh = $self->IOReportDirectory->Open;
+  
+  my @evalfile_list;
+
+  while (my $file = readdir $dh){
+    $file =~ /^\./ and next;
+
+    # save evaluation files
+    if ($file =~ /evaluation$/) {
+      push @evalfile_list, "$report_dir/$file"; 
+      next;
+    }
+  }
+  undef $dh;
+  
+  #---------------------------------------------------------
+  my %eval_hash;
+
+  # retrieve evaluation from storage
+  foreach my $file (@evalfile_list) {
+
+    (my $macro_name = basename($file) ) =~ s/\.evaluation//;
+
+    my $ref = retrieve($file) or die "Cannot retrieve $file: $!";
+    $eval_hash{$macro_name} = $$ref;
+  
+  }
   
   #---------------------------------------------------------
   # display run-based scalars, errors and warnings
 
- SWITCH: {
+  print h3("<hr>Run-based scalars, errors and warnings:\n"); 
 
-    $flag =~ /run_scalars/ and do{
-      print h3("<hr>Run-based scalars, errors and warnings:\n"); 
-      print h4("Macro: $macro_name\n"); 
-      print h4("Multiplicity class: $mult_class; track node limits = ($mult_low, $mult_high)"); 
-      QA_report_io::show_scalars_and_test_failures($eval, $mult_class, 'run');
-      last SWITCH;
-    };
+  foreach my $macro_name (keys %eval_hash){
 
-    $flag =~ /evtscalars_tests/ and do{
-
-      print h3("<hr>Event-based errors and warnings:\n"); 
-      print "<h4> Macro: $macro_name </h4> \n"; 
-      print h4("Mulitplicity class: $mult_class; track node limits = ($mult_low, $mult_high)"); 
-      QA_report_io::show_scalars_and_test_failures($eval, $mult_class, 'event');
-      
-      print h3("<hr>Run-based tests (all entries):\n"); 
-      print "<h4> Macro: $macro_name </h4> \n"; 
-      print h4("Mulitplicity class: $mult_class; track node limits = ($mult_low, $mult_high)"); 
-      QA_report_io::show_all_tests($eval, $mult_class, 'run');
-
-      last SWITCH;
-    };
+    my $eval = $eval_hash{$macro_name};
+    print h4("Macro: $macro_name\n"); 
+    
+    QA_report_io::show_scalars_and_test_failures($eval, 'run');
   }
+
+  #---------------------------------------------------------
+  # display event-based scalars, errors and warnings
+
+  print h3("<hr>Event-based errors and warnings:\n"); 
+  foreach my $macro_name (keys %eval_hash){
+
+    my $eval = $eval_hash{$macro_name};
+    print "<h4> Macro: $macro_name </h4> \n"; 
+    
+    QA_report_io::show_scalars_and_test_failures($eval, 'event');
+  }
+
+  #---------------------------------------------------------
+  # display run-based tests
+
+  print h3("<hr>Run-based tests (all entries):\n"); 
+
+  foreach my $macro_name (keys %eval_hash){
+
+    my $eval = $eval_hash{$macro_name};
+    print "<h4> Macro: $macro_name </h4> \n"; 
+
+    QA_report_io::show_all_tests($eval, 'run');
+
+  }
+  #---------------------------------------------------------
+  # display event-based tests
+
+  # disabled because display too long for many events and in any case not very useful
+  # pmj 11/11/99
+
+  #print "<hr><h3> Event-based tests (all entries): </h3>\n"; 
+  #
+  # foreach $macro_name (keys %eval_hash){
+  #
+  #   $eval = $eval_hash{$macro_name};
+  #  print "<h4> Macro: $macro_name </h4> \n"; 
+  #
+  #   show_all_tests($eval, 'event');
+  #}
 }
 
 #============================================================================
@@ -971,13 +918,7 @@ sub PrintFilestring{
   my $string = shift;
   my $file   = shift;
 
-  # optional arg for report key; default is this object
-  my $report_key = shift;
-  $report_key or $report_key = $self->ReportKey();
-    
-  #--------------------------------------------------------------------
-
-  my $report_dir = $QA_object_hash{$report_key}->IOReportDirectory->Name;
+  my $report_dir = $self->IOReportDirectory->Name;
 
   my $filename = "$report_dir/$file";
   
@@ -996,7 +937,7 @@ sub PrintFilestring{
     print "$string $filename <br> \n";
   }
   else{
-    my $report_dir_WWW = $QA_object_hash{$report_key}->ReportDirectoryWWW;
+    my $report_dir_WWW = $self->ReportDirectoryWWW;
     my $filename_WWW   = "$report_dir_WWW/$file";
     QA_cgi_utilities::make_anchor($string, $filename, $filename_WWW);
   }
@@ -1058,12 +999,6 @@ sub UpdateLogReport{
   print h4("Making directory: $report_dir\n");
   mkdir $report_dir, 0775;
 
-  # just check for existence since it may already have been created before
-  unless(-e $report_dir){
-    print "Cannot create the report directory $report_dir: $!";
-    return;
-  }
-
   # create Logreport_object_offline, nightly, or online, etc
 
   my $logreport_ref = $self->NewLogReportObject() or return;
@@ -1107,149 +1042,13 @@ sub GetLogReport{
   }
   else
   {
-
-    print h3("<font color=orange>",$self->ReportKey,
-	     " is currently being updated?</font>\n");
-
-#    print h3("<font color=red>Cannot find $filename<br>\n",
-#	     "It's possible that the db has been updated, ",
-#	     "but the logfile has not been parsed</font>\n"); 
+    print h3("<font color=red>Cannot find $filename<br>\n",
+	     "It's possible that the db has been updated, ",
+	     "but the logfile has not been parsed</font>\n"); 
     return; 
   }
   
 }
-#=========================================================
-sub EvaluationFileList{
-
-  my $self = shift;
-
-  my $report_dir = $self->IOReportDirectory->Name;
-
-  # open the report directory, get evaluation files
-  my $dh = $self->IOReportDirectory->Open;
-  my @evalfile_list;
-
-  while (my $file = readdir $dh){
-    $file =~ /^\./ and next;
-    # save evaluation files
-    if ($file =~ /evaluation$/) {
-      push @evalfile_list, "$report_dir/$file"; 
-      next;
-    }
-  }
-  undef $dh;
-  return @evalfile_list;
-}
-#=========================================================
-sub MultClassLabels{
-
-  my $self = shift;
-
-  exists $self->{_MultClassLabels} or do{
-
-    my @evalfile_list = $self->EvaluationFileList();
-    
-    # look at one evaluation file to extract multiplcity classes
-    my $file = $evalfile_list[0];
-    my $ref = retrieve($file) or die "Cannot retrieve $file: $!";
-    my $eval = $$ref;
-    @{$self->{_MultClassLabels}} = $eval->MultClassLabels();
-
-  };
-
-  return @{$self->{_MultClassLabels}};
-}
-#=========================================================
-sub MultClassLimits{
-
-  my $self = shift;
-  my $mult_class = shift;
-  
-  exists $self->{_MultClassLimits}->{$mult_class} or do{
-
-    my @evalfile_list = $self->EvaluationFileList();
-    
-    # look at one evaluation file to extract multiplcity classes
-    my $file = $evalfile_list[0];
-    my $ref = retrieve($file) or die "Cannot retrieve $file: $!";
-    my $eval = $$ref;
-
-    my ($low, $high) = $eval->MultClassLimits($mult_class);
-
-    @{$self->{_MultClassLimits}->{$mult_class}} = ($low, $high);
-  };
-
-  return @{$self->{_MultClassLimits}->{$mult_class}};
-}
-#=========================================================
-sub MultClassButtonString{
-
-  # returns string for printing buttons for all available macros and multiplicity classes
-
-  my $self = shift;
-  my $ButtonSub = shift;
-  @_ and my @args = @_;
-
-  #-----------------------------------------------------------
-  my $button_string;
-  my $report_key = $self->ReportKey;
-  #-----------------------------------------------------------
-
-  my @evalfile_list = $self->EvaluationFileList();
-
-  my @mult_class_list = $self->MultClassLabels();
-
-  foreach my $mult_class (@mult_class_list){
-    my ($low, $high) =  $self->MultClassLimits($mult_class);
-    $button_string .= "Multiplicity class: $mult_class; track node limits ($low, $high)<br>\n";
-  }
-
-
-  #-----------------------------------------------------------------------------------
-  # first the scalars for shift crews
-
-  $button_string .= "<br><font color=red>Scalars for QA shift crew:</font>\n";
-
-  foreach my $file (@evalfile_list) {
-    (my $macro_name = basename($file) ) =~ s/\.evaluation//;
-
-    $macro_name =~ /eventBranch/ or next;
-
-    $button_string .= "<br>";
-    foreach my $mult_class (@mult_class_list){
-      my $button_label = "$macro_name";
-      $mult_class ne 'none' and $mult_class ne 'mc' and $button_label .= " $mult_class";
-
-      my $button_ref = Button_object->new( $ButtonSub, $button_label, 
-					   $report_key, $file, $macro_name, $mult_class, @args);
-      $button_string .= $button_ref->SubmitString;
-    }
-  }
-  #-----------------------------------------------------------------------------------
-  # now all the rest
-
-  $button_string .= "<br><br>Other scalars:\n";
-
-  foreach my $file (@evalfile_list) {
-    (my $macro_name = basename($file) ) =~ s/\.evaluation//;
-
-    $macro_name !~ /eventBranch/ or next;
-
-    $button_string .= "<br>";
-    foreach my $mult_class (@mult_class_list){
-      my $button_label = "$macro_name";
-      $mult_class ne 'none' and $mult_class ne 'mc' and $button_label .= " $mult_class";
-
-      my $button_ref = Button_object->new( $ButtonSub, $button_label, 
-					   $report_key, $file, $macro_name, $mult_class, @args);
-      $button_string .= $button_ref->SubmitString;
-    }
-  }
-  #-----------------------------------------------------------------------------------
-  return $button_string;
-
-}
-
 #=========================================================
 # -------------- hard coded accessors  -------------------
 

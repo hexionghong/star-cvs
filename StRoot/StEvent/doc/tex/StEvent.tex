@@ -2,7 +2,7 @@
 %
 % StEvent - User Guide and Reference Manual -- LaTeX Source
 %
-% $Id: StEvent.tex,v 2.50 2000/11/01 16:47:49 lasiuk Exp $
+% $Id: StEvent.tex,v 2.45 2000/08/23 03:14:07 ullrich Exp $
 %
 % Author: Thomas Ullrich, Nov 1999
 %
@@ -21,8 +21,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % $Log: StEvent.tex,v $
-% Revision 2.50  2000/11/01 16:47:49  lasiuk
-% add the RICH changes of today
+% Revision 2.45  2000/08/23 03:14:07  ullrich
+% Improved (corrected) explanation of return value
+% of chi2 methods of StVertex and StTrackFitTraits.
 %
 % Revision 2.49  2000/10/16 17:08:12  ullrich
 % Added more description for StEventScavenger.
@@ -215,8 +216,8 @@
   \mbox{\includegraphics[width=\textwidth]{StEventTitle.eps}}
   \hfill\mbox{}\\[3cm]
   {\LARGE User Guide and Reference Manual \\[5mm] for Version 2}\\[2cm]
-  {\LARGE $ $Revision: 2.50 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/11/01 16:47:49 $ $}  % replaced by cvs with current revision
+  {\LARGE $ $Revision: 2.45 $ $}  \\[5mm] % replaced by cvs with current revision
+  {\LARGE $ $Date: 2000/08/23 03:14:07 $ $}  % replaced by cvs with current revision
   \vfill
 \end{center}
 \cleardoublepage
@@ -389,10 +390,6 @@ enum StTrackFittingMethod   {kUndefinedFitterId,
                              kLine2StepId,
                              kLine3DId};
 
-enum StTrackFinderMethod    {svtGrouper,
-                             svtStk,
-                             svtOther,
-                             tpcStandard,
                              tpcOther,
                              ftpcConformal,
                              svtTpcSvm,
@@ -402,28 +399,6 @@ enum StTrackFinderMethod    {svtGrouper,
 enum StRichPidFlag          {eNoMip,
                              eFastEnough,
                              eLightOnPadPlane};
-
-enum StRichHitFlag          {eDeconvoluted=1,
-                             eMip=2,
-                             eSaturatedPad=4 ,
-                             ePhotoElectron=8,
-                             eMultiplyAssignedToRing=16,
-                             eAssociatedMip=32,
-                             e1SigmaPi=64,
-                             e2SigmaPi=128,
-                             eInConstantAreaPi=256,
-                             eInAreaPi=512,
-                             eAssignedToRingPi=1024,
-                             e1SigmaK=2048,
-                             e2SigmaK=4096,
-                             eInConstantAreaK=8192,
-                             eInAreaK=16384,
-                             eAssignedToRingK=32768,
-                             e1Sigmap=65536,
-                             e2Sigmap=131072,
-                             eInConstantAreap=262144,
-                             eInAreap=524288,
-                             eAssignedToRingp=1048576};
 \end{verbatim}
 
 Note that often the enumeration type names (e.g. \texttt{StTrackType})
@@ -2455,197 +2430,6 @@ with
      event->l3Trigger()->someMethod();
 \end{verbatim}
 Only the entry point \texttt{event} has to be replaced by \texttt{event->l3trigger()}.
-However, the level of detail in the offline reconstructed data will
-always be somewhat larger and some information might not be available in the L3
-tree (e.g.~certain PID traits, fit traits etc.).
-
-... more description to be provided by the L3 group ...  \clearpage
-
-\section{Writing MiniDSTs using StEvent}
-\label{sec:miniDST}\index{miniDST}
-Following STARs terminology a miniDST is the next higher level in the
-DST hierarchy after the DST itself. What follows are the
-microDST and nanoDST.  The miniDST should be readable STAR-wide which
-implies that it has to be based on \StEvent. This has several
-advantages:
-\begin{itemize}
-\item programs and code that works based on \StEvent\ can be used
-    directly; in fact the analysis code doesn't have to change at all
-    between DST and miniDST
-\item schema evolution comes for free
-\item the standard IO maker handles the writing and reading of the
-    miniDST
-\end{itemize}
-
-The miniDST contains a fraction of the StEvent data tree plus
-(optionally) user defined components.  Which fraction of StEvent gets
-written is up to the user.  The obvious candidates to go on miniDSTs
-are primary tracks, vertices, or certain global tracks.  There is also
-no rule which says that there can only be one miniDST. It makes
-perfectly sense to keep different variants of miniDSTs. Some Physics
-Working Groups might want highly compressed miniDSTs for rare probe
-searches since they deal with many events. Other groups might want
-more complete miniDSTs since they need less events in total.  Several
-PWG can go for a common miniDST, STAR can go for a common miniDST.
-This is a matter a choice.  Important is that the scheme does not
-limit us in our choice that there's a way of achieving this.
-
-The basic principle used in the implementation is not to copy and
-store information in a new scheme in a different place (e.g.~in a
-TTree or user defined format) but to \textbf{remove} those pieces of
-the current \StEvent\ one doesn't need. The result is the same but
-removing or marking instread of copying is faster and more efficient.
-
-The extension for miniDSTs is \texttt{.mdst.root}.
-
-\subsection{The StEventScavanger class}
-\index{StEventScavanger} To get remove unwanted objects from \StEvent\ 
-one can do two things: deleting them (operator \texttt{delete}) or
-marking them (using the zombie mechanism).  Both methods require some
-level of expertise and there are many things that can go wrong.  What
-is needed is a way to savely remove arbitrary parts of StEvent in a
-simple way. This is exactly what the \texttt{StEventScavanger} class
-is for.
-
-The class has only static member functions which means you can call them from
-everywhere in your code without creating an instance of \texttt{StEventScavanger}.\\
-Example:
-\begin{verbatim}
-    StEvent* event = (StEvent *) GetInputDS("StEvent");
-    StEventScavenger::removeEventSummary(event);
-    StEventScavenger::removeSoftwareMonitor(event);
-    StEventScavenger::removeTpcHitCollection(event);
-    StEventScavenger::removeFtpcHitCollection(event); 
-\end{verbatim}
-The class has methods to delete individual tracks, all hits, event summary,
-software monitors, and much more (see section \ref{sec:StEventScavenger}).
-Note, that most of these methods actually mark the objects and do not remove
-via operator \texttt{delete}.
-Marked objects will be ignored by the IO maker and not written
-to the miniDST. So don't worry if you still see them after you called 
-StEventScavenger. They won't show up on the miniDST.
-
-
-\subsection{An Example: StMiniDstMaker}
-
-The STAR library contains a complete example on how to write a miniDST.
-The example consist of the \texttt{StMiniDstMaker} maker and two macros:
-\texttt{mDstWrite.C} and \texttt{mDstRead.C}.
-
-The basic idea behind the example is to show how to write a miniDST of primary kaons
-which contains nothing but the kaons and the trigger information.
-
-The most important thing is that you use the macro \texttt{mDstWrite.C} instead
-of the usual \texttt{doEvents.C}-like macros. \texttt{mDstWrite.C} is especially
-setup to write \StEvent\ read in from a DST into a single
-output file. The version of the macro in the library calls the \texttt{StMiniDstMaker}
-package to select what should be written and what not. 
-
-So a typical run looks like this:
-\begin{verbatim}
-root4star -b
-.x mDstWrite.C(1000,"/star/data03/reco/P00hi/2000/09","*.dst.root","mykaons");
-\end{verbatim}
-
-In this case 1000 events will be read from various\ \texttt{*.dst.root}
-files in the \texttt{/star/data03/reco/P00hi/2000/09} directory and written to
-a miniDST with name \texttt{mykaons.mdst.root}.
-For every event the \texttt{StMiniDstMaker::Make()} method selects the kaon tracks and removes the
-rest. To remove primary track which are not identified as kaons the \texttt{remove(StTrack*)} from
-\texttt{StEventScavanger} class is used.
-The code looks as follows:
-\begin{verbatim}
-    StSPtrVecPrimaryTrack& theTracks = event->primaryVertex()->daughters();
-    for (unsigned int i=0; i<theTracks.size(); i++)
-        if (!accept(theTracks[i]))
-            StEventScavenger::remove(theTracks[i]);
-\end{verbatim}
-
-where \texttt{accept(StTrack*)} is a filter method defined in \texttt{StMiniDstMaker}.
-
-To read the file back use for example:
-\begin{verbatim}
-root4star -b
-.x mDstRead.C(1000,"/star/data03/reco/P00hi/2000/09","*.mdst.root");
-\end{verbatim}
-
-The \texttt{mDstRead.C} macro in the library actually calls the standard StAnalysisMaker.
-Of course one can also create a macro which reads in a miniDSTs and writes out
-another, more compressed version of it.\\
-Please note that \texttt{StMiniDstMaker}, \texttt{mDstWrite.C}, and \texttt{mDstRead.C}
-are only examples and should be used as templates for you own purposes.
-
-\subsection{Advanced features}
-\subsubsection{Using Zombies}
-Most methods of the  \texttt{StEventScavanger} class are based on the 'zombie' mechanism
-introduced by Victor in Sep 2000.
-The scheme relies on the fact that all \StEvent\ objects inherit from \texttt{StObject}
-and \texttt{StObject} itself has a few free user bits which can be used to mark the object.
-Once the object is marked it becomes a zombie and will be ignored when the rest of
-\StEvent\ is written to the miniDST. The object can be marked by invoking the
-\texttt{void StObject::makeZombie()} method and the state of each object can be
-checked with the \texttt{bool StObject::isZombie()} method.
-
-If you feel that your understanding of StEvent is sufficient enough you always can use
-the zombie mechanism directly. Once an object becomes a zombie also all references to the
-object will disappear on the miniDST, i.e.~pointer are nulled, at least. In this sense
-zombies are pretty save to use.
-
-Please note, that - as in the bad movies - zombies are visible. After an object is made
-a zombie you still can use the same way as before. With other words it does not get deleted
-in memory.
-
-\subsubsection{Adding user defined classes}
-
-The miniDST mechanism is in principle not restricted to StEvent
-classes only.  Objects of every class which inherits from
-\texttt{StObject} and use the \texttt{ClassDef()} and
-\texttt{ClassImp()} macros can be written to a miniDST. You
-will need of course the class definition when you read the data back
-in. If the class definition is not availabe the object cannot be
-retrieved from the miniDST; you still we be able to read the rest though.
-Needles to say that it is the responsibility of the user to
-make sure the class is available to everyone who tries to read the
-miniDSTs.
-
-Here's a very simple example:
-\begin{verbatim}
-// StMyDstClass.h
-#include "StObject.h"
-class StMyDstClass : public StObject {
-public:
-    StMyDstClass();
-    int myCounter;
-    int eventIsGood;
-    ClassDef(StMyDstClass,1);
-};
-\end{verbatim}
-
-The \texttt{StMyDstClass.cxx} file of course has to exist and should contain
-\begin{verbatim}
-// StMyDstClass.h
-#include "StMyDstClass.h"
-ClassImp();
-StMyDstClass::StMyDstClass()
-{
-    myCounter = 0;
-    eventIsGood = 0;
-}
-\end{verbatim}
-
-All you have to do is to create an instance of this class in the \texttt{Make()} method
-of your maker (\texttt{StMiniDstMaker}) and attach it to \StEvent\:
-
-\begin{verbatim}
-StMyDstClass *my = new StMyDstClass;
-my->myCounter = 17;
-my->eventIsGood = 1;
-event->content().push_back(my);
-\end{verbatim}
-
-From here on the \texttt{StMyDstClass} object is integral part of \StEvent\ and
-will be treated as such during I/O.
-Please not that you are of course not limited to build in data types
 but can more complex ones as pointers to \texttt{StTrack} objects for example.
 One could imagine to have a class \texttt{StMyPair} which links two tracks which form
 a pair to name just one of many applications. 
@@ -3138,9 +2922,7 @@ definition in the header file.
     \verb+const TString& type() const;+\\
     Character string which contains a short description of the type of
     the event you got.
-    
-    \verb+Long_t id() const;+\\
-    Unique event identifier.
+    \verb+ULong_t bunchCrossingNumber() const;+\\       
     
     \verb+Long_t runId() const;+\\
     Unique run identifier.
@@ -3236,7 +3018,7 @@ definition in the header file.
     
     \verb+StSPtrVecKinkVertex& kinkVertices();+\\
     \verb+const StSPtrVecKinkVertex& kinkVertices() const;+\\
-    Returns container with kink vertices.
+    \verb+void setBunchCrossingNumber(ULong_t);+\\
     
     \verb+void setType(const Char_t*);+\\
 
@@ -3289,67 +3071,22 @@ definition in the header file.
 \item[Description] Please note that the information this class provides
     is already accessible directly through the \texttt{StEvent} class
     itself. This class is only used hold this information within
-    \texttt{StEvent}. For more information see \ref{sec:StEvent}.
-
-\item[Related Classes]
-\item[Public\\ Constructors]
-    \verb+StEventInfo();+\\
+    \verb+ULong_t bunchCrossingNumber() const;+\\
     \verb+StEventInfo(const event_header_st&);+\\
 \item[Public Member\\ Functions]
     \verb+const TString& type() const;+\\
     \verb+Long_t id() const;+\\
     \verb+Long_t runId() const;+\\
-    \verb+Long_t time() const;+\\
+    \verb+void setBunchCrossingNumber(ULong_t);+\\
     \verb+ULong_t triggerMask() const;+\\
 
     \verb+ULong_t bunchCrossingNumber(Uint_t i) const;+\\
     Returns the bunch crossing numbers, i.e.~two 32 bit words.
     \texttt{i = 0} returns the lower and \texttt{i = 1} the upper number.
 
-    \verb+void setType(const Char_t*);+\\
-    \verb+void setRunId(Long_t);+\\
-    \verb+void setId(Long_t);+\\
-    \verb+void setTime(Long_t);+\\
-    \verb+void setTriggerMask(ULong_t);+\\
-    \verb+void setBunchCrossingNumber(ULong_t, UInt_t);+\\
-\end{Entry}
-\clearpage
-
-\subsection{StEventScavenger}
-\index{StEventScavenger|textbf}
-\label{sec:StEventScavenger}\index{miniDST, mDST}
-\begin{Entry}
-\item[Summary] Helper class to ease creating miniDSTs based on StEvent
-\item[Synopsis]
-    \verb+#include "StEventScavenger.h"+\\
-    \verb+class StEventScavenger;+\\
-\item[Description]
-    The class contains only static member functions. These
-    methods allow to delete, or better mark, classes which
-    you do \textbf{not} want to end up on the miniDSTs.
-    For more see section \ref{sec:miniDST}.
-\item[Related Classes]
-    none
-\item[Public\\ Constructors]
-    \verb+static bool removeEventSummary(StEvent*);+\\
-    \verb+static bool removeSoftwareMonitor(StEvent*);+\\
-    \verb+static bool removeTpcHitCollection(StEvent*);+\\
-    \verb+static bool removeFtpcHitCollection(StEvent*);+\\
-    \verb+static bool removeSvtHitCollection(StEvent*);+\\
-    \verb+static bool removeSsdHitCollection(StEvent*);+\\
-    \verb+static bool removeEmcCollection(StEvent*);+\\
-    \verb+static bool removeRichCollection(StEvent*);+\\
     \verb+static bool removeTriggerDetectorCollection(StEvent*);+\\
     \verb+static bool removeL3Trigger(StEvent*);+\\
     \verb+static bool removeV0Vertices(StEvent*);+\\
-    \verb+static bool removeXiVertices(StEvent*);+\\
-    \verb+static bool removeKinkVertices(StEvent*);+\\
-    \verb+static bool remove(StTrack*);+\\
-    
-    \verb+removeTpcHitsNotOnTrack(StEvent*);+\\
-    Marks all TPC hits not associated with valid tracks.
-    'Valid' means that the track will be written to the miniDST
-    (i.e.~the track exist and is not a zombie). This method
     has to be called after the rejected tracks are removed.
     Do not remove the TPC hits via \texttt{removeTpcHitCollection()}
     if you use this method.
@@ -4313,7 +4050,7 @@ definition in the header file.
     Returns the amplitude of the pixel with the largest
     amplitude in the hit.
 
-    \verb+Long_t clusterNumber() const;+\\
+    \verb+ULong_t clusterNumber() const;+\\
     Returns the number (index) of the cluster from which the
     hit was produced.
 
@@ -4335,19 +4072,11 @@ definition in the header file.
     Returns the position of the hit in the internal coordinate
     system of the detector.
 
-    \verb+UShort_t numberOfPads() const;+\\
-    Returns the number of pads from which a hit was
-    constructed.
-    
-    \verb+void setNumberOfPads(UShort_t);+\\
-    Set the number of pads from which a hit was
-    constructed.
-    
     \verb+void setMaxAmplitude(Float_t);+\\
     Set the amplitude of the pixel with the maximum
     amplitude contained within the cluster.
 
-    \verb+void setClusterNumber(Long_t);+\\
+    \verb+void setClusterNumber(UShort_t);+\\
     Assign the cluster number (index) to which the
     it is associated.
 
@@ -4514,73 +4243,6 @@ definition in the header file.
 
     \verb+void setInfo(const StSPtrVecRichMCInfo&);+\\
     Specifies the Monte Carlo list.
-
-    \verb+const StSPtrVecRichMCInfo& getMCInfo() const;+\\
-    Returns the Monte Carlo information.
-
-    \verb+StSPtrVecRichMCInfo& getMCInfo();+\\
-    Returns the Monte Carlo information.
-\end{Entry}
-\clearpage
-
-\subsection{StRichPid}
-\index{StRichPid|textbf}
-\label{sec:StRichPid}
-\begin{Entry}
-\item[Summary]
-\item[Synopsis]
-    \verb+#include "StRichPid.h"+\\
-    \verb+class StRichPid;+\\
-\item[Description]
-\item[Related Classes]
-\item[Public\\ Constructors]
-    \verb+StRichPid();+\\
-\item[Public Member\\ Functions]
-    \verb+StRichPid(StParticleDefinition* particle, StThreeVectorD resid,+\\
-    \verb+Float_t totAzim, Float_t totArea,+\\
-    \verb+UShort_t totHits, Float_t trunAzim,+\\
-    \verb+Float_t trunArea, UShort_t trunHits);+\\
-    \verb+Int_t operator==(const StRichPid&) const;+\\
-    \verb+void setRingType(StParticleDefinition* particle);+\\
-    \verb+void setMipResidual(StThreeVectorD t);+\\
-    \verb+void setTotalAzimuth(Float_t);+\\
-    \verb+void setTotalArea(Float_t);+\\
-    \verb+void setTotalHits(UShort_t);+\\
-    \verb+void setTruncatedAzimuth(Float_t);+\\
-    \verb+void setTruncatedArea(Float_t);+\\
-    \verb+void setTruncatedHits(UShort_t);+\\
-    \verb+StParticleDefinition* getRingType() const;+\\
-    \verb+const StPtrVecRichHit& getAssociatedRichHits() const;+\\
-    \verb+StPtrVecRichHit& getAssociatedRichHits();+\\
-    \verb+Int_t getParticleNumber() const;+\\
-    \verb+StThreeVectorD getMipResidual() const;+\\
-    \verb+Float_t getTotalAzimuth() const;+\\
-    \verb+Float_t getTotalArea() const;+\\
-    \verb+UShort_t getTotalHits() const;+\\
-    \verb+Float_t getTotalDensity() const;+\\
-    \verb+Float_t getTruncatedAzimuth() const;+\\
-    \verb+Float_t getTruncatedArea() const;+\\
-    \verb+UShort_t getTruncatedHits() const;+\\
-    \verb+Float_t getTruncatedDensity() const;+\\
-    \verb+bool isSet(StRichPidFlag);+\\
-    \verb+void setBit(StRichPidFlag);+\\
-    \verb+void unSetBit(StRichPidFlag);+\\
-\end{Entry}
-\clearpage
-
-\subsection{StRichPidTraits}
-\index{StRichPidTraits|textbf}
-\label{sec:StRichPidTraits}
-\begin{Entry}
-\item[Summary]
-\item[Synopsis]
-    \verb+#include "StRichPidTraits.h"+\\
-    \verb+class StRichPidTraits;+\\
-\item[Description]
-\item[Related Classes]
-\item[Public\\ Constructors]
-    \verb+StRichPidTraits();+\\
-\item[Public Member\\ Functions]
     \verb+Int_t operator==(const StRichPidTraits&) const;+\\
     \verb+void addPid(StRichPid* );+\\
     \verb+StSPtrVecRichPid getAllPids();+\\
@@ -4630,6 +4292,8 @@ definition in the header file.
     \verb+UShort_t adc() const;+\\
     Returns the adc value.
 
+
+
     \verb+ULong_t reservedLong() const;+\\
     Reserved for future use.
 
@@ -4643,25 +4307,11 @@ definition in the header file.
 \label{sec:StRichSoftwareMonitor}
 \begin{Entry}
 \item[Summary]
-\item[Synopsis]
-    \verb+#include "StRichSoftwareMonitor.h"+\\
-    \verb+class StRichSoftwareMonitor;+\\
-\item[Description]
-\item[Related Classes]
-\item[Public\\ Constructors]
-    \verb+StRichSoftwareMonitor();+\\
-    \verb+StRichSoftwareMonitor(const dst_mon_soft_rich_st&);+\\
-\item[Public Member\\ Functions]
-    \verb+void setNumberOfPixels(Long_t);+\\
-    \verb+void setNumberOfClusters(Long_t);+\\
-    \verb+void setNumberOfHits(Long_t);+\\
-    \verb+void setTotalCharge(Long_t);+\\
-    \verb+Long_t numberOfPixels() const;+\\
-    \verb+Long_t numberOfClusters() const;+\\
-    \verb+Long_t numberOfHits() const;+\\
-    \verb+Long_t totalCharge() const;+\\
     \verb+void setNumberOfTracksCrossing(Long_t);+\\
     \verb+void setNumberOfTracksPidCalculated(Long_t);+\\
+\clearpage
+
+
     \verb+void setNumberOfTracksAbove1Gev(Long_t);+\\
     \verb+void setNumberOfHitsInRings(Long_t);+\\
     \verb+void setNumberOfRings(Long_t);+\\

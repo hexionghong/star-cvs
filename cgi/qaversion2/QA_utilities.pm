@@ -42,24 +42,25 @@ use Db_update_utilities;
 1.;
 #=================================================================
 sub sort_time{
-  
-  my $key = shift;
-  
-  $key or return -99999;
-  
-  my $time = -99999;
-  
-  # pmj 12/9/00 changed "exists" to "defined"
 
-  if ( defined $QA_message_hash{$key} ){
+  my $key = shift;
+
+  $key or return -99999;
+
+  my $time;
+
+  if ( exists $QA_message_hash{$key} ){
     $time = $QA_message_hash{$key}->CreationEpochSec;
   }
-  elsif ( defined $QA_object_hash{$key} ){
+  elsif ( exists $QA_object_hash{$key} ){
     $time = $QA_object_hash{$key}->CreationEpochSec;
   }
-  
+  else{
+    $time = -99999;
+  }
+
   return $time;
-  
+
 }
 #=================================================================
 # BEN(4jun2000)

@@ -13,7 +13,6 @@ use CGI qw/:standard :html3/;
 
 use QA_globals;
 use Storable;
-use IO_object;
 use DataClass_object;
 
 use strict;
@@ -52,25 +51,20 @@ sub _init{
    
 }
 #========================================================
-# get the possible values for various fields from disk
+# get the possible values for various fields from the db
 # for selecting a particular job.
-# if something is funky, gets it from the db.
+# called in JobPopupMenu
 
 sub GetSelectionOptions{
   my $self = shift;
 
-  my $menuRef;
-  # first check the disk
-  my $storable = IO_object->new("MenuStorable")->Name();
-  eval {
-    $menuRef = retrieve($storable);
-  };
+  # uses the global DataClass_object to determine which 
+  # sub to call depending on the data class
   no strict 'refs';
-  # else get it from the db
-  if ($@ || !defined $menuRef) {
-    $menuRef = &{$gDataClass_object->GetSelectionOptions};
-  }
-  return $menuRef;
+
+  my $sub_getselections = $gDataClass_object->GetSelectionOptions;
+
+  return &$sub_getselections;
 
 }
 #========================================================
@@ -117,17 +111,11 @@ sub GetSelectedKeyList{
   my @key_list = $self->GetSelectedKeysFromDb();
 
 
-  # dont make the QA_objects if too many rows are returned.
-  my $limit = $Db_KeyList_utilities::selectLimit;
+  # make the QA_objects
+  QA_utilities::make_QA_objects(@key_list);
 
-  if ( scalar @key_list >= $limit ) {
-    return @key_list;
-  }
-  else {
-    QA_utilities::make_QA_objects(@key_list);
-     # sort
-    return $self->SortKeys(@key_list);
-  }
+  # sort
+  return $self->SortKeys(@key_list);
 
 }
 
@@ -205,7 +193,8 @@ sub FillQAStatusMenu{
     foreach my $macro_name (@macro_names){
       my $value = "$status;$macro_name";
       push @{$self->{values}{QAstatus}}, $value;
-      $abbrev = ($status eq 'warnings') ? 'warn' : 'err';
+      ($abbrev = $status) =~ s/warnings/warn/ if $status eq 'warnings';
+      ($abbrev = $status) =~ s/errors/err/    if $status eq 'errors';
       $self->{labels}{QAstatus}{$value} = "$abbrev - $macro_name";
     }
   }

@@ -24,7 +24,6 @@ use KeyList_object_offline;
 use KeyList_object_nightly;
 use KeyList_object_online;
 use Db_KeyList_utilities;
-use CompareReport_utilities;
 
 use DataClass_object;
 
@@ -59,10 +58,6 @@ sub _init{
 
   $self->{_KeyList} = new $KeyList_obj; # depends on type of data
   $self->{_Hidden}  = new HiddenObject_object;
-
-  # pmj 7/9/00 generate user reference filename
-  my $io = new IO_object("UserReferenceFile");
-  undef $io;
 
 }
 
@@ -221,12 +216,10 @@ sub StartingDisplay{
                  <tr> $table_string
                  </table>
         </table>};
-
   #-----------------------------------------------------------------------------
   if( $self->ExpertPageFlag() ){
-    print "$expert_action_string";
+    print "<hr>$expert_action_string<hr>";
   }
-  print hr;
   #-----------------------------------------------------------------------------
   # display update status
   my ($io, $fh, $line);
@@ -305,21 +298,7 @@ sub DisplayDataset{
     $gCGIquery->delete('selected_key_list');
 
     # get selected keys - also make QA_objects
-
-    # pmj 5/9/00 **Also prints out DB query (this should be made a separate function)
     my @all_selected_keys = $self->KeyList->GetSelectedKeyList;
-
-
-    #----
-    # pmj 5/9/00 move these here...
-    # show the references
-    unless($gCGIquery->param('Display messages')){
-      CompareReport_utilities::ShowReferences();
-      print "<hr>\n";
-    }
-
-    #----
-
     
     my $rows = scalar @all_selected_keys;
     # no keys match query, get out
@@ -350,12 +329,11 @@ sub DisplayDataset{
       my $more_button = Browser_utilities::SubmitButton('Next subset');
       my $row_ref  = td([ $popup, $more_button]);
       
-      print "<center>",h3("Rows 1 - $subset_len (of $rows)"),
+      print "<center>",h3("Rows 1 - $subset_len (total $rows rows)"),
       table(Tr($row_ref)). "</center>";
       
     }
     else{
-      print "<center>",h3("Rows 1 - $rows"),"</center>";
       @selected_keys = @all_selected_keys;
     }
   }
@@ -408,7 +386,7 @@ sub DisplayDataset{
 
     my $row_ref = td([ $previous_button, $popup, $more_button]);
     print "<center>",
-          h3("Rows $first_row - $last_row (of $rows)"), 
+          h3("Rows $first_row - $last_row (total $rows rows)"), 
           table( Tr($row_ref) ), 
           "</center>";
   }
@@ -446,10 +424,6 @@ sub DisplayDataset{
       my $temp   = $QA_message_hash{$key}->CreationEpochSec;
       my $time   = localtime($temp);
       my $text   = $QA_message_hash{$key}->MessageString;
-
-      # pmj 15/9/00 get rid of references to sol in old messages
-      $text =~ s/sol\.star\.bnl\.gov/www\.star\.bnl\.gov/g;
-      #---
 
       $data_string = "<strong>";
 
@@ -490,8 +464,6 @@ sub DisplayDataset{
     else{ # print dataset
      
       # make sure logfile report exists
-
-      defined  $QA_object_hash{$key} or next;
       my $logfile_report = $QA_object_hash{$key}->LogReportStorable;
       -s $logfile_report or next;
       
@@ -610,19 +582,6 @@ sub OnlineRunBrowser{
 
   my $string = "<a href=$url target = 'documentation'>Online Run Log</a>";
   return $string;
-}
-#===========================================================
-sub AddUserReference{
-
-  my $self = shift;
-  my $user_reference = shift;
-  
-  #--------------------------------------------------------------
-  my ($io, $FH);
-  $io = new IO_object("UserReferenceFile");
-  $FH = $io->Open(">>");
-  print $FH "$user_reference ";
-  undef $io;
 }
 
 #===========================================================

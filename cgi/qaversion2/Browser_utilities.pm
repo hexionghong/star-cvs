@@ -50,7 +50,7 @@ sub start_expert_buttons{
   my $script_name = $gCGIquery->script_name;
   my $hidden_string = $gBrowser_object->Hidden->Parameters;
 
-  my ($row1, $row2, $row3);
+  my ($row1, $row2);
 
   # -- first row --
   $row1 = $gCGIquery->startform(-action=>"$script_name/lower_display", 
@@ -84,8 +84,8 @@ sub start_expert_buttons{
   $button_ref = Button_object->new('MoveOldReports', 'Move old reports');
   $row2      .= $button_ref->SubmitString;
 
-#  $button_ref = Button_object->new('CrontabAdd', 'Add crontab.txt');
-#  $row2      .= $button_ref->SubmitString;
+  $button_ref = Button_object->new('CrontabAdd', 'Add crontab.txt');
+  $row2      .= $button_ref->SubmitString;
 
   $button_ref = Button_object->new('CrontabMinusL', 'Do crontab -l');
   $row2      .= $button_ref->SubmitString;
@@ -99,12 +99,8 @@ sub start_expert_buttons{
   $button_ref = Button_object->new('EnableDSV','Enable DSV'); 
   $row2      .= $button_ref->SubmitString;
   
-  $button_ref = Button_object->new("SetDefaultReferences",
-				   "Set default references");
-  $row2      .= $button_ref->SubmitString;
-
   $row2      .= $hidden_string . $gCGIquery->endform();
-  
+
   # see global messages only
   my $message =
     $gCGIquery->startform(-action=>"$script_name/upper_display", 
@@ -279,7 +275,8 @@ sub SwitchDataTypeMenu{
   my $popup_string = $gCGIquery->popup_menu(-name   => 'data_class',
 					    -values => \@dir_values,
 					    -default=> $cur_data_class,
-					    -labels => \%dir_labels 
+					    -labels => \%dir_labels,  
+					    -onChange => 'this.form.submit()'
 					    );
 
 #pmj 6/4/00: change labels from "Select Class" to "Change Class"
@@ -291,8 +288,8 @@ sub SwitchDataTypeMenu{
   my @table_rows =  td ( [h3('Change Class of Data:')] );
 #---
 
-#  push @table_rows, td ( [$popup_string ] );
-#  push @table_rows, td ( [$submit_string] );
+  push @table_rows, td ( [$popup_string ] );
+  push @table_rows, td ( [$submit_string] );
   
   my $table_string = table({-align=>'center'}, 
 			   Tr({-valign=>'top'},\@table_rows));
@@ -300,9 +297,9 @@ sub SwitchDataTypeMenu{
   my $toggle_string =
     $gCGIquery->startform(-action=>"$script_name/upper_display",
 			  -TARGET=>"list").
-      $popup_string. $submit_string .
+      $table_string.
 	$hidden_string.
-	  $gCGIquery->endform ."\n";
+	  $gCGIquery->endform;
   
   return $toggle_string;
 } 
@@ -356,26 +353,3 @@ sub SwitchDataTypeMenuLite{
   
   return $toggle_string;
 } 
-#====================================================================
-sub ScalarDocumentationString{
-
-  # pmj 8/9/00 documentation on scalars
-
-  my $doc_link = $gCGIquery->script_name;
-  $doc_link =~ s/QA_main\.pm/doc\/Scalars.html/;
-
-  my $doc_string = "<a href=$doc_link target='documentation'>Documentation on scalars</a>";
- 
-  return $doc_string;
-}
-#====================================================================
-sub HistogramDocumentationString{
-
-  # pmj 8/9/00 pointer to Gene's histo documentation page
-
-  my $doc_link = "http://connery.star.bnl.gov/STARAFS/comp/qa/hists";
-
-  my $doc_string = "<a href=$doc_link target='documentation'>Documentation on histograms</a>";
- 
-  return $doc_string;
-}

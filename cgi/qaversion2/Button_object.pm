@@ -7,7 +7,6 @@
 #=========================================================
 package Button_object;
 #=========================================================
-use CGI qw/:standard :html3/;
 use Cwd;
 
 use File::stat;
@@ -50,15 +49,11 @@ sub _init{
   $button_value = shift;
   @_ and $report_key = shift;
 
-  # pmj 26/8/00 save rest of arguments
-  @_ and @args = @_;
-
   #-------------------------------------------------
 
   $self->MethodName($method_name);
   $self->ButtonValue($button_value);
   $report_key and $self->ReportKey($report_key);
-  @args and $self->Args(@args);
 
   # generate a unique name for the button, put reference to this
   #object into a hash that persists over multiple calls to script
@@ -93,13 +88,6 @@ sub ButtonName{
 
     $report_key = $self->ReportKey;
     $report_key and $name .= "\.$report_key";
-
-    # add arguments to name, if any
-    my @args = $self->Args();
-    @args and do{
-      my $string = join '_', @args;
-      $name .= $string;
-    };
     $self->{ButtonName} = $name;
 
   };
@@ -111,12 +99,6 @@ sub ReportKey{
   my $self = shift;
   @_ and $self->{ReportKey} = shift;
   return $self->{ReportKey};
-}
-#========================================================
-sub Args{
-  my $self = shift;
-  @_ and @{$self->{Args}} = @_;
-  return @{$self->{Args}};
 }
 #========================================================
 sub SubmitString{
@@ -363,9 +345,7 @@ sub ViewScalarsAndTests{
   my $report_key = $self->ReportKey;
   #-------------------------------------------------------
 
-  my ($file, $macro_name, $mult_class, $flag) = $self->Args();
-
-  $QA_object_hash{$report_key}->ShowScalarsAndTests($file, $macro_name, $mult_class, $flag);
+  $QA_object_hash{$report_key}->ShowScalarsAndTests;
 }
 #========================================================
 sub FilesAndReports{
@@ -412,33 +392,29 @@ sub SetupCompareReport{
   # save reference as part of object
   $QA_object_hash{$report_key}->CompareReport_obj($ref);
   
-  # initial display 
+  # initial display for comparison
   $ref->InitialDisplay();
-
   
 }
 #========================================================
-# obsolete pmj 11/9/00
-#sub SelectMultipleReports{
-#
-#  my $self = shift;
-#  my $report_key = $self->ReportKey;
-#
-#  #-------------------------------------------------------
-#  my $ref = $QA_object_hash{$report_key}->CompareReport_obj();
-#  $ref->SelectMultipleReports();
-#}
-#========================================================
-sub DoCompareMultipleReports{
+sub SelectMutipleReports{
 
   my $self = shift;
   my $report_key = $self->ReportKey;
 
   #-------------------------------------------------------
-  my ($file, $macro_name, $mult_class) = $self->Args();
-
   my $ref = $QA_object_hash{$report_key}->CompareReport_obj();
-  $ref->CompareMultipleReports($file, $macro_name, $mult_class);
+  $ref->SelectMutipleReports();
+}
+#========================================================
+sub DoCompareMutipleReports{
+
+  my $self = shift;
+  my $report_key = $self->ReportKey;
+
+  #-------------------------------------------------------
+  my $ref = $QA_object_hash{$report_key}->CompareReport_obj();
+  $ref->CompareMutipleReports();
 }
 #========================================================
 sub DoCompareToReference{
@@ -447,12 +423,7 @@ sub DoCompareToReference{
   my $report_key = $self->ReportKey;
 
   #-------------------------------------------------------
-  my $ref = new CompareReport_object($report_key);
-  
-  # save reference as part of object
-  $QA_object_hash{$report_key}->CompareReport_obj($ref);
-
-  #my $ref = $QA_object_hash{$report_key}->CompareReport_obj();
+  my $ref = $QA_object_hash{$report_key}->CompareReport_obj();
   $ref->CompareToReference();
 }
 #========================================================
@@ -487,23 +458,6 @@ sub DoQaBatch{
   print "<h3> Submitting batch job to do QA on run $report_key... </h3> \n";
   &QA_utilities::submit_batchjob('do_qa', $report_key);
 }
-#========================================================
-sub ResetInProgress{
-  my $self = shift;
-  my $report_key = $self->ReportKey;
-
-  my $qaID = $QA_object_hash{$report_key}->qaID;
-  
-  my $rows = QA_db_utilities::ResetInProgressFlag($qaID);
-
-  if ($rows+=0){
-    print h3("Reset $report_key as QA not done");
-  }
-  else{
-    print h3("<font color=red>Error in resetting in progress flag</font>");
-  }
-}
-
 #========================================================
 sub EnableAddEditComments{
 
@@ -635,99 +589,3 @@ sub CleanUpHungJobs{
   QA_db_utilities::ResetQANotDone();
 }
 
-#=========================================================
-# lets the users modify the default references
-
-sub SetDefaultReferences{
-  my $self = shift;
-
-  CompareReport_utilities::SetDefaultReferences();
-
-}
-  
-#=========================================================
-# add a default reference
-
-sub AddReference{
-  my $self = shift;
-
-  my $method = $self->MethodName;
-  my $name   = $self->ButtonName;
-
-  # extract the datatype from the button name
-  (my $dataType = $name) =~ s/$method//;
-  
-  my $report_key = $gCGIquery->param('reference_key');
-
-  CompareReport_utilities::ProcessReference("Add",$report_key,$dataType);
-    
-}
-#=========================================================
-# delete a default reference
-
-sub DeleteReference{
-  my $self = shift;
-
-  my $method = $self->MethodName;
-  my $name   = $self->ButtonName;
-
-  # extract the datatype from the button name
-  (my $dataType = $name) =~ s/$method//;
-  
-  my $report_key = $gCGIquery->param('reference_key');
-
-  CompareReport_utilities::ProcessReference("Delete",$report_key,$dataType);
-}
-#=========================================================
-sub DeleteUserReferences{
-
-  # pmj 7/9/00
-
-  my $self = shift;
-
-  my $io =  new IO_object("UserReferenceFile");
-  my $file = $io->Name();
-
-  unlink $file;
-
-  print "User references deleted<br>\n";
-
-}
-#==========================================================
-# change the old default with the new reference
-
-sub ChangeReference{
-  my $self = shift;
-
-  my $method = $self->MethodName;
-  my $name   = $self->ButtonName;
-
-  # extract the datatype from the button name
-  (my $dataType = $name) =~ s/$method//;
-  
-  # what the user typed in the text field
-  my $report_key = $gCGIquery->param('reference_key');
-
-  # the default value of the text field
-  my $oldKey = $gCGIquery->param('old_key');
-
-  
-  CompareReport_utilities::ProcessReference("Change",$report_key,$dataType,$oldKey);
-
-}
-
-#==========================================================
-
-sub SetUserReference{
-  my $self = shift;
-
-  my $report_key = $self->ReportKey();
-
-  $gBrowser_object->AddUserReference($report_key);
-
-  my @reference_list = CompareReport_utilities::GetUserReferences();
-
-  #---
-  print "<h4>Data set $report_key added to references</h4>\n";
-
-}

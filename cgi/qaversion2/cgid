@@ -160,7 +160,7 @@ ACCEPT_LOOP: while ($client = $daemon->accept)
 # I'm the child, handle the request
 #
 
-printToLog ("$0.$$ child handling request '" . $request->url() . "'");
+printToLog ("$0.$$ child handling request");
 
 #
 # process requests to allowed scripts, and docs in allowed dirs.
@@ -170,15 +170,18 @@ my ($script_name, $doc_name, $working_dir) = translateURL($request);
 
 if ($script_name){       #this is an allowed cgi script
 
+    #
+    # send http header not provided by the cgi script
+    #
+
     #$client->send_basic_header;
     # for some reason, the above does not work ???
+    print $client "HTTP/1.1 200 OK\n";
 
     #
     # set up the environment ala the CGI/1.1 "specification"
     #    - see http://Web.Golux.Com/coar/cgi/
     #
-    
-    printToLog("creating cgi environment variables");
 
     # start clean
     my $PATH = $ENV{PATH};
@@ -220,63 +223,25 @@ if ($script_name){       #this is an allowed cgi script
     #
     # send ouput of QA_main.pm, putting any POST content on stdin
     #
-
-    STDERR->autoflush(1);
     
     local *Writer;
     local *Reader; 
     chdir $working_dir or die "cannot cd to $working_dir\n";
+    open2(\*Reader, \*Writer, "./$script_name" ); # I & O sockets
+    Writer->autoflush(1);
+    Reader->autoflush(1);
 
-    printToLog("returning output");
-
-    # BEN: put timeout on script 
-    my @output = ();
-    my $scriptPid = 0;
-    # eval is necessary when using alarm because of system call in open2
-    eval{
-	local $SIG{ALRM} = sub{
-	    print $client "HTTP/1.1 500 ERROR\n";
-	    print $client "Content-type: text/html\n\n";
-	    print $client "<h1>$script_name timed out.</h1>\n";
-	    printToLog("$script_name timed out");
-
-	    close Writer; close Reader; $client = undef;
-	    
-	    # destroy running script
-	    kill 9, $scriptPid;
-	    printToLog("killed $script_name (pid $scriptPid)");
-
-	    exit(0);
-	};
-	
-	alarm 30;
-
-	printToLog("running script");
-	$scriptPid = open2(\*Reader, \*Writer, "./$script_name"); 
-	print Writer $request->content();
-	@output = <Reader>;
-
-	alarm 0;
-    };
-    if ($@){
-	print $client "HTTP/1.1 500 ERROR\n";
-	print $client "Content-type: text/html\n\n";
-	print $client "<h1>$script_name died with error $!.</h1>\n";
-	printToLog("$script_name died with error $!.\n");
-
-	close Writer; close Reader; $client = undef;
-
-	exit(0);
-    }
-
-    print $client "HTTP/1.1 200 OK\n";
-    print $client join("", @output);
+    print Writer $request->content();
+    print $client join("", <Reader>);
 
     #
     # clean up the mess
     #
     
-    close Writer; close Reader; $client = undef;
+    close Writer;
+    close Reader;
+
+    $client = undef;
 
     printToLog ("$0.$$ handled request for script'" . $request->url . 
 		"', exiting");
@@ -379,7 +344,7 @@ sub translateURL {
 sub printToLog{
     my $msg = "[" . localtime() . "] " . shift();
 
-    system("echo \"$msg\" >> $log_file.$$");
+    system("echo \"$msg\" >> $log_file");
     $opt{v} && print STDERR "$msg\n";
 
 }
