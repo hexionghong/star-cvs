@@ -28,10 +28,6 @@ C  Generic radius first, then specific
 	if (Z .eq. 79) RNuc=6.38
 	if (Z .eq. 82) RNuc=6.62
 
-C  quick fix to account for photon flux weighting in XnXn and 1n1n
-C  breakup  - change effective size of the nucleus
-
-	if (ibreakup .eq. 2 .or. ibreakup .eq. 3) RNuc=RNuc*1.1
 
 c	unless otherwise defined later, default is Wmin=0
 	Wmin_default = 0.
@@ -52,7 +48,7 @@ c	to 0.15 is safe for Summer 2000 triggering for e+e- pairs
 	   Wmin_default = 2.*mmu
 	endif
         if(ip.eq.15) then
-	   mass = mtau
+	   mass = 1.777
 	   spin = 0.5
 	   Wmin_default = 2*mtau
 	endif
