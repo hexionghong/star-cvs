@@ -43,8 +43,7 @@ sub new{
   my $self      = $classname->SUPER::new(@_) or return;  
   defined $self or return;
 
-  bless($self,$classname);
-
+#  bless($self,$classname);
 
   if (defined %members){
     # using SUPER::AUTOLOAD
