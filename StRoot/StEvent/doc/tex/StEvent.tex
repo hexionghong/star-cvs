@@ -2,7 +2,7 @@
 %
 % StEvent - User Guide and Reference Manual -- LaTeX Source
 %
-% $Id: StEvent.tex,v 2.44 2000/08/17 00:36:31 ullrich Exp $
+% $Id: StEvent.tex,v 2.45 2000/08/23 03:14:07 ullrich Exp $
 %
 % Author: Thomas Ullrich, Nov 1999
 %
@@ -21,8 +21,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % $Log: StEvent.tex,v $
-% Revision 2.44  2000/08/17 00:36:31  ullrich
-% Added description of StTptTrack.
+% Revision 2.45  2000/08/23 03:14:07  ullrich
+% Improved (corrected) explanation of return value
+% of chi2 methods of StVertex and StTrackFitTraits.
+%
+% Revision 2.49  2000/10/16 17:08:12  ullrich
+% Added more description for StEventScavenger.
 %
 % Revision 2.48  2000/10/13 19:21:02  ullrich
 % Added new chapter on how to wrire miniDSTs using StEvent.
@@ -196,8 +200,8 @@
   {\end{entry}}
 
 \begin{document}
-  {\LARGE $ $Revision: 2.44 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/08/17 00:36:31 $ $}  % replaced by cvs with current revision
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %    Title page
 %
@@ -212,8 +216,8 @@
   \mbox{\includegraphics[width=\textwidth]{StEventTitle.eps}}
   \hfill\mbox{}\\[3cm]
   {\LARGE User Guide and Reference Manual \\[5mm] for Version 2}\\[2cm]
-  {\LARGE $ $Revision: 2.44 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/08/17 00:36:31 $ $}  % replaced by cvs with current revision
+  {\LARGE $ $Revision: 2.45 $ $}  \\[5mm] % replaced by cvs with current revision
+  {\LARGE $ $Date: 2000/08/23 03:14:07 $ $}  % replaced by cvs with current revision
   \vfill
 \end{center}
 \cleardoublepage
@@ -2002,8 +2006,8 @@ information on the number of pads and pixels used to compose the hit.
 See \ref{sec:StTpcHit} for details.
 \begin{figure}[htb]
     \begin{center}
-const int isec = 3;
-const int irow = 24;
+        \includegraphics{tpc.eps}
+        \caption{Class diagrams of the TPC hit storage scheme: sector/padrow.}
         \label{fig:tpc}
     \end{center}
 \end{figure}
@@ -2119,9 +2123,9 @@ collection (\texttt{StSvtHitCollection}) contains 3 barrel
 collections.  Each barrel collection
 (\texttt{StSvtBarrelHitCollection}) contains up to 16 ladder
 collections and each (\texttt{StSvtLadderHitCollection}) contains up
-const int ibarrel  = 1;
-const int iladder  = 10;
-const int iwafer   = 3;
+to 7 wafer collection (\texttt{StSvtWaferHitCollection}). The latter
+finally contains the hits.  With other words, the hits are stored per
+wafer.  Each of the shown classes provide a method
 (\texttt{numberOfHits()}) to return the number of hits stored in the
 referring subcomponent. 
 \begin{figure}[htb]
@@ -5198,10 +5202,15 @@ numberOfPoints(kTpcId) == numberOfPoints(kFtpcWestId)
     \verb+StTrackFitTraits(UShort_t, UShort_t, Float_t[2], Float_t[15]);+\\
     \verb+StTrackFitTraits(const dst_track_st&);+\\
 \item[Public Member\\ Functions]
-    Depending on the fitting method there is one or two
-    $\chi^2$ values. If a real 3D fit is performed the
-    second $\chi^2$ is undefined.
     
+    \verb+UShort_t numberOfFitPoints() const;+\\
+    Total number of points used for the fit, i.e. summing the
+    hits in all detectors the track crossed.
+    
+    \verb+UShort_t numberOfFitPoints(StDetectorId id) const;+\\
+    Number of points in detector \texttt{id} used for the fit.
+    
+    \verb+StParticleDefinition* pidHypothesis() const;+\\
     PID hypothesis used for the fit. This variable is only
     useful if the fitting algorithms takes energy loss and
     multiple scattering into account.
@@ -5497,6 +5506,7 @@ numberOfPoints(kTpcId) == numberOfPoints(kFtpcWestId)
 \subsection{StVertex}
 \index{StVertex|textbf}
 \label{sec:StVertex}
+\begin{Entry}
 \item[Summary]
 \item[Synopsis]
     \verb+#include "StVertex.h"+\\
