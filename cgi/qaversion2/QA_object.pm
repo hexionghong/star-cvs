@@ -773,7 +773,7 @@ sub ShowScalarsAndTests{
     $flag =~ /run_scalars/ and do{
       print h3("<hr>Run-based scalars, errors and warnings:\n"); 
       print h4("Macro: $macro_name\n"); 
-      print h4("Multiplicity class: $mult_class; track node limits = ($mult_low, $mult_high)"); 
+      print h4("Mulitplicity class: $mult_class; track node limits = ($mult_low, $mult_high)"); 
       QA_report_io::show_scalars_and_test_failures($eval, $mult_class, 'run');
       last SWITCH;
     };
@@ -1058,12 +1058,6 @@ sub UpdateLogReport{
   print h4("Making directory: $report_dir\n");
   mkdir $report_dir, 0775;
 
-  # just check for existence since it may already have been created before
-  unless(-e $report_dir){
-    print "Cannot create the report directory $report_dir: $!";
-    return;
-  }
-
   # create Logreport_object_offline, nightly, or online, etc
 
   my $logreport_ref = $self->NewLogReportObject() or return;
@@ -1107,13 +1101,9 @@ sub GetLogReport{
   }
   else
   {
-
-    print h3("<font color=orange>",$self->ReportKey,
-	     " is currently being updated?</font>\n");
-
-#    print h3("<font color=red>Cannot find $filename<br>\n",
-#	     "It's possible that the db has been updated, ",
-#	     "but the logfile has not been parsed</font>\n"); 
+    print h3("<font color=red>Cannot find $filename<br>\n",
+	     "It's possible that the db has been updated, ",
+	     "but the logfile has not been parsed</font>\n"); 
     return; 
   }
   
