@@ -14,7 +14,7 @@ C***************************************************************************
 *--
       COMMON/HIMAIN1/NATT,EATT,JATT,NT,NP,N0,N01,N10,N11
       SAVE  /HIMAIN1/
-      COMMON/HIMAIN2/KATT(130000,4),PATT(130000,4)
+      COMMON/HIMAIN2/KATT(100000,6),PATT(100000,5), VATT(100000,5)
       SAVE  /HIMAIN2/
       COMMON/HIPARNT/HIPR1(100),IHPR2(50),HINT1(100),IHNT2(50)
       SAVE  /HIPARNT/
@@ -49,7 +49,10 @@ C***************************************************************************
       read ( lin, * ) line, iquench
       read ( lin, * ) line, ihard, ptjet
       read ( lin, * ) line, ihard_switch
-            
+      read ( lin, * ) line, ih11, ih12
+      read ( lin, * ) line, ih21, ih18
+      read ( lin, * ) line, hipr7
+           
 *      read ( lin, * ) line, nevt_file, output_dir 
 *
 *       open ( lout, file=output_file, status='unknown'
@@ -57,21 +60,21 @@ C***************************************************************************
        PSSHEP(4) = efrm
        PSSHEP(5) = 197.197
 *
-       ihpr2(4) = iquench       ! Switch quenching
+       ihpr2(4) = iquench          ! Switch quenching
 *
-       ihpr2(11) = 1            ! Set all parents  
-       ihpr2(12) = 0
-       ihpr2(21) = 1 
+       ihpr2(11) = ih11            ! Set baryon production  
+       ihpr2(12) = ih12            ! turn on/off decay of particles
+       ihpr2(21) = ih21            ! turn on/off mothers-daughters info 
 *
-       ihpr2(3) = ihard         ! Switch hard scattering
+       ihpr2(3) = ihard            ! Switch hard scattering
 *
-       ihpr2(18) = 1            ! Set B production                             
-       hipr1(7) = 5.36
+       ihpr2(18) = ih18            ! Set B production                          
+       hipr1(7) = hipr7
 *
-       ihpr2(8) = ihard_switch  ! Switch jet production
+       ihpr2(8) = ihard_switch     ! Switch jet production
 *
-       hipr1(10) = 2.0          ! Pt jet
-*
+       hipr1(10) = ptjet           ! Pt jet
+*   
 *****  Initialize HIJING 
           call hijset(efrm,frame,proj,targ,iap,izp,iat,izt)
           IFIRST = 1
@@ -87,6 +90,14 @@ C
        end
 
   
+
+
+
+
+
+
+
+
 
 
 
