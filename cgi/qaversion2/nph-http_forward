@@ -56,7 +56,7 @@ my $request =
 #
 
 my $response = $userAgent->request($request);
-my @lines = split("\n", $response->content);
+my @lines = split("\n", $response->as_string);
 
 #
 # parse the links inside html tags to make them point back to 
