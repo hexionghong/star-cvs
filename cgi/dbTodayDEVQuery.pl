@@ -2,7 +2,7 @@
 #
 #  
 #
-#  dbTodayNFCQuery.pl  script to get browser of nightly test files updated today. 
+#  dbTodayDEVQuery.pl  script to get browser of nightly test files updated today. 
 #  L. Didneko
 #
 ###############################################################################
