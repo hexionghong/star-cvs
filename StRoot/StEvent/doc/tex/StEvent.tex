@@ -2,7 +2,7 @@
 %
 % StEvent - User Guide and Reference Manual -- LaTeX Source
 %
-% $Id: StEvent.tex,v 2.42 2000/07/13 12:47:07 ullrich Exp $
+% $Id: StEvent.tex,v 2.43 2000/08/17 01:18:02 ullrich Exp $
 %
 % Author: Thomas Ullrich, Nov 1999
 %
@@ -21,8 +21,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % $Log: StEvent.tex,v $
-% Revision 2.42  2000/07/13 12:47:07  ullrich
-% Added ZDC info provided by Clemens
+% Revision 2.43  2000/08/17 01:18:02  ullrich
+% Fixed wrong description of StZtbTriggerDetector::adc().
+%
+% Revision 2.48  2000/10/13 19:21:02  ullrich
+% Added new chapter on how to wrire miniDSTs using StEvent.
 %
 % Revision 2.47  2000/09/28 10:58:43  ullrich
 % Added ref section for new RICH classes.
@@ -190,11 +193,11 @@
     {\parbox[t]{\labelwidth}{\hspace{0pt}\textbf{{#1}}}}}}
 \newenvironment{Entry}%
 {\renewcommand{\entrylabel}{\Entrylabel}\begin{entry}}%
-  {\LARGE $ $Revision: 2.42 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/07/13 12:47:07 $ $}  % replaced by cvs with current revision
+  {\end{entry}}
+
 \begin{document}
-  {\LARGE $ $Revision: 2.42 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/07/13 12:47:07 $ $}  % replaced by cvs with current revision
+  {\LARGE $ $Revision: 2.43 $ $}  \\[5mm] % replaced by cvs with current revision
+  {\LARGE $ $Date: 2000/08/17 01:18:02 $ $}  % replaced by cvs with current revision
 %
 %    Title page
 %
@@ -209,8 +212,8 @@
   \mbox{\includegraphics[width=\textwidth]{StEventTitle.eps}}
   \hfill\mbox{}\\[3cm]
   {\LARGE User Guide and Reference Manual \\[5mm] for Version 2}\\[2cm]
-  {\LARGE $ $Revision: 2.42 $ $}  \\[5mm] % replaced by cvs with current revision
-  {\LARGE $ $Date: 2000/07/13 12:47:07 $ $}  % replaced by cvs with current revision
+  {\LARGE $ $Revision: 2.43 $ $}  \\[5mm] % replaced by cvs with current revision
+  {\LARGE $ $Date: 2000/08/17 01:18:02 $ $}  % replaced by cvs with current revision
   \vfill
 \end{center}
 \cleardoublepage
@@ -3428,6 +3431,10 @@ definition in the header file.
     \verb+class StHit;+\\
 \item[Description]
     
+\item[Related Classes]
+    \texttt{StHit} is derived form
+    \texttt{StMeasuredPoint}. \texttt{StTpcHit}, \texttt{StSvtHit},
+    \texttt{StSsdHit}, \texttt{StRichHit}, \texttt{StFtpcHit}, and
     \texttt{StEmcPoint} inherit from this class.
         
 \item[Public\\ Constructors]
@@ -5574,15 +5581,12 @@ numberOfPoints(kTpcId) == numberOfPoints(kFtpcWestId)
 
     \verb+UInt_t numberOfZdcWords() const;+\\
     Currently, and probably for the rest of its lifetime, this method
-        \item adc[7] = zdcEast1;     
-        \item adc[7] = zdcEast1;     
-        \item adc[6] = zdcEast2;     
-        \item adc[5] = zdcEast3;     
-        \item adc[4] = zdcEastSum;   
-        \item adc[3] = zdcWest1;     
-        \item adc[2] = zdcWest2;     
-        \item adc[1] = zdcWest3;     
-        \item adc[0] = zdcWestSum;   
+    will return 16.
+    
+    \verb+Float_t adc(UInt_t) const;+\\
+    The meaning of the various words is as follows:
+    \begin{itemize}
+    \item unattenuated signals (mostly useful for looking at the single neutron peak)
         \begin{description}
         \item adc[7] = zdcEast1;
         \item adc[7] = zdcEast1;    
