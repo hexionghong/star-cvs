@@ -190,7 +190,7 @@ sub UpdateQAOffline{
 	
 	# insert into QASummary
 	#print "\t$reportKey\n";
-#	unless($debug){
+	unless($debug){
 	  my $rc = $sthInsert->execute($jobID, $redone, $reportKey, $skip);
 	  $rc +=0;
 	  # save report key
@@ -200,7 +200,7 @@ sub UpdateQAOffline{
 	  else{
 	    push @keyList, $reportKey;
 	  }
-#	}
+	}
       }
       #$countJob=0;
     }	 
