@@ -2,7 +2,7 @@
 #
 #  
 #
-#  dbTodayNFCQuery.pl  script to get browser of nightly test files updated today. 
+#  dbTodayDEVJobSt.pl  script to get browser of nightly test files updated today. 
 #  L. Didneko
 #
 ###############################################################################
@@ -15,9 +15,9 @@ use Class::Struct;
 require "/afs/rhic/star/packages/DEV00/mgr/dbTJobsSetup.pl";
 
 my $TOP_DIRD = "/star/rcf/test/dev/";
-my @dir_year = ("year_1h", "year_2a");
-my @node_dir = ("tfs_redhat61", "tfs_Solaris_CC5","trs_redhat61","tfs_Solaris"); 
-my @hc_dir = ("hc_lowdensity", "hc_standard", "hc_highdensity", "peripheral");
+my @dir_year = ("year_1h", "year_2b");
+my @node_dir = ("trs_redhat61","trs_redhat61_opt", "daq_redhat61", "daq_redhat61_opt"); 
+my @hc_dir = ("hc_lowdensity", "hc_standard", "hc_highdensity", "peripheral", "minbias", "central");
 
 my @OUT_DIR;
 my @OUTD_DIR;
@@ -84,7 +84,7 @@ struct FileAttr => {
  &beginHtml();
 
 
-$sql="SELECT path, logFile, jobStatus, NoEventDone, memUsageF, memUsageL, CPU_per_evt_sec, createTime FROM $JobStatusT where path LIKE '%$testDay%' AND avail = 'Y'";
+$sql="SELECT path, logFile, jobStatus, NoEventDone, memUsageF, memUsageL, CPU_per_evt_sec, createTime FROM $JobStatusT where path LIKE '%$testDay%' AND path LIKE '%redhat61%' AND avail = 'Y'";
  $cursor =$dbh->prepare($sql)
    || die "Cannot prepare statement: $DBI::errstr\n";
  $cursor->execute;
@@ -132,6 +132,8 @@ $sql="SELECT path, logFile, jobStatus, NoEventDone, memUsageF, memUsageL, CPU_pe
         $myMemL  = ($$eachFile)->memL; 
         $myCPU   = ($$eachFile)->mCPU;          
         $myCtime = ($$eachFile)->timeS;  
+    next if $myPath =~ /tfs_/;
+    next if $myPath =~ /year_2a/;
 
    &printRow();
 
