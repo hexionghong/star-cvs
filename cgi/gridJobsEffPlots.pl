@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 #!/usr/bin/env perl 
 #
-#  gridJobsEffPlots.pl
+# 
 #
 # L. Didenko 
 #
@@ -441,7 +441,7 @@ $xLabelSkip = 40 if( $qperiod eq "12_months" );
     $graph->set_x_axis_font(gdMediumBoldFont);
     $graph->set_y_axis_font(gdMediumBoldFont);
     print STDOUT $graph->plot(\@data);
-}
+    }
 
  }
 

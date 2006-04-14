@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 #!/usr/bin/env perl 
 #
-#  gridJobStatus.pl
+# 
 #
 # L.Didenko
 #
