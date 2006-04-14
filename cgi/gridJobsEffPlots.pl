@@ -1,9 +1,9 @@
 #!/usr/local/bin/perl
 #!/usr/bin/env perl 
 #
-# 
+#  gridJobsEffPlots.pl
 #
-# 
+# L. Didenko 
 #
 #
 ##########################################################
