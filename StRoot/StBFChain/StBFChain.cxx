@@ -1,5 +1,5 @@
 //_____________________________________________________________________
-// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx,v 1.515 2007/07/12 19:14:06 fisyak Exp $
+// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx,v 1.517 2007/09/05 03:48:48 genevb Exp $
 //_____________________________________________________________________
 #include "TROOT.h"
 #include "TString.h"
@@ -715,6 +715,11 @@ Int_t StBFChain::Instantiate()
     if ( maker == "StFtpcTrackMaker"       &&
 	 GetOption("flaser"))                  mk->SetMode(mk->GetMode()+1);
     // FTPC
+
+    // PMD
+    if ( maker == "StPmdReadMaker"         &&
+         GetOption("pmdRaw"))                  mk->SetAttr("pmdRaw",kTRUE);
+    // PMD
     
     // Hit filtering will be made from a single maker in
     // future with flexible filtering method
@@ -1472,7 +1477,7 @@ void StBFChain::SetDbOptions(StMaker *mk){
 		       << " Maker set time = "
 		       << db->GetDateTime().GetDate() << "."
 		       << db->GetDateTime().GetTime() << endm;
-    if (GetOption("VMC") && m_EvtHddr) {
+    if (GetOption("SIMU") && m_EvtHddr) {
       gMessMgr->QAInfo() << GetName() << " Chain set time from  " << db->GetName() << endm;
       m_EvtHddr->SetDateTime(db->GetDateTime());
     }
