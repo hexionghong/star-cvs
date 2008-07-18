@@ -1,6 +1,0 @@
-Gui.Backend qt
-Plugin.TGuiFactory  qtgui  TQtGUIFactory  QtRootGui  "TQtGUIFactory()"
-Gui.Factory qtgui
-Plugin.TVirtualPadEditor  Ged TQtGedEditor   QtGed  "TQtGedEditor(TCanvas*)"
-Plugin.TVirtualViewer3D  ogl    TQtRootViewer3D  RQTGL "TQtRootViewer3D(TVirtualPad*)"
-+Plugin.TVirtualViewer3D  oiv   TQtRootCoinViewer3D  RQIVTGL    "TQtRootCoinViewer3D(TVirtualPad*)"
