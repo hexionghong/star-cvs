@@ -169,13 +169,9 @@ DISTFILES += LICENSE.QPL Module.mk  Module.mk.unix  Module.mk.win32
 headerfiles.path   = $$QTROOTSYSPATHINSTALL/include/
 headerfiles.files  = $$HEADERS inc/*.cw
 headerfiles.files -= $$MODDIRI/LinkDef.h
-
-plugins.path   = $$QTROOTSYSPATHINSTALL/etc/plugins/TGuiFactory/
-plugins.files  = plugins/TGuiFactory/*.C
-
 target.path = $$QTROOTSYSPATHINSTALL/lib/
 
-INSTALLS += headerfiles target plugins
+INSTALLS += headerfiles target
 
 unix {
 #  -- working directory 
