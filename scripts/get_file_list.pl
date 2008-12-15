@@ -14,14 +14,13 @@
 #use Env (OPTSTAR);
 #use lib "$OPTSTAR/lib";
 use lib "/afs/rhic.bnl.gov/star/packages/scripts";
-#use lib "/star/u/jeromel/work/STAR/scripts";
 use strict;
 use FileCatalog;
 
 my @output;
 my $i;
 my $count;
-my ($debug,$caching);
+my $debug;
 
 # The state variables
 my ($all, $alls, $unique, $field_list, $class);
@@ -44,7 +43,6 @@ $debug       = 0;
 $onefile     = 0;
 $outfilename = "";
 $class       = "";
-$caching     = 0;
 
 # Parse the cvommand line arguments.
 $count = 0;
@@ -58,8 +56,7 @@ while (defined $ARGV[$count]){
 	$onefile = 1; 
     } elsif ($ARGV[$count] eq "-distinct"){
 	$unique = 1; 
-    } elsif ($ARGV[$count] eq "-cache"){
-	$caching= 1;
+
 
     } elsif ($ARGV[$count] eq "-V"){
 	print "This is Version ".$fileC->Version()."\n"; 
@@ -141,12 +138,8 @@ if ($count == 0){
 	$field_list .= ",grp(filename),orda(persistent)";
     }
 
-    # Getting the data - DO NOT use query_cache() for all querries
-    if ($caching){
-	@output = $fileC->run_query_cache(split(/,/,$field_list));
-    } else {
-	@output = $fileC->run_query(split(/,/,$field_list));
-    }
+    # Getting the data
+    @output = $fileC->run_query(split(/,/,$field_list));
 
     # Printing the output
     if ($onefile == 0) {
