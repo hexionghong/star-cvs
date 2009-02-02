@@ -14,10 +14,13 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
-/* $Id: TGeant3.cxx,v 1.4 2009/02/01 17:29:50 fisyak Exp $ */
+/* $Id: TGeant3.cxx,v 1.5 2009/02/02 14:28:21 fisyak Exp $ */
 
 /*
 $Log: TGeant3.cxx,v $
+Revision 1.5  2009/02/02 14:28:21  fisyak
+Add protection wrt new method introduced in ROOT 5.22.0
+
 Revision 1.4  2009/02/01 17:29:50  fisyak
 Resolve conflicts
 
@@ -2450,7 +2453,7 @@ TMCProcess TGeant3::G3toVMC(Int_t iproc) const
   //
   // Conversion between GEANT and TMC processes
   //
-
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,22,0)
   const TMCProcess kPG2MC1[30] = {
     kPTransportation, kPMultipleScattering, kPEnergyLoss, kPMagneticFieldL, kPDecay,
     kPPair, kPCompton, kPPhotoelectric, kPBrem, kPDeltaRay,
@@ -2458,7 +2461,15 @@ TMCProcess TGeant3::G3toVMC(Int_t iproc) const
     kPNuclearAbsorption, kPPbarAnnihilation, kPNCapture, kPHIElastic, 
     kPHInhelastic, kPMuonNuclear, kPTOFlimit, kPPhotoFission, kPNoProcess, 
     kPRayleigh, kPNoProcess, kPNoProcess, kPNoProcess, kPNull, kPStop};
-
+#else
+  const TMCProcess kPG2MC1[30] = {
+    kPNoProcess, kPMultipleScattering, kPEnergyLoss, kPMagneticFieldL, kPDecay,
+    kPPair, kPCompton, kPPhotoelectric, kPBrem, kPDeltaRay,
+    kPAnnihilation, kPHadronic, kPNoProcess, kPEvaporation, kPNuclearFission,
+    kPNuclearAbsorption, kPPbarAnnihilation, kPNCapture, kPHElastic, 
+    kPHInhelastic, kPMuonNuclear, kPTOFlimit, kPPhotoFission, kPNoProcess, 
+    kPRayleigh, kPNoProcess, kPNoProcess, kPNoProcess, kPNull, kPStop};
+#endif
   const TMCProcess kPG2MC2[9] = {
       kPLightAbsorption, kPLightScattering, kStepMax, kPNoProcess, kPCerenkov,
       kPLightReflection, kPLightRefraction, kPSynchrotron, kPNoProcess};
@@ -6205,7 +6216,9 @@ void TGeant3::Init()
 
     DefineParticles();
     fApplication->AddParticles();
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,22,0)
     fApplication->AddIons();
+#endif
     fApplication->ConstructGeometry();
     FinishGeometry();
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5,01,1)
