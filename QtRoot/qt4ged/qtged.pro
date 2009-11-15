@@ -91,13 +91,9 @@ mac {
 headerfiles.path  = $$QTROOTSYSPATHINSTALL/include
 headerfiles.files = $$QTGEDDIRI/*.h
 headerfiles.files -= $$QTGEDDIRI/LinkDef.h
-
-plugins.path   = $$QTROOTSYSPATHINSTALL/etc/plugins/TVirtualPadEditor/
-plugins.files  = plugins/TVirtualPadEditor/*.C
-
 target.path = $$QTROOTSYSPATHINSTALL/lib
 
-INSTALLS += headerfiles target plugins
+INSTALLS += headerfiles target
 
 DISTFILES += LICENSE.QPL Module.mk
 

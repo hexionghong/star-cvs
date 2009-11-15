@@ -108,12 +108,9 @@ LIBS +=  $$QGLVIEWERDIR/$$LIB_NAME
 headerfiles.path  = $$QTROOTSYSPATHINSTALL/include
 headerfiles.files = $$QTGLDIRI/*.*
 
-plugins.path   = $$QTROOTSYSPATHINSTALL/etc/plugins/TVirtualViewer3D/
-plugins.files  = plugins/TVirtualViewer3D/*.C
+target.path = $$QTROOTSYSPATHINSTALL/lib
 
-target.path    = $$QTROOTSYSPATHINSTALL/lib
-
-INSTALLS += headerfiles target plugins
+INSTALLS += headerfiles target
 
 # Input
 HEADERS += inc/TBoundBoxEstimator.h       \
@@ -127,7 +124,7 @@ HEADERS += inc/TBoundBoxEstimator.h       \
            inc/TQtRootViewer3D.h          \
            inc/TQVirtualGL.h              \
            inc/TShape3DPolygonView.h
-#           inc/TQGLKernel.h              \
+#           inc/TQGLKernel.h               \
            
 SOURCES += src/TObject3DView.cxx             \
            src/TObject3DViewFactory.cxx      \
