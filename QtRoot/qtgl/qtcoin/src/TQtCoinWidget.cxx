@@ -548,8 +548,6 @@ TQtCoinWidget::TQtCoinWidget(QWidget *parent, COINWIDGETFLAGSTYPE f)
    , fWantClipPlane(kFALSE), fClipPlaneMan(0), fClipPlane(0), fSlicePlane(0),fHelpWidget(0),fRecord(kFALSE)
    , fMovie(0),fMPegMovie(0),fClipPlaneState(0),fClipPlanePath(0)
    , fKeyboardHandler(0)
-   , fOffScreenBatch(kFALSE)
-   , fOffScreenRender(0)
 {
       memset(fPivotClipPoint,0,sizeof(fPivotClipPoint));
       fMaxSnapFileCounter = CreateSnapShotCounter();
@@ -602,8 +600,6 @@ TQtCoinWidget::TQtCoinWidget(TVirtualPad *pad, const char *title,
    , fWantClipPlane(kFALSE), fClipPlaneMan(0), fClipPlane(0), fSlicePlane(0),fHelpWidget(0),fRecord(kFALSE)
    , fMovie(0),fMPegMovie(0),fClipPlaneState(0),fClipPlanePath(0)
    , fKeyboardHandler(0)
-   , fOffScreenBatch(kFALSE)
-   , fOffScreenRender(0)
 {
    // printf("TQtCoinWidget::TQtCoinWidget begin Pad=%p\n", pad);
    //Create the default SnapShot file name and type if any
@@ -725,9 +721,6 @@ TQtCoinWidget::~TQtCoinWidget()
       SoQtExaminerViewer *viewer = (SoQtExaminerViewer*)fInventorViewer; 
       fInventorViewer = 0; delete viewer; 
    }
-
-   delete fOffScreenRender; fOffScreenRender =0;
-
    if (fMPegMovie)    { delete fMPegMovie;      fMPegMovie     = 0;}
    if (fMovie)        { fMovie       ->unref(); fMovie         = 0;}
    if (fSlicePlane)   { fSlicePlane->unref();   fSlicePlane    = 0;}
@@ -907,12 +900,8 @@ void TQtGLViewerImp::ShowStatusBar(Bool_t show)
 //______________________________________________________________________________
 void TQtCoinWidget::SetUpdatesEnabled(bool enable)
 {   
-   if (!enable) QApplication::setOverrideCursor( QCursor(Qt::WaitCursor), TRUE );
-   else if (! IsOffScreen() ) {
-      setUpdatesEnabled(enable);  
-      if (fInventorViewer) fInventorViewer->setAutoRedraw(enable);
-      QApplication::restoreOverrideCursor();
-   }
+   setUpdatesEnabled(enable);  
+   if (fInventorViewer) fInventorViewer->setAutoRedraw(enable);
 }
 
 //______________________________________________________________________________
@@ -1118,22 +1107,6 @@ static QStringList ExtensionList(const QString &filter)
 }
 #endif
 //______________________________________________________________________________
-bool TQtCoinWidget::OffScreenRender()
-{
-   bool renderOk = false;
-   if (fInventorViewer) {
-      if (!fOffScreenRender) 
-         fOffScreenRender = new SoOffscreenRenderer(fInventorViewer->getViewportRegion());
-      else 
-         fOffScreenRender->setViewportRegion(fInventorViewer->getViewportRegion());
-      SoNode * root = fInventorViewer->getSceneManager()->getSceneGraph();
-      renderOk = fOffScreenRender->render(root);
-      //      osr.setComponents(SoOffscreenRenderer::RGB);
-   }
-   return renderOk;
-}
-
-//______________________________________________________________________________
 void TQtCoinWidget::Save(QString fileName,QString type)
 { 
    if (fileName.isEmpty()) return;
@@ -1280,16 +1253,12 @@ void TQtCoinWidget::Save(QString fileName,QString type)
       myAction.getOutput()->closeFile();
    } else if (e == "mpg") {
       SnapShotSaveCB(TRUE);
-   } else if (IsOffScreen() && OffScreenRender() ) {
-      if (!fOffScreenRender->writeToFile((const char*)thatFile, (const char*)e) )
-         fprintf(stderr, "Can not save the OpenGL buffer with the file %s type %s\n",
-                  (const char*)thatFile, (const char*)e);
    } else {
         QGLWidget *w = (QGLWidget *)GetCoinViewer()->getGLWidget();
         if (w) {
            QImage im =  w->grabFrameBuffer(TRUE); 
            if ( e.lower() == "gif") {
-              // Save animated GIF via TImage (to avoid the "Software patent" issue
+              // Save animated GIF via TImage (to avoid the "Sofwatre patent" issue
               Int_t saver = gErrorIgnoreLevel;
               gErrorIgnoreLevel = kFatal;
               TImage *img = TImage::Create();
@@ -2035,12 +2004,8 @@ void TQtGLViewerImp::Paint(Option_t *opt)
 //______________________________________________________________________________
 void TQtCoinWidget::Update()
 {  
- 	fRootNode->touch();
-   if (!IsOffScreen()) {
-      fInventorViewer->render();
-   } else {
-      SaveSnapShot(); 
-   }
+	fRootNode->touch();
+   fInventorViewer->render();
 	/*
    CreateViewer();
 #ifdef QGLVIEWER
@@ -2064,14 +2029,6 @@ void TQtCoinWidget::SetPadSynchronize(Bool_t on)
 #endif
 }
 */
-//______________________________________________________________________________
-void TQtCoinWidget::SetOffScreen(Bool_t offscreen)
-{
-   // Set the offscreen mode (batch) 
-   // Default is kFALSE
-   fOffScreenBatch = offscreen;
-}
-
 //______________________________________________________________________________
 void TQtCoinWidget::SetFileName(const QString &fileName)
 {
