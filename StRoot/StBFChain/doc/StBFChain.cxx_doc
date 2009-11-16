@@ -1,5 +1,5 @@
 //_____________________________________________________________________
-// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx_doc,v 1.31 2007/07/12 19:14:07 fisyak Exp $
+// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx_doc,v 1.39 2007/10/31 15:18:53 genevb Exp $
 //_____________________________________________________________________
 #include "TROOT.h"
 #include "TString.h"
@@ -386,6 +386,7 @@ Bfc_st BFC[] = {
   {"VtxOffSet" ,"" ,"","","" ,"","Account Primary Vertex offset from y2000 data",kFALSE},
   {"Calibration" ,"" ,"","","" ,"","Calibration mode",kFALSE},
   {"beamLine" ,"" ,"","","" ,"","LMV Beam line constrain",kFALSE},
+  {"min2trkVtx" ,"" ,"","","" ,"","...only 2 tracks needed for vertex finding",kFALSE},
 
 
 
@@ -661,7 +662,7 @@ Bfc_st BFC[] = {
                                                                            "New simulator for BEMC",kFALSE},
   {"EEfs" ,"eefs","","db,EEmcUtil,MuDst",
                                      "StEEmcFastMaker","StEEmcSimulatorMaker","EEMC fast simulator",kFALSE},
-  {"StiLibs","","","StarMagField,StiTpcLib,StiSvtLib,StiSsdlib,StiRnDLib","",
+  {"StiLibs","","","StarMagField,StiTpcLib,StiSvtLib,StiSsdlib,StiRnDLib,StiUtil","",
                                                                        "","ITTF:load Sti libraries",kFALSE},
   {"StiTpcLib","","","tpcDB","", "Sti,StiTpc","Sti Tpc related libratries",kFALSE},
   {"StiSvtLib","","","svtDB","", "Sti,StSvtClassLibrary,StiSvt","Sti Svt related libratries",kFALSE},
@@ -670,6 +671,7 @@ Bfc_st BFC[] = {
   {"laserIT" ,"","","","", "TpcIT","use Sti for laser reconstruction",kFALSE},
   {"TpcIT" ,"" ,"","TpcDb,StiLibs","" ,"","ITTF: track using TPC geom",kFALSE},
   {"NoSvtIT" ,"" ,"","-SvtIT","" ,"","ITTF: track with switch off SVT geom",kFALSE},
+  {"NoSsdIT" ,"" ,"","-SsdIT","" ,"","ITTF: track with switch off SSD geom",kFALSE},
   {"SvtIT" ,"" ,"","svtDb,StiLibs","" ,"","ITTF: track using SVT geom",kFALSE},
   {"SsdIT" ,"" ,"","ssdDb,StiLibs","" ,"","ITTF: track using SSD geom",kFALSE},
   {"HpdIT" ,"" ,"","StiLibs","" ,"","ITTF: track using Hpd geom",kFALSE},
@@ -706,7 +708,8 @@ Bfc_st BFC[] = {
   {"flaser" ,"","","fpt" ,"","","StFtpcTrackMaker in LASERTRACKING",kFALSE},
 
 
-  {"pmdRaw" ,"pmdRaw","","PmdUtil,pmdRead,pmdClust" ,"StMaker","StChain","PMD Raw chain",kFALSE},
+  {"pmdReco" ,"pmdReco","","PmdUtil,pmdRead,pmdClust" ,"StMaker","StChain","PMD Reco chain",kFALSE},
+  {"pmdRaw" ,"pmdRaw","","pmdReco" "","","PMD Reco chain giving raw data",kFALSE},
   {"pmd" ,"pmd","","pmdSim,pmdClust,pmdDis","StMaker" ,"StChain", "PMD Simulation chain",kFALSE},
   {"pmdRead" ,"","","PmdUtil","StPmdReadMaker" ,"StPmdReadMaker", "DAQ reader for PMD",kFALSE},
   {"pmdSim" ,"","","PmdUtil","StPmdSimulatorMaker","StPmdSimulatorMaker","Hit Simulator for PMD",kFALSE},
@@ -845,7 +848,7 @@ Bfc_st BFC[] = {
   {"NoDefault" ,"" ,"","" ,"","","No Default consistency check",kFALSE},
 
   {"Calibration chains","------------","-----------","-----------------------------------","","","",kFALSE},
-  {"LanaDV" ,"","","MakeEvent,in,tpc_daq,tpcI,fcf,LaserIT,VFMinuit,Lana,Analysis,Corr4",
+  {"LanaDV" ,"","","MakeEvent,trgd,in,tpc_daq,tpcI,fcf,LaserIT,VFMinuit,Lana,Analysis,Corr4",
    "","" ,"get LDV",kFALSE},
   {"LaserDV.Chain","","","in,LaserCal,fcf,TpcHitMover,OGridLeak3D,OShortR,OSpaceZ2","","","get LDV",kFALSE},
 
@@ -926,7 +929,7 @@ Bfc_st BFC[] = {
   {"p2001e.Chain" ,"" ,"","ry2001,DbV1107,in,tpc_daq,tpc,rich,l3onl,tofDat,Physics,Kalman,AlignSectors,"
    "Cdst,tags,Tree,evout,emcDY2,ExB,OBmap,OClock,OPr13,Otwist" ,"","","",kFALSE},
   {"trsgl.Chain" ,"","","y2001,trs,Simu,rrs,tpc,rich,l0,Cdst,Kalman,tags,Tree,EvOut,emcY2,big,GeantOut,fzin"
-                                                                                          ,"","","",kFALSE},
+                                                                                    ,"","","",kFALSE},
   {"p2001l.Chain" ,"" ,"","ry2001,in,tpc_daq,tpc,rich,l3onl,tofDat,Physics,Kalman,AlignSectors,Cdst,tags,"
    "Tree,evout,ExB,OBmap,OClock,OPr13,OTwist,NoHits" ,"","","",kFALSE},
   {"p2001f.Chain" ,"" ,"","ry2001,DbV1211,in,tpc_daq,tpc,rich,l3onl,tofDat,Physics,Kalman,AlignSectors,"
@@ -1451,15 +1454,15 @@ Bfc_st BFC2[] = {
   {"B2007","","","ry2007,MakeEvent,in,tpc_daq,tpcI,fcf,svt_daq,SvtD,ssddat,spt,Physics,Idst,l0,tags,Tree,evout",
                                                         "","","Base chain for 2007 ITTF (tpc+svt+ssd)",kFALSE},
   {"P2007" ,"" ,"",
-   "B2007,IAna,KeepSvtHit,hitfilt,skip1row,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr5",
+   "B2007,IAna,KeepSvtHit,hitfilt,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr5",
                       "","","Production chain for 2007 data (+ l3, tof, bcc/fpd, ftpc, e/b-emc, trgd)",kFALSE},
 
 
   {"P2007a" ,"" ,"",
-   "B2007,IAna,KeepSvtHit,hitfilt,skip1row,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr3",
+   "B2007,IAna,KeepSvtHit,hitfilt,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr3",
                  "","","Production chain for 2007 data Corr3 (+ l3, tof, bcc/fpd, ftpc, e/b-emc, trgd)",kFALSE},
   {"P2007b" ,"" ,"",
-   "B2007,IAna,KeepSvtHit,hitfilt,skip1row,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr4",
+   "B2007,IAna,KeepSvtHit,hitfilt,VFMinuit,l3onl,emcDY2,fpd,ftpc,trgd,ZDCvtx,svtIT,ssdIT,Corr4",
                  "","","Production chain for 2007 data Corr4 (+ l3, tof, bcc/fpd, ftpc, e/b-emc, trgd)",kFALSE},
   {"LaserCal0","" ,"","db,detDb,tpc_daq,tpcDb,tcl,globT,laser,LaserTest","","",
                                                                     "Laser Calibration Chain (tcl)",kFALSE},
@@ -1576,6 +1579,7 @@ Bfc_st BFC2[] = {
   {"VtxOffSet" ,"" ,"","","" ,"","Account Primary Vertex offset from y2000 data",kFALSE},
   {"Calibration" ,"" ,"","","" ,"","Calibration mode",kFALSE},
   {"beamLine" ,"" ,"","","" ,"","LMV Beam line constrain",kFALSE},
+  {"min2trkVtx" ,"" ,"","","" ,"","...only 2 tracks needed for vertex finding",kFALSE},
   {"CtbMatchVtx" ,"" ,"","genvtx","" ,"","... CTB Matching ON in Vertex Finding",kFALSE},
   {"VFPPV" ,"" ,"","genvtx","" ,"","... Pile-up proof vertex finder",kFALSE},
   {"VFPPVnoCTB" ,"" ,"","genvtx","" ,"","... Pile-up proof vertex finder, noCTB",kFALSE},
@@ -1854,7 +1858,7 @@ Bfc_st BFC2[] = {
                                                                            "New simulator for BEMC",kFALSE},
   {"EEfs" ,"eefs","","db,EEmcUtil,MuDst",
                                      "StEEmcFastMaker","StEEmcSimulatorMaker","EEMC fast simulator",kFALSE},
-  {"StiLibs","","","StarMagField,StiTpcLib,StiSvtLib,StiSsdlib,StiRnDLib","",
+  {"StiLibs","","","StarMagField,StiTpcLib,StiSvtLib,StiSsdlib,StiRnDLib,StiUtil","",
                                                                        "","ITTF:load Sti libraries",kFALSE},
   {"StiTpcLib","","","tpcDB","", "Sti,StiTpc","Sti Tpc related libratries",kFALSE},
   {"StiSvtLib","","","svtDB","", "Sti,StSvtClassLibrary,StiSvt","Sti Svt related libratries",kFALSE},
@@ -1863,6 +1867,7 @@ Bfc_st BFC2[] = {
   {"laserIT" ,"","","","", "TpcIT","use Sti for laser reconstruction",kFALSE},
   {"TpcIT" ,"" ,"","TpcDb,StiLibs","" ,"","ITTF: track using TPC geom",kFALSE},
   {"NoSvtIT" ,"" ,"","-SvtIT","" ,"","ITTF: track with switch off SVT geom",kFALSE},
+  {"NoSsdIT" ,"" ,"","-SsdIT","" ,"","ITTF: track with switch off SSD geom",kFALSE},
   {"SvtIT" ,"" ,"","svtDb,StiLibs","" ,"","ITTF: track using SVT geom",kFALSE},
   {"SsdIT" ,"" ,"","ssdDb,StiLibs","" ,"","ITTF: track using SSD geom",kFALSE},
   {"HpdIT" ,"" ,"","StiLibs","" ,"","ITTF: track using Hpd geom",kFALSE},
@@ -1899,7 +1904,8 @@ Bfc_st BFC2[] = {
   {"flaser" ,"","","fpt" ,"","","StFtpcTrackMaker in LASERTRACKING",kFALSE},
 
 
-  {"pmdRaw" ,"pmdRaw","","PmdUtil,pmdRead,pmdClust" ,"StMaker","StChain","PMD Raw chain",kFALSE},
+  {"pmdReco" ,"pmdReco","","PmdUtil,pmdRead,pmdClust" ,"StMaker","StChain","PMD Reco chain",kFALSE},
+  {"pmdRaw" ,"pmdRaw","","pmdReco" "","","PMD Reco chain giving raw data",kFALSE},
   {"pmd" ,"pmd","","pmdSim,pmdClust,pmdDis","StMaker" ,"StChain", "PMD Simulation chain",kFALSE},
   {"pmdRead" ,"","","PmdUtil","StPmdReadMaker" ,"StPmdReadMaker", "DAQ reader for PMD",kFALSE},
   {"pmdSim" ,"","","PmdUtil","StPmdSimulatorMaker","StPmdSimulatorMaker","Hit Simulator for PMD",kFALSE},
@@ -2038,7 +2044,7 @@ Bfc_st BFC2[] = {
   {"NoDefault" ,"" ,"","" ,"","","No Default consistency check",kFALSE},
 
   {"Calibration chains","------------","-----------","-----------------------------------","","","",kFALSE},
-  {"LanaDV" ,"","","MakeEvent,in,tpc_daq,tpcI,fcf,LaserIT,VFMinuit,Lana,Analysis,Corr4",
+  {"LanaDV" ,"","","MakeEvent,trgd,in,tpc_daq,tpcI,fcf,LaserIT,VFMinuit,Lana,Analysis,Corr4",
    "","" ,"get LDV",kFALSE},
   {"LaserDV.Chain","","","in,LaserCal,fcf,TpcHitMover,OGridLeak3D,OShortR,OSpaceZ2","","","get LDV",kFALSE},
 
@@ -2440,8 +2446,11 @@ Int_t StBFChain::Instantiate()
 	ProcessLine(Form("((St_geant_Maker *) %p)->SetNwGEANT(%i);",mk,NwGeant));
 	if (GetOption("Higz")) ProcessLine(Form("((St_geant_Maker *) %p)->SetIwtype(1);",mk));
 	if (GetOption("paw"))  ProcessLine(Form("((St_geant_Maker *) %p)->SetNwPAW(2);",mk));
-	if (GetOption("fzin") || GetOption("ntin") || GetOption("gstar") || GetOption("PrepEmbed")) mk->SetActive(kTRUE);
-	else                                                              mk->SetActive(kFALSE);
+	if (GetOption("fzin") || GetOption("ntin") || GetOption("gstar") || GetOption("PrepEmbed")) {
+	  mk->SetActive(kTRUE);
+	  if (GetOption("PrepEmbed")) mk->SetMode(10*(mk->GetMode()/10)+1);
+	}
+	else   mk->SetActive(kFALSE);
 	if (! mk) goto Error;
 	SetGeantOptions(mk);
       }
@@ -2472,10 +2481,12 @@ Int_t StBFChain::Instantiate()
 	  mk->SetAttr("useSvt"	,kTRUE);
 	  mk->SetAttr("activeSvt"	,kTRUE);
 	}
-      if (GetOption("SsdIT")){
-	mk->SetAttr("useSsd"	,kTRUE);
-	mk->SetAttr("activeSsd"	,kTRUE);
-      }
+      if (GetOption("NoSsdIT")) mk->SetAttr("useSsd"	,kFALSE);
+      else 
+	if (GetOption("SsdIT")){
+	  mk->SetAttr("useSsd"	,kTRUE);
+	  mk->SetAttr("activeSsd"	,kTRUE);
+	}
       if (GetOption("PixelIT")){
 	mk->SetAttr("usePixel"	,kTRUE);
 	mk->SetAttr("activePixel",kTRUE);
@@ -2511,10 +2522,11 @@ Int_t StBFChain::Instantiate()
       mk->SetMode(VtxOpt);
       
       // All VertexFinders implement those (or not)
-      if (GetOption("beamLine") || GetOption("CtbMatchVtx")) {
+      if (GetOption("beamLine") || GetOption("CtbMatchVtx") || GetOption("min2trkVtx")) {
 	TString  cmd(Form("StGenericVertexMaker* gvtxMk = (StGenericVertexMaker*) %p;",mk));
 	if (GetOption("beamLine"))    {cmd += "gvtxMk->UseBeamLine();";}
 	if (GetOption("CtbMatchVtx")) {cmd += "gvtxMk->UseCTB();";}
+	if (GetOption("min2trkVtx"))  {cmd += "gvtxMk->SetMinimumTracks(2);";}
 	ProcessLine(cmd);
       }
     }
@@ -2820,8 +2832,10 @@ Int_t StBFChain::Instantiate()
       if (mode) mk->SetMode(mode);
     }
 #endif
-    if ((maker == "StdEdxMaker" || maker == "StdEdxY2Maker" ) &&
-	GetOption("Simu"))  mk->SetMode(-10);
+    if (maker == "StdEdxMaker" || maker == "StdEdxY2Maker" ) {
+      if (GetOption("Simu"))  mk->SetMode(-10);
+      if (GetOption("Embedding")) mk->SetMode(-11);
+    }
     if (maker == "StTpcDbMaker"){
       mk->SetMode(0);
       // this change may be temporary i.e. if Simulation includes
@@ -2851,6 +2865,11 @@ Int_t StBFChain::Instantiate()
     if ( maker == "StFtpcTrackMaker"       &&
 	 GetOption("flaser"))                  mk->SetMode(mk->GetMode()+1);
     // FTPC
+
+    // PMD
+    if ( maker == "StPmdReadMaker"         &&
+         GetOption("pmdRaw"))                  mk->SetAttr("pmdRaw",kTRUE);
+    // PMD
     
     // Hit filtering will be made from a single maker in
     // future with flexible filtering method
@@ -3608,7 +3627,7 @@ void StBFChain::SetDbOptions(StMaker *mk){
 		       << " Maker set time = "
 		       << db->GetDateTime().GetDate() << "."
 		       << db->GetDateTime().GetTime() << endm;
-    if (GetOption("VMC") && m_EvtHddr) {
+    if (GetOption("SIMU") && m_EvtHddr) {
       gMessMgr->QAInfo() << GetName() << " Chain set time from  " << db->GetName() << endm;
       m_EvtHddr->SetDateTime(db->GetDateTime());
     }
