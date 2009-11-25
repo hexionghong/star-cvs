@@ -364,36 +364,6 @@ Int_t StEventQAMaker::Make() {
 }
 
 
-//_____________________________________________________________________________
-/// Fill histograms for event summary
-void StEventQAMaker::MakeHistEvSum() {
-  
-  //PrintInfo();
-  if (Debug()) 
-    gMessMgr->Info(" *** in StEventQAMaker - filling software monitor histograms ");
-  
-  if (event->softwareMonitor()) {
-    StTpcSoftwareMonitor *tpcMon = event->softwareMonitor()->tpc();
-    StFtpcSoftwareMonitor *ftpcMon = event->softwareMonitor()->ftpc();
-    if (tpcMon) {
-      Float_t tpcChgWest=0;
-      Float_t tpcChgEast=0;
-      for (UInt_t i=0; i<24; i++) {
-        if (i<12)
-	  tpcChgWest += tpcMon->chrg_tpc_in[i]+tpcMon->chrg_tpc_out[i];
-        else
-	  tpcChgEast += tpcMon->chrg_tpc_in[i]+tpcMon->chrg_tpc_out[i];
-      }
-      m_glb_trk_chg->Fill(tpcChgEast/(tpcChgWest+1.e-10),(float) eventClass);
-    }
-    if (ftpcMon) {
-      m_glb_trk_chgF->Fill(ftpcMon->chrg_ftpc_tot[1]/(ftpcMon->chrg_ftpc_tot[0]+1.e-10),
-			   (float) eventClass);
-    }
-  }
-}
-
-
 //-----------------------------------------------------------------
 void StEventQAMaker::MakeHistGlob() {
   
@@ -2189,12 +2159,12 @@ void StEventQAMaker::MakeHistTOF() {
     StSPtrVecBTofHit &tofHits = btofcol->tofHits();
     Int_t nTofHits = tofHits.size();
     Int_t nHitsvsTray[120] = {0};   
-    Int_t nHitsvsModule[2][32] = {0};
+    Int_t nHitsvsModule[2][32] = {{0},{0}};
     Int_t nHitsTof = 0;
     Int_t nHitsVpd[2] = {0};
 
     Int_t nCellvsTray[120] = {0};
-    Int_t nCellvsModule[2][32] = {0};
+    Int_t nCellvsModule[2][32] = {{0},{0}};
     Int_t nCellTof = 0;
     for(i=0;i<nTofHits;i++) {
       StBTofHit *aHit = dynamic_cast<StBTofHit*>(tofHits[i]);
@@ -2285,7 +2255,7 @@ void StEventQAMaker::MakeHistTOF() {
   StSPtrVecTofData &tofData = tofcol->tofData();
   Int_t nTofData = tofData.size();
   Int_t nHitsvsTray[120] = {0};
-  Int_t nHitsvsModule[2][32] = {0};
+  Int_t nHitsvsModule[2][32] = {{0},{0}};
   Int_t nHitsTof = 0;
   Int_t nHitsVpd[2] = {0};
   for(i=0;i<nTofData;i++) {
@@ -2315,7 +2285,7 @@ void StEventQAMaker::MakeHistTOF() {
   StSPtrVecTofCell &tofCell = tofcol->tofCells();
   Int_t nTofCell = tofCell.size();
   Int_t nCellvsTray[120] = {0};
-  Int_t nCellvsModule[2][32] = {0};
+  Int_t nCellvsModule[2][32] = {{0},{0}};
   Int_t nCellTof = 0;
   for(i=0;i<nTofCell;i++) {
     StTofCell *aCell = dynamic_cast<StTofCell*>(tofCell[i]);
@@ -2376,8 +2346,14 @@ void StEventQAMaker::MakeHistTOF() {
 }
 
 //_____________________________________________________________________________
-// $Id: StEventQAMaker.cxx,v 2.93 2009/03/27 21:18:36 genevb Exp $
+// $Id: StEventQAMaker.cxx,v 2.95 2009/11/19 20:34:38 genevb Exp $
 // $Log: StEventQAMaker.cxx,v $
+// Revision 2.95  2009/11/19 20:34:38  genevb
+// Remove Event Summary (using defunct old software monitors)
+//
+// Revision 2.94  2009/11/19 20:12:10  genevb
+// Clean up compiler warnings
+//
 // Revision 2.93  2009/03/27 21:18:36  genevb
 // Add Jet Patch trigger histograms
 //
