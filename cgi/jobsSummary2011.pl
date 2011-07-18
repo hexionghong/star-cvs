@@ -1,12 +1,11 @@
-#!/usr/local/bin/perl
 #!/usr/bin/env perl
 #
 # 
 #
 # L.Didenko
+# jobSummary2011.pl - summary of production jobs status for year 2011
 #
-#
-##########################################################
+########################################################################################
 
 
 BEGIN {
