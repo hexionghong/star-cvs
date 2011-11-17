@@ -403,10 +403,10 @@ int sfs_index::getInodeSize(fs_inode *inode, SfsDirsize *sizes)
 
 int sfs_index::getDirSize(char *dir, SfsDirsize *sizes)
 {
-  memset(sizes, 0, sizeof(SfsDirsize));
   fs_dir *d = opendir(dir);
   if(!d) return -1;
- 
+  
+  memset(sizes, 0, sizeof(SfsDirsize));
   sizes->dataSize += d->inode->sz;
   sizes->size += d->inode->sz + d->inode->overhead;
 
@@ -806,7 +806,7 @@ int sfs_index::mountSingleDir(char *fn, int offset)
   wfile.lseek(offset, SEEK_SET);
 
   int ret = mountSingleDir();
-  //wfile.close();  
+  wfile.close();  
   return ret;
 }
 
@@ -890,13 +890,11 @@ int sfs_index::mountSingleDir()   // mounts from current position of wfile...
   LOG(DBG, "mountSingleDir()   offset=%lld 0x%x", offset, wfile.wbuff);
   if(!wfile.wbuff) {   // if a memory mount, already done...
     singleDirOffset = offset;
-    nextSingleDirOffset = offset;
   }
 #else
   int offset = wfile.lseek(0,SEEK_CUR);
   if(!wfile.wbuff) {
     singleDirOffset = offset;
-    nextSingleDirOffset = offset;
   }
 #endif
 
@@ -935,14 +933,11 @@ int sfs_index::mountSingleDir()   // mounts from current position of wfile...
 int sfs_index::mountNextDir()
 {
 #if  defined(__USE_LARGEFILE64) || defined(_LARGEFILE64_SOURCE)
-
- 
-  singleDirOffset = nextSingleDirOffset;
-  long long int offset = wfile.lseek(singleDirOffset,SEEK_SET);
-  
+  long long int offset = wfile.lseek(0,SEEK_CUR);
+  singleDirOffset = offset;
 #else
   int offset = wfile.lseek(0,SEEK_CUR);
-  //singleDirOffset = nextSingleDirOffset;
+  singleDirOffset = offset;
 #endif
 
   return(_mountNextDir());
@@ -1000,7 +995,6 @@ int sfs_index::_mountNextDir()
     int last_file_sz = seeksize(singleDirIttr->entry.sz);
       
     if(singleDirIttr->next() < 0) {
-      nextSingleDirOffset = wfile.lseek(0, SEEK_CUR);
       return -1;
     }
 
@@ -1009,7 +1003,6 @@ int sfs_index::_mountNextDir()
       if(!wfile.wbuff) {   // if a memory mount, already done...
 	singleDirSize = last_offset + last_head_sz + last_file_sz - singleDirOffset;
       }
-      nextSingleDirOffset = wfile.lseek(0, SEEK_CUR);
       return (files_added > 0) ?  1 : 0;
     }
 
@@ -1026,12 +1019,10 @@ int sfs_index::_mountNextDir()
       if(!wfile.wbuff) {   // if a memory mount, already done...
 	singleDirSize = last_offset + last_head_sz + last_file_sz - singleDirOffset;
       }
-      nextSingleDirOffset = wfile.lseek(0, SEEK_CUR);
       return (files_added > 0) ? 1 : 0;
     }
   }
-  
-  nextSingleDirOffset = wfile.lseek(0, SEEK_CUR);
+
   return 0;
 }
 
