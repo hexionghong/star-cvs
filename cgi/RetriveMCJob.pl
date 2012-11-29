@@ -156,7 +156,7 @@ my $dnm = 0;
 
    &beginChHtml();
 
-     $sql="SELECT distinct chainOptions FROM $RequestSumT  where prodTag = ? and requestID = ? and type = 'sim' ";
+     $sql="SELECT distinct chainOptions FROM $RequestSumT  where requestID = ? and type = 'sim' ";
 
       $cursor =$dbh->prepare($sql)
           || die "Cannot prepare statement: $DBI::errstr\n";
