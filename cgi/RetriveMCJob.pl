@@ -160,7 +160,7 @@ my $dnm = 0;
 
       $cursor =$dbh->prepare($sql)
           || die "Cannot prepare statement: $DBI::errstr\n";
-       $cursor->execute($qprod,$qreq);
+       $cursor->execute($qreq);
 
        while( $chn = $cursor->fetchrow() ) {
           $chnopts[$nch] = $chn;
