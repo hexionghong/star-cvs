@@ -184,7 +184,7 @@ my @jbdaqtenk  = ();
 my @jbwb = ();
 
  
- my @arperiod = ("week","1_month","2_months","3_months","4_months","5_months","6_months");
+ my @arperiod = ("1_month","2_months","3_months","4_months","5_months","6_months");
 
 #my @arperiod = ("1_month","2_months","3_months","4_months","5_months","6_months");
 
