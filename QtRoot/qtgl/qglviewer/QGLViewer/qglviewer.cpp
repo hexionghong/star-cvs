@@ -24,7 +24,6 @@
 #include "qglviewer.h"
 #include "camera.h"
 #include "keyFrameInterpolator.h"
-#include <GL/glu.h>
 
 #if QT_VERSION >= 0x040000
 # include <QtAlgorithms>
