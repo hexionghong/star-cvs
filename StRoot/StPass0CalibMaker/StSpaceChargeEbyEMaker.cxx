@@ -154,8 +154,9 @@ Int_t StSpaceChargeEbyEMaker::Init() {
 //_____________________________________________________________________________
 Int_t StSpaceChargeEbyEMaker::Make() {
 
-  // On very first event
-  if (PrePassmode && (tabname.Length() == 0)) SetTableName();
+  // On very first event, determine first event timestamp and
+  //   set default parameters, unless in Calibmode
+  if ((!Calibmode) && (tabname.Length() == 0)) SetTableName();
   
   // Get instance of StMagUtilities
   m_ExB = StMagUtilities::Instance();
@@ -443,10 +444,11 @@ Int_t StSpaceChargeEbyEMaker::Make() {
       X[34] = gapZdivslopewest;
       X[35] = s0*X[35] + s1*runinfo->spaceCharge();
       X[36] = s0*X[36] + s1*((float) (runinfo->spaceChargeCorrectionMode()));
-      X[37] = s0*X[37] + s1*St_trigDetSumsC::Nc(runinfo->zdcCoincidenceRate(),
-                                 runinfo->zdcEastRate(),runinfo->zdcWestRate());
-      X[38] = s0*X[38] + s1*St_trigDetSumsC::Nc(runinfo->bbcCoincidenceRate(),
-                                 runinfo->bbcEastRate(),runinfo->bbcWestRate());
+      //X[37] = s0*X[37] + s1*St_trigDetSumsC::Nc(runinfo->zdcCoincidenceRate(),
+      //                           runinfo->zdcEastRate(),runinfo->zdcWestRate());
+      //X[38] = s0*X[38] + s1*St_trigDetSumsC::Nc(runinfo->bbcCoincidenceRate(),
+      //                           runinfo->bbcEastRate(),runinfo->bbcWestRate());
+      X[37] = 0; X[38] = 0;
 	      
       // In calib mode, only fill when doReset (we found an sc)
       if (doReset || !Calibmode) ntup->Fill(X);
@@ -810,6 +812,21 @@ void StSpaceChargeEbyEMaker::SetTableName() {
   gMessMgr->Info() << "first event date = " << date << endm;
   gMessMgr->Info() << "first event time = " << time << endm;
   tabname = Form("./StarDb/Calibrations/rich/spaceChargeCorR2.%08d.%06d.C",date,time);
+
+  // Set Prepass default parameters based on data time
+  if (date < 20071000) {
+    setVtxEmcMatch(0);
+    setReqEmcMatch(kFALSE);
+    setVtxTofMatch(0);
+    setReqTofMatch(kFALSE);
+    setVtxMinTrks(10);
+  } else if (date < 20090000) {
+    setVtxEmcMatch(1);
+    setReqEmcMatch(kFALSE);
+    setVtxTofMatch(0);
+    setReqTofMatch(kFALSE);
+    setVtxMinTrks(5);
+  }
 }
 //_____________________________________________________________________________
 void StSpaceChargeEbyEMaker::WriteTableToFile(){
@@ -1046,8 +1063,17 @@ float StSpaceChargeEbyEMaker::EvalCalib(TDirectory* hdir) {
   return code;
 }
 //_____________________________________________________________________________
-// $Id: StSpaceChargeEbyEMaker.cxx,v 1.32 2010/11/17 17:23:33 genevb Exp $
+// $Id: StSpaceChargeEbyEMaker.cxx,v 1.35 2011/02/09 21:56:50 genevb Exp $
 // $Log: StSpaceChargeEbyEMaker.cxx,v $
+// Revision 1.35  2011/02/09 21:56:50  genevb
+// Version which can work in SL10k
+//
+// Revision 1.34  2011/02/09 21:11:36  genevb
+// Parameters need to be available in normal event-by-event mode too
+//
+// Revision 1.33  2011/02/09 16:24:18  genevb
+// Allow for historical operating parameters in Prepass mode
+//
 // Revision 1.32  2010/11/17 17:23:33  genevb
 // Include corrected coincidence rates in ntuple
 //
