@@ -1,3 +1,0 @@
-CXXFLAGS += /FR
-CFLAGS += /FR
-
