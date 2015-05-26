@@ -14,12 +14,12 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
-/* $Id: TGeant3.cxx,v 1.6 2015/05/26 14:56:41 jwebb Exp $ */
+/* $Id: TGeant3.cxx,v 1.7 2015/05/26 15:39:27 jwebb Exp $ */
 
 /*
 $Log: TGeant3.cxx,v $
-Revision 1.6  2015/05/26 14:56:41  jwebb
-PopStar Initial Version
+Revision 1.7  2015/05/26 15:39:27  jwebb
+Revert to previous version.  Last checkin was in error.
 
 Revision 1.5  2009/02/02 14:28:21  fisyak
 Add protection wrt new method introduced in ROOT 5.22.0
@@ -631,7 +631,6 @@ Cleanup of code
 # define rxouth  rxouth_
 # define rxinh   rxinh_
 
-# define gptmed  gptmed_
 
 #else
 
@@ -724,8 +723,6 @@ Cleanup of code
 # define rxinh   RXINH
 # define gfang   GFANG 
 
-# define gptmed GPTMED
-
 #endif
 
 //______________________________________________________________________
@@ -734,8 +731,6 @@ extern "C"
   //
   // Prototypes for GEANT functions
   //
-  void type_of_call gptmed( int & );
-
   void type_of_call g3zebra(const int&);
 
   void type_of_call g3pcxyz();
@@ -1109,9 +1104,6 @@ Double_t statsafety, statsnext;
 TTree *stattree =0;
 TFile *statfile=0;
 #endif
-
-
-void TGeant3::Gptmed( Int_t itmed ) { gptmed( itmed ); }
 
 //______________________________________________________________________
 TGeant3::TGeant3()
