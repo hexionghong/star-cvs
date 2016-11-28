@@ -1,3 +1,0 @@
-    */10 * * * * /direct/star+u/starqa/QA/daemon > /dev/null 2> /dev/null
-
-
