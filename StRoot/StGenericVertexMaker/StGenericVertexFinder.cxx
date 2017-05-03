@@ -1,5 +1,5 @@
 /***************************************************************************
- * $Id: StGenericVertexFinder.cxx,v 1.34 2016/09/06 20:02:55 smirnovd Exp $
+ * $Id: StGenericVertexFinder.cxx,v 1.32 2016/04/28 18:17:38 smirnovd Exp $
  *
  * Author: Lee Barnby, April 2003
  *
@@ -241,9 +241,9 @@ StThreeVectorD StGenericVertexFinder::CalcVertexSeed(const StDcaList &trackDcas)
    {
       trackDca->GetXYZ(xyzp, covXyzp);
 
-      double x_weight = 1./covXyzp[0];
-      double y_weight = 1./covXyzp[2];
-      double z_weight = 1./covXyzp[5];
+      double x_weight = 1./sqrt(covXyzp[0]);
+      double y_weight = 1./sqrt(covXyzp[2]);
+      double z_weight = 1./sqrt(covXyzp[5]);
 
       vertexSeed  += StThreeVectorD(xyzp[0]*x_weight, xyzp[1]*y_weight, xyzp[2]*z_weight);
       totalWeigth += StThreeVectorD(x_weight, y_weight, z_weight);
@@ -272,13 +272,6 @@ void StGenericVertexFinder::UseVertexConstraint(const vertexSeed_st& beamline)
 {
    sBeamline = beamline;
 
-   LOG_INFO << "BeamLine constraint: weight =  " << sBeamline.weight << "\n"
-            << "x(z) = (" << sBeamline.x0   << " +/- max(0.01, "   << sBeamline.err_x0 << ") ) + "
-            <<        "(" << sBeamline.dxdz << " +/- max(0.0001, " << sBeamline.err_dxdz << ") ) * z\n"
-            << "y(z) = (" << sBeamline.y0   << " +/- max(0.01, "   << sBeamline.err_y0 << ") ) + "
-            <<        "(" << sBeamline.dydz << " +/- max(0.0001, " << sBeamline.err_dydz << ") ) * z"
-            << endm;
-
    sBeamline.err_x0 = std::max(0.01f, sBeamline.err_x0);
    sBeamline.err_y0 = std::max(0.01f, sBeamline.err_y0);
 
@@ -286,7 +279,9 @@ void StGenericVertexFinder::UseVertexConstraint(const vertexSeed_st& beamline)
    sBeamline.err_dxdz = std::max(0.0001f, sBeamline.err_dxdz);
    sBeamline.err_dydz = std::max(0.0001f, sBeamline.err_dydz);
 
-   UseVertexConstraint();
+   LOG_INFO << "BeamLine constraint: weight =  " << sBeamline.weight << endm;
+   LOG_INFO << "x(z) = (" << sBeamline.x0 << " +/- " << sBeamline.err_x0 << ") + (" << sBeamline.dxdz << " +/- " << sBeamline.err_dxdz << ") * z" << endm;
+   LOG_INFO << "y(z) = (" << sBeamline.y0 << " +/- " << sBeamline.err_y0 << ") + (" << sBeamline.dydz << " +/- " << sBeamline.err_dydz << ") * z" << endm;
 }
 
 

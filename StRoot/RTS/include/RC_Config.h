@@ -215,7 +215,7 @@ struct TcdSetup
 #define MIX_DSM_OBJECT   4
 #define BCW_DSM_OBJECT   5
 #define BCE_DSM_OBJECT   6
-#define EPQ_QT_OBJECT    7
+#define FEQ_QT_OBJECT    7
 #define BBC_DSM_OBJECT   8
 #define BBQ_QT_OBJECT    9
 #define FMS_DSM_OBJECT  10
@@ -231,8 +231,6 @@ struct TcdSetup
 #define L1_OBJECT 35
 #define L2_OBJECT 36
 #define L3_OBJECT 37            // Reserved for L3 use...
-#define FQ1_QT_OBJECT 38
-#define FQ2_QT_OBJECT 39
 
 #define BIT_OBJECT 100          // Reserved for TCU bit labels
 
@@ -691,11 +689,6 @@ int putConfigFile(STAR_CFG *cfg, char *filename);
 
 //struct TrgCfg;
 struct TrgPS;
-
-char *confNum2String(int conf_num);
-int string2ConfNum(char *str);
-UINT32 getCrateMask4TrgDet(int det);
-UINT16 getTrgDetRequiredMask(char *node, int board=-1);
 
 void writeRCCNF(char *fn, STAR_CFG *cfg);   // write rc def file...
 

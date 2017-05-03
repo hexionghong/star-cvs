@@ -1,5 +1,5 @@
 //_____________________________________________________________________
-// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx,v 1.638 2016/09/26 17:15:26 jeromel Exp $
+// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx,v 1.633 2016/07/02 22:23:10 perev Exp $
 //_____________________________________________________________________
 #include "TROOT.h"
 #include "TPRegexp.h"
@@ -654,15 +654,6 @@ Int_t StBFChain::Instantiate()
       cmd += "pMuMk->SetStatus(\"EztAll\",1);";
       ProcessLine(cmd);
     }
-
-    if ( maker == "StPicoDstMaker"){
-      if ( GetOption("picoWrite") )  mk->SetMode(1);
-      if ( GetOption("picoRead")  )  mk->SetMode(2);   // possibly more magic
-      if ( GetOption("PicoVtxVpd"))           mk->SetAttr("picoVtxMode", "PicoVtxVpd");
-      else if ( GetOption("PicoVtxDefault"))  mk->SetAttr("picoVtxMode", "PicoVtxDefault");
-      
-    }
-
 
     if (maker == "StLaserEventMaker"){
       // Bill stuff - Empty place-holder

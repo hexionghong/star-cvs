@@ -74,7 +74,7 @@
 #define TCD_BBC         7	//0x11, trigger-only; unused
 #define TCD_ETOW        8	//0x12,
 #define TCD_MTD_QT      9	//0x13, trigger-only; unused
-#define TCD_FCS        10	//0x14, Sep 16: was IST, Jun 2013: was FGT before; Aug 26, 2009: was FPD's before
+#define TCD_IST         10	//0x14, Jun 2013: was FGT before; Aug 26, 2009: was FPD's before
 #define TCD_TOF         11      //0x15,
 #define TCD_PP          12      //0x16
 #define TCD_MTD         13      //0x17
@@ -82,15 +82,15 @@
 #define TCD_BSMD        15      //0x19
 #define TCD_CTB         16	//0x1A, trigger-only; unused
 #define TCD_BTOW        17      //0x1B
-#define TCD_ETOF        18      //0x1C; Sep 16: was SST; was FTPC; gone in Sep '11
-#define TCD_RHICF       19      //0x1D; Sep 16: was PXL; was PMD; gone in Sep '11
+#define TCD_SST         18      //0x1C; was FTPC; gone in Sep '11
+#define TCD_PXL         19      //0x1D; was PMD; gone in Sep '11
 #define TCD_GMT         20      //0x1E; WAS: empty, Nov, 2008
 #define TCD_VPD		21      //0x1F trigger-only; unused
 
 
 
-// FY17 Group definitions
-#define ETOF_GRP	0
+// FY14 Group definitions; Tonko Nov 2013.
+#define SST_GRP		0
 #define PP_GRP	        1
 #define ETOW_GRP	2   
 #define BTOW_GRP	3
@@ -98,8 +98,8 @@
 #define TOF_GRP	        5
 #define ESMD_GRP	6
 #define TPX_GRP		7
-#define RHICF_GRP	8
-#define FCS_GRP        9
+#define PXL_GRP		8
+#define IST_GRP         9
 //#define xxx_GRP		10	// unused
 //#define xxx_GRP		11	// but still unused
 //#define xxx_GRP		12	// unused
@@ -262,9 +262,8 @@ so we keep it here for source compatibility
 #define SST_SYSTEM      24
 #define SST_ID          SST_SYSTEM     /* HFT's SSD */
 
-//Removed RPII as 25 -- was never used
-#define ETOF_SYSTEM       25
-#define ETOF_ID           ETOF_SYSTEM
+//#define RPII_SYSTEM      25
+//#define RPII_ID          RPII_SYSTEM     /* Roman Pots, Phase II */
 
 #define GMT_SYSTEM      26
 #define GMT_ID          GMT_SYSTEM     /* GEM Monitor for TPC */
@@ -275,68 +274,15 @@ so we keep it here for source compatibility
 #define FPS_SYSTEM       28
 #define FPS_ID           FPS_SYSTEM
 
-//Removed STRXXX as 29-- was never used!
-#define RHICF_SYSTEM       29
-#define RHICF_ID           RHICF_SYSTEM
+#define STRXXX_SYSTEM       29
+#define STRXXX_ID           STRXXX_SYSTEM
 
-//reserved for DEP tests in Jan 2017
-#define FCS_SYSTEM       30
-#define FCS_ID           FCS_SYSTEM
-
-#define RTS_NUM_SYSTEMS	31	/* current maximum. Can not be greater than 32! */
+#define RTS_NUM_SYSTEMS	30	/* current maximum. Can not be greater than 32! */
 
 #define PP_SEQE_INSTANCE  1
 #define PP_SEQW_INSTANCE  2
 #define PP_TRG_INSTANCE 3
 #define PP_TEST_INSTANCE 4
-
-// Trigger Detector Bit Mask
-#define TRGDET_ZDC 0
-#define TRGDET_BBC 1
-#define TRGDET_VPD 2
-#define TRGDET_TOF 3
-#define TRGDET_EPD 4
-#define TRGDET_MTD 5
-#define TRGDET_BEMC 6
-#define TRGDET_EEMC 7
-#define TRGDET_PP2PP 8
-#define TRGDET_FMS 9
-#define TRGDET_FPS 10
-#define TRGDET_FCAL 11
-
-extern inline int getTrgDetBit(char *str) {
-    if(strcmp(str, "zdc")==0) return TRGDET_ZDC;
-    if(strcmp(str, "bbc")==0) return TRGDET_BBC;
-    if(strcmp(str, "vpd")==0) return TRGDET_VPD;
-    if(strcmp(str, "tof")==0) return TRGDET_TOF;
-    if(strcmp(str, "epd")==0) return TRGDET_EPD;
-    if(strcmp(str, "mtd")==0) return TRGDET_MTD;
-    if(strcmp(str, "bemc")==0) return TRGDET_BEMC;
-    if(strcmp(str, "eemc")==0) return TRGDET_EEMC;
-    if(strcmp(str, "pp2pp")==0) return TRGDET_PP2PP;
-    if(strcmp(str, "fms")==0) return TRGDET_FMS;
-    if(strcmp(str, "fps")==0) return TRGDET_FPS;
-    if(strcmp(str, "fcal")==0) return TRGDET_FCAL;
-    return -1;
-}
-
-extern inline char *getTrgDetBitName(int x) {
-    switch(x) {
-    case TRGDET_ZDC: return "zdc";
-    case TRGDET_BBC: return "bbc";
-    case TRGDET_VPD: return "vpd";
-    case TRGDET_TOF: return "tof";
-    case TRGDET_EPD: return "epd";
-    case TRGDET_MTD: return "mtd";
-    case TRGDET_BEMC: return "bemc";
-    case TRGDET_EEMC: return "eemc";
-    case TRGDET_PP2PP: return "pp2pp";
-    case TRGDET_FMS: return "fms";
-    case TRGDET_FPS: return "fps";
-    case TRGDET_FCAL: return "fcal";
-    }
-    return NULL;
-}
 
 /*
   Subsystems (These are overloaded for each system)
@@ -413,12 +359,9 @@ extern inline char *getTrgDetBitName(int x) {
 #define  TRG_QT4_INSTANCE  20 
 #define TRG_BBQ_INSTANCE 21
 #define TRG_MXQ_INSTANCE 22
-// #define TRG_FEQ_INSTANCE 23   // JML via JN.  8/29/16
-#define TRG_EPQ_INSTANCE 23
+#define TRG_FEQ_INSTANCE 23
 
 #define TRG_TCD_NEW_INSTANCE	24
-#define TRG_FQ1_INSTANCE 25
-#define TRG_FQ2_INSTANCE 26
 
 #define L3EVP_INSTANCE      1
 #define L3DISP_INSTANCE     2
@@ -592,12 +535,7 @@ extern inline char *getTrgDetBitName(int x) {
 #define  TRG_QT4_NODE   ((TRG_SYSTEM<<12) | TRG_QT4_INSTANCE)
 #define TRG_BBQ_NODE    ((TRG_SYSTEM<<12) | TRG_BBQ_INSTANCE)
 #define TRG_MXQ_NODE    ((TRG_SYSTEM<<12) | TRG_MXQ_INSTANCE)
-//#define TRG_FEQ_NODE    ((TRG_SYSTEM<<12) | TRG_FEQ_INSTANCE)
-#define TRG_FEQ_NODE    ((TRG_SYSTEM<<12) | TRG_EPQ_INSTANCE)
-#define TRG_EPQ_NODE    ((TRG_SYSTEM<<12) | TRG_EPQ_INSTANCE)
-#define TRG_FQ1_NODE    ((TRG_SYSTEM<<12) | TRG_FQ1_INSTANCE)
-#define TRG_FQ2_NODE    ((TRG_SYSTEM<<12) | TRG_FQ2_INSTANCE)
-
+#define TRG_FEQ_NODE    ((TRG_SYSTEM<<12) | TRG_FEQ_INSTANCE)
 
 #define TRG_SCALER48_NODE  ((TRG_SYSTEM<<12) | TRG_SCALER48_INSTANCE)
 
@@ -639,11 +577,7 @@ extern inline char *getTrgDetBitName(int x) {
 
 #define FPS_NODES(x)     ((EXT2_SYSTEM<<12) | (FPS_SYSTEM<<7) | (x))
 
-#define ETOF_NODES(x)  ((EXT2_SYSTEM<<12) | (ETOF_SYSTEM<<7) | (x))
-
-#define RHICF_NODES(x)  ((EXT2_SYSTEM<<12) | (RHICF_SYSTEM<<7) | (x))
-
-#define FCS_NODES(x)  ((EXT2_SYSTEM<<12) | (FCS_SYSTEM<<7) | (x))
+#define STRXXX_NODES(x)  ((EXT2_SYSTEM<<12) | (STRXXX_SYSTEM<<7) | (x))
 
 extern inline const char *rts2name(int rts_id)
 {
@@ -702,12 +636,8 @@ extern inline const char *rts2name(int rts_id)
 		return "L4" ;
 	case FPS_SYSTEM :
 		return "FPS" ;
-	case ETOF_SYSTEM :
-		return "ETOF" ;
-	case FCS_SYSTEM :
-		return "FCS" ;
-	case RHICF_SYSTEM :
-		return "RHICF" ;
+	case STRXXX_SYSTEM :
+		return "STRXXX" ;
 	default :
 	  return (const char *)NULL ;	// unknown!
 	}
@@ -770,12 +700,8 @@ extern inline const char *rts2sfs_name(int rts_id)
 		return "l4" ;
 	case FPS_SYSTEM :
 		return "fps" ;
-	case ETOF_SYSTEM :
-		return "etof";
-	case RHICF_SYSTEM :
-		return "rhicf";
-	case FCS_SYSTEM :
-		return "fcs";
+	case STRXXX_SYSTEM :
+		return "strxxx";
 	default :
 	  return (const char *)NULL ;	// unknown!
 	}
@@ -821,9 +747,7 @@ extern inline int rts2det(int ix)
 //	case RPII_ID :
 	case GMT_ID :
 	case FPS_ID:
-	case ETOF_ID:
-	case RHICF_ID:
-	case FCS_ID:
+	case STRXXX_ID:
 		return ix ;
 	default :
 		return -1 ;
@@ -855,10 +779,10 @@ extern inline int rts2tcd(int rts)
 		TCD_BSMD,	//18
 		TCD_ESMD,	//19
 		TCD_TPX,	//20
-		TCD_RHICF,	//21 PXL
+		TCD_PXL,	//21 PXL
 		TCD_MTD,	//22 MTD
-		TCD_FCS,	//23 IST
-		TCD_ETOF,	//24 SST
+		TCD_IST,	//23 IST
+		TCD_SST,	//24 SST
 		-1,		//25 
 		TCD_GMT,	//26 GMT
 		-1,		//27
@@ -888,7 +812,7 @@ extern inline int tcd2rts(int tcd)
         -1,		//7 BBC
         ETOW_SYSTEM,	//8
         -1,		//9 ; used for MTD_QT, was SSD?
-        FCS_SYSTEM,	//10 ; moved from FGT; moved from FPD
+        IST_SYSTEM,	//10 ; moved from FGT; moved from FPD
         TOF_SYSTEM,	//11
         PP_SYSTEM,	//12 ; moved from SVT_SYSTem to PP!
         MTD_SYSTEM,	//13 was EMPTY in FY10, MTD in FY11
@@ -896,8 +820,8 @@ extern inline int tcd2rts(int tcd)
         BSMD_SYSTEM,	//15
         -1,		//16 CTB aka ZDC
         BTOW_SYSTEM,	//17
-        ETOF_SYSTEM,	//18
-        RHICF_SYSTEM,	//19
+        SST_SYSTEM,	//18
+        PXL_SYSTEM,	//19
         GMT_SYSTEM,	//20 GMT; EMPTY until Aug 11; TPC was here... removed Sep 08
         -1,		//21 VPD
         -1,		//22
@@ -919,9 +843,9 @@ extern inline int tcd2rts(int tcd)
 
 // BTOW, ETOW now part of trigger:   jan 2008
 #define LEGACY_DETS (1<<FTP_ID)
-#define DAQ1000_DETS ((1<<TPX_ID) | (1<<TOF_ID) | (1<<RHICF_ID) | (1<<PMD_ID) | (1<<ESMD_ID) | (1<<PP_ID) | (1<<FGT_ID) | \
-		      (1<<L3_ID) | (1 << BSMD_ID) | (1 << MTD_ID) | (1<<ETOF_ID) | (1<<GMT_ID) | (1<<BTOW_ID) | (1<<ETOW_ID)) | (1<<FPS_ID) |\
-			(1<<FCS_ID) 
+#define DAQ1000_DETS ((1<<TPX_ID) | (1<<TOF_ID) | (1<<PXL_ID) | (1<<PMD_ID) | (1<<ESMD_ID) | (1<<PP_ID) | (1<<FGT_ID) | \
+		      (1<<L3_ID) | (1 << BSMD_ID) | (1 << MTD_ID) | (1<<IST_ID) | (1<<SST_ID) | (1<<GMT_ID) | (1<<BTOW_ID) | (1<<ETOW_ID)) | (1<<FPS_ID) |\
+			(1<<STRXXX_ID) 
 
 // 2009... unused dets:  SSD/SVT/TPC/PMD/HFT --->  FTPGROUP
 extern inline u_int grp2rts_mask(int grp)
@@ -930,8 +854,8 @@ extern inline u_int grp2rts_mask(int grp)
 
 	ret = 0 ;
 
-	if(grp & (1<<ETOF_GRP)) {
-	  ret  |= (1<<ETOF_SYSTEM) ;
+	if(grp & (1<<SST_GRP)) {
+	  ret  |= (1<<SST_SYSTEM) ;
 	}
 	if(grp & (1 << PP_GRP)) {
 	  ret |= (1 << PP_SYSTEM);
@@ -954,11 +878,11 @@ extern inline u_int grp2rts_mask(int grp)
 	if(grp & (1 << TPX_GRP)) {
 	  ret |= (1 << TPX_SYSTEM);
 	}
-	if(grp & (1 << RHICF_GRP)) {
-	  ret |= (1 << RHICF_SYSTEM);
+	if(grp & (1 << PXL_GRP)) {
+	  ret |= (1 << PXL_SYSTEM);
 	}
-	if(grp & (1 << FCS_GRP)) {
-	  ret |= (1 << FCS_SYSTEM);
+	if(grp & (1 << IST_GRP)) {
+	  ret |= (1 << IST_SYSTEM);
 	}
 	if(grp & (1 << MTD_GRP)) {
 	  ret |= (1 << MTD_SYSTEM);
@@ -990,16 +914,21 @@ extern inline int rts2grp(int rts)
 		return TOF_GRP;
 	case TPX_ID:
 		return TPX_GRP;
+	case FGT_ID:
+		return IST_GRP;
 	case MTD_ID:
 		return MTD_GRP;
 	case GMT_ID :
 		return GMT_GRP;
-	case ETOF_ID :
-		return ETOF_GRP;
-	case RHICF_ID :
-		return RHICF_GRP;
-	case FCS_ID :
-		return FCS_GRP ;
+	// Tonko, Aug 11: filled them all
+	case SST_ID :
+		return SST_GRP;
+	case PXL_ID :
+		return PXL_GRP;
+	case IST_ID :
+		return IST_GRP ;
+//	case RPII_ID :
+//		return RPII_GRP ;
 	default:
 		return 31 ;	// this is an ERROR since groups < 16
    }

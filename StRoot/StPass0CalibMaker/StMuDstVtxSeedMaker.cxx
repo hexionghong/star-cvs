@@ -43,7 +43,7 @@ Int_t StMuDstVtxSeedMaker::Make() {
     return kStErr;
   }
  
-  int result = kStOk;
+  Int_t result = kStOk;
   for (pvn=0; pvn<mudst->numberOfPrimaryVertices(); pvn++) {
     result = StVertexSeedMaker::Make();
     if (result != kStOk) break;
@@ -52,8 +52,8 @@ Int_t StMuDstVtxSeedMaker::Make() {
   return result;
 }
 //_____________________________________________________________________________
-bool StMuDstVtxSeedMaker::CheckTriggers() {
-  bool notTrig = kTRUE;
+Bool_t StMuDstVtxSeedMaker::CheckTriggers() {
+  Bool_t notTrig = kTRUE;
 
   // Check trigger ids
   StMuTriggerIdCollection& trigIdColl = event->triggerIdCollection();
@@ -66,7 +66,7 @@ bool StMuDstVtxSeedMaker::CheckTriggers() {
   return notTrig;
 }
 //_____________________________________________________________________________
-int StMuDstVtxSeedMaker::GetEventData() {
+Int_t StMuDstVtxSeedMaker::GetEventData() {
   // Get primary vertex from MuEvent
   StMuPrimaryVertex* primVtx = mudst->primaryVertex(pvn);
   if (!primVtx) {
@@ -77,7 +77,6 @@ int StMuDstVtxSeedMaker::GetEventData() {
   zdc = (float) (runInfo.zdcCoincidenceRate());
   fill = (int) (runInfo.beamFillNumber(blue));
   run = runInfo.runId();
-  timeEvent = event->eventInfo().time();
 
   StThreeVectorF pvert = primVtx->position();
   StThreeVectorF epvert = primVtx->posError();
@@ -139,17 +138,14 @@ int StMuDstVtxSeedMaker::GetEventData() {
 //_____________________________________________________________________________
 void StMuDstVtxSeedMaker::PrintInfo() {
   LOG_INFO << "\n**************************************************************"
-           << "\n* $Id: StMuDstVtxSeedMaker.cxx,v 1.15 2016/08/02 21:17:17 genevb Exp $"
+           << "\n* $Id: StMuDstVtxSeedMaker.cxx,v 1.14 2015/05/18 21:25:47 genevb Exp $"
            << "\n**************************************************************" << endm;
 
   if (Debug()) StVertexSeedMaker::PrintInfo();
 }
 //_____________________________________________________________________________
-// $Id: StMuDstVtxSeedMaker.cxx,v 1.15 2016/08/02 21:17:17 genevb Exp $
+// $Id: StMuDstVtxSeedMaker.cxx,v 1.14 2015/05/18 21:25:47 genevb Exp $
 // $Log: StMuDstVtxSeedMaker.cxx,v $
-// Revision 1.15  2016/08/02 21:17:17  genevb
-// Added tDay,tFill to resNtuple, and improved C++11 compliance
-//
 // Revision 1.14  2015/05/18 21:25:47  genevb
 // Use HFT hits
 //

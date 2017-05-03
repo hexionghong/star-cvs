@@ -25,7 +25,11 @@ extern "C" {
 
   };
 
+  void gsking_(int &igk);
+
 }
+//
+void gsking( int igk ){ gsking_(igk); }
 //
 // --------------------------------------------------------------------------------------------------
 //
@@ -72,7 +76,8 @@ Int_t AgUDecay::operator()()
   int np = mDecayer -> ImportParticles( mArray ); if ( np<1 ) return np;
 
   // Flag deselected particles
-  vector<int> flags(np);
+  //vector<int> flags(np); // this causes a mystery crash when flags dtor is called
+  int flags[np]; for ( int i=0;i<np;i++ ) flags[i] = 0;
 
   //  mArray -> Print();
 
@@ -125,12 +130,19 @@ Int_t AgUDecay::operator()()
 
 	}
 
+      
+      int kflag = 0;
 
       // Long lived particles are stacked for further tracking.  
       if ( 1 != status )
       	{
+
+	  bool stack = true;
+
+	  if ( pdgid == 15 || pdgid == -15 ) stack=false;
+
       	  double lifetime = mDecayer->GetLifetime(pdgid); 
-      	  if ( true /* lifetime > double( 1.0E-15 ) */ )
+      	  if ( stack /* lifetime > double( 1.0E-15 ) */ )
       	    {
       	      // Particle is stacked, skip daughters
       	      if (first>0) for (int j=first;j<=last;j++ ) flags[j]=1;
@@ -144,9 +156,9 @@ Int_t AgUDecay::operator()()
       	    {
       	      // Particle is decayed (skipped), stack daughters
       	      //LOG_INFO << "Decay particle, stack daughters tlife=" << lifetime << endm;
-      	      particlePDG->Print();
+	      //      	      particlePDG->Print();
       	      flags[i] = 1; 
-      	      continue; 
+	      //	      continue; 
       	    }
       	  else {
 	    //      	    LOG_INFO << "Stack particle, stable tlife=" << lifetime << endm;
@@ -180,10 +192,25 @@ Int_t AgUDecay::operator()()
       // time of flight offset (mm)... (huh?)
       (gcking.tofd[index])    = 0.;
 
+      // Set the flag to handle the particle in GSKING.   We currently skip particles
+      // which we have decayed with the "continue" statements above.  This is because
+      // the STAR stepping routine drops the iflgk flag before the call to gsking which
+      // processes it.... 
+      //
+      // so in order to preserve the particle in the event record, we will need to add
+      // a call to gsking in this routine.  (And test test test test...) 
+      (gcking.iflgk[index])   = kflag;
+
       // And increase stack counter
       index++;
 
     }
+
+
+  /* call */ gsking(0); // store daughters in the kinematics bank
+
+  gcking.ngkine = 0;     // and reset
+
 
 
   return np;
