@@ -4,14 +4,15 @@
 
 ClassImp(StMuMtdHeader)
 
-StMuMtdHeader::StMuMtdHeader() : mFiberHeader1(0), mFiberHeader2(0), mFiberTriggerWord1(0), mFiberTriggerWord2(0),
-  mTriggerTime1(0), mTriggerTime2(0), mShouldHaveRejectEvent(-1), mTpcSectorMask(0)
-{
-  // default constructor
-}
-
-StMuMtdHeader::StMuMtdHeader(const StMtdHeader *header) : StMuMtdHeader()
-{
+StMuMtdHeader::StMuMtdHeader(const StMtdHeader *header){
+  mFiberHeader1 = 0;
+  mFiberHeader2 = 0;
+  mFiberTriggerWord1 = 0;
+  mFiberTriggerWord2 = 0;
+  mTriggerTime1 = 0;
+  mTriggerTime2 = 0;
+  mShouldHaveRejectEvent = -1;
+  mTpcSectorMask = 0;
   if (header){
     for(int i=0; i<header->MAXFIBER; i++){
       if(i==0) {

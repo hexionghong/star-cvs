@@ -1,5 +1,5 @@
 /*******************************************************************
- * $Id: StMtdMatchMaker.cxx,v 1.36 2016/08/05 16:12:24 marr Exp $
+ * $Id: StMtdMatchMaker.cxx,v 1.33 2015/10/16 19:04:55 marr Exp $
  * Author: Bingchu Huang
  *****************************************************************
  *
@@ -9,15 +9,6 @@
  *****************************************************************
  *
  * $Log: StMtdMatchMaker.cxx,v $
- * Revision 1.36  2016/08/05 16:12:24  marr
- * Add MTD hit IdTruth to avoid applying dy shift for BL 8 and 24 for MC hits
- *
- * Revision 1.35  2016/07/28 14:31:23  marr
- * Fix coverity check: initialization of data member
- *
- * Revision 1.34  2016/07/27 15:46:34  marr
- * Fix coverity check: initialization of data members
- *
  * Revision 1.33  2015/10/16 19:04:55  marr
  * Remove filling trees
  *
@@ -221,29 +212,24 @@ using namespace std;
 /// Default constructor: set default values
 StMtdMatchMaker::StMtdMatchMaker(const Char_t *name): StMaker(name)
 {
-        mBeamHelix = NULL;
 	doPrintMemoryInfo = kFALSE;
 	doPrintCpuInfo    = kFALSE;
-	mCosmicFlag=kFALSE;
-
 	mMinFitPointsPerTrack=15;
 	mMindEdxFitPoints=10;
-	mMinFitPointsOverMax=0.52;
 	mMinEta=-0.8;
 	mMaxEta=0.8;
 	mMinPt = 1.0;
-
-	mMuDstIn = kFALSE;
-	mHisto = kFALSE;
-	memset(mVDrift,0,sizeof(mVDrift));
-	mnNeighbors = kTRUE;
-	mNExtraCells = 3;
-	index2Primary.clear();
-
+	mMinFitPointsOverMax=0.52;
+	mCosmicFlag=kFALSE;
 	mELossFlag=kTRUE;
 	mLockBField = kFALSE;
 	mMtdGeom = 0;
 
+	mnNeighbors = kTRUE;
+	mNExtraCells = 3;
+	//mZLocalCut = 43.5;
+	mNSigReso = 3.; // n sigma of z and y resolution.
+	mHisto = kFALSE;
 	ngTracks = 0;
 	mEvent = NULL;
 	mMuDst = NULL;
@@ -254,52 +240,7 @@ StMtdMatchMaker::StMtdMatchMaker(const Char_t *name): StMaker(name)
 	fPhiReso = new TF1("fPhiReso","sqrt([0]/x/x+[1])",0,100);
 	fPhiReso->SetParameters(9.514e-4,7.458e-6); //rad
 
-	mEventCounterHisto            = NULL;
-	mCellsMultInEvent             = NULL;
-	mHitsMultInEvent              = NULL;
-	mHitsPrimaryInEvent           = NULL;
-	mHitsGlobalInEvent            = NULL;
-	mHitsMultPerTrack             = NULL;
-	mHitsPosition                 = NULL;
-	for(int i=0; i<mNBacklegs; i++)
-	  {
-	    mDaqOccupancy[i]          = NULL;
-	    mDaqOccupancyProj[i]      = NULL;
-	    mHitCorr[i]               = NULL;
-	    mHitCorrModule[i]         = NULL;
-	    mDeltaHitFinal[i]         = NULL;
-	  }
-	mTrackPtEta                   = NULL;
-	mTrackPtPhi                   = NULL;
-	mTrackNFitPts                 = NULL;
-	mTrackdEdxvsp                 = NULL;
-	mNSigmaPivsPt                 = NULL;
-	mCellsPerEventMatch1          = NULL;
-	mHitsPerEventMatch1           = NULL;
-	mCellsPerTrackMatch1          = NULL;
-	mTracksPerCellMatch1          = NULL;
-	mDaqOccupancyMatch1           = NULL;
-	mDeltaHitMatch1               = NULL;
-	mCellsPerEventMatch2          = NULL;
-	mHitsPerEventMatch2           = NULL;
-	mCellsPerTrackMatch2          = NULL;
-	mTracksPerCellMatch2          = NULL;
-	mDaqOccupancyMatch2           = NULL;
-	mDeltaHitMatch2               = NULL;
-	mCellsPerEventMatch3          = NULL;
-	mHitsPerEventMatch3           = NULL;
-	mCellsPerTrackMatch3          = NULL;
-	mTracksPerCellMatch3          = NULL;
-	mDaqOccupancyMatch3           = NULL;
-	mDeltaHitMatch3               = NULL;
-	mCellsPrimaryPerEventMatch3   = NULL;
-	hphivsz                       = NULL;
-	hTofPhivsProj                 = NULL;
-	hTofZvsProj                   = NULL;
-	hMtdZvsProj                   = NULL;
-	hMtdPhivsProj                 = NULL;
-	hMtddPhivsBackleg             = NULL;
-	hMtddZvsBackleg               = NULL;
+	return;
 }
 
 StMtdMatchMaker::~StMtdMatchMaker(){
@@ -882,7 +823,6 @@ Bool_t StMtdMatchMaker::readMtdHits(mtdCellHitVector& daqCellsHitVec,idVector& v
 			aDaqCellHit.tot=aHit->tot();
 			aDaqCellHit.leadingEdgeTime=aHit->leadingEdgeTime();
 			aDaqCellHit.index2MtdHit=i;
-			aDaqCellHit.idTruth = aHit->idTruth();
 			daqCellsHitVec.push_back(aDaqCellHit);
 
 			//additional valid number configuration
@@ -936,7 +876,6 @@ Bool_t StMtdMatchMaker::readMtdHits(mtdCellHitVector& daqCellsHitVec,idVector& v
 			aDaqCellHit.tot=aHit->tot();
 			aDaqCellHit.leadingEdgeTime=aHit->leadingEdgeTime();
 			aDaqCellHit.index2MtdHit=i;
-			aDaqCellHit.idTruth = aHit->idTruth();
 			daqCellsHitVec.push_back(aDaqCellHit);
 
 			//additional valid number configuration
@@ -1212,7 +1151,6 @@ void StMtdMatchMaker::matchMtdHits(mtdCellHitVector& daqCellsHitVec,mtdCellHitVe
 				cellHit.theta = proIter->theta;
 				cellHit.pathLength = proIter->pathLength;
 				cellHit.expTof2MTD = proIter->expTof2MTD;
-				cellHit.idTruth = daqIter->idTruth;
 				matchHitCellsVec.push_back(cellHit);
 			}
 		} 
@@ -1261,7 +1199,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
 		      cellHit.theta = tempIter->theta;
 		      cellHit.pathLength = tempIter->pathLength;
 		      cellHit.expTof2MTD = tempIter->expTof2MTD;
-		      cellHit.idTruth = tempIter->idTruth;
 		      if(Debug())
 			{
 			  LOG_INFO<<"track Info: "<<cellHit.zhit<<" "<<cellHit.yhit<<endm;
@@ -1284,7 +1221,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
 		  cellHit_candidate.theta = erasedIter->theta;
 		  cellHit_candidate.pathLength = erasedIter->pathLength;
 		  cellHit_candidate.expTof2MTD = erasedIter->expTof2MTD;
-		  cellHit_candidate.idTruth = erasedIter->idTruth;
 		  multiHitsCellsVec_temp.push_back(cellHit_candidate);
 		  if(Debug())
 		    {
@@ -1315,7 +1251,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
       cellHit.theta = tempIter->theta;
       cellHit.pathLength = tempIter->pathLength;
       cellHit.expTof2MTD = tempIter->expTof2MTD;
-      cellHit.idTruth = tempIter->idTruth;
 
       if (nTracks==1)
 	{
@@ -1383,7 +1318,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
       vector<Double_t> vpathLength;
       vector<Double_t> vexpTof2MTD;
       vector<Int_t> vindex2MtdHit;
-      vector<Int_t> vidTruth;
 
       mtdCellHitVectorIter temp_Iter=tempVec_2Trck.begin();
       mtdCellHitVectorIter erased_Iter=erasedVec_2Trck.begin();
@@ -1409,7 +1343,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
 	      vtheta.push_back(erased_Iter->theta);
 	      vpathLength.push_back(erased_Iter->pathLength);
 	      vexpTof2MTD.push_back(erased_Iter->expTof2MTD);
-	      vidTruth.push_back(erased_Iter->idTruth);
 	      if(Debug())
 		{
 		  LOG_INFO<<"ntracks ="<<ntracks<<endm;
@@ -1440,10 +1373,9 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
 	    Int_t   ibackleg = vbackleg[j];
 	    Int_t   imodule  = vmodule[j];
 	    Int_t   icell    = vcell[j];
-	    Int_t   iidTruth = vidTruth[j];
 
 	    Float_t trkLocalY = vyhit[j];
-	    Float_t hitLocalY = mMtdGeom->GetGeoModule(ibackleg,imodule)->GetCellLocalYCenter(icell,ibackleg,iidTruth);
+	    Float_t hitLocalY = mMtdGeom->GetGeoModule(ibackleg,imodule)->GetCellLocalYCenter(icell,ibackleg);
 	    Float_t dy = fabs(trkLocalY-hitLocalY);
 
 	    Float_t trkGlobalZ = vPosition[j].z();
@@ -1487,7 +1419,6 @@ void StMtdMatchMaker::sortSingleAndMultiHits(mtdCellHitVector& matchHitCellsVec,
 	      Cellhit.theta = vtheta[thiscandidate];
 	      Cellhit.pathLength = vpathLength[thiscandidate];
 	      Cellhit.expTof2MTD = vexpTof2MTD[thiscandidate];
-	      Cellhit.idTruth = vidTruth[thiscandidate];
 	      singleHitCellsVec.push_back(Cellhit);
 	      if(Debug())
 		{
@@ -1521,7 +1452,6 @@ void StMtdMatchMaker::finalMatchedMtdHits(mtdCellHitVector& singleHitCellsVec,mt
       vector<Double_t> vexpTof2MTD;
       vector<Int_t> vindex2MtdHit;
       vector<Int_t> vflag;
-      vector<Int_t> vidTruth;
       mtdCellHitVectorIter tempIter=tempVec.begin();
       mtdCellHitVectorIter erasedIter=erasedVec.begin();
       while(erasedIter!= erasedVec.end()) 
@@ -1543,7 +1473,6 @@ void StMtdMatchMaker::finalMatchedMtdHits(mtdCellHitVector& singleHitCellsVec,mt
 	      vflag.push_back(erasedIter->matchFlag);
 	      vpathLength.push_back(erasedIter->pathLength);
 	      vexpTof2MTD.push_back(erasedIter->expTof2MTD);
-	      vidTruth.push_back(erasedIter->idTruth);
 	      if(Debug())
 		{
 		  LOG_INFO<<"flag 1 ::"<<" "<<nCells<<" "<<erasedIter->matchFlag<<endm;
@@ -1572,7 +1501,6 @@ void StMtdMatchMaker::finalMatchedMtdHits(mtdCellHitVector& singleHitCellsVec,mt
 	  cellHit.theta = vtheta[0];
 	  cellHit.pathLength = vpathLength[0];
 	  cellHit.expTof2MTD = vexpTof2MTD[0];
-	  cellHit.idTruth = vidTruth[0];
 	  finalMatchedCellsVec.push_back(cellHit);
 
 	  if(Debug())
@@ -1620,10 +1548,9 @@ void StMtdMatchMaker::finalMatchedMtdHits(mtdCellHitVector& singleHitCellsVec,mt
 		  Int_t   ibackleg = vbackleg[ttCandidates[j]];
 		  Int_t   imodule = vmodule[ttCandidates[j]];
 		  Int_t   icell = vcell[ttCandidates[j]];
-		  Int_t   iidTruth = vidTruth[ttCandidates[j]];
 
 		  Float_t trkLocalY = vyhit[ttCandidates[j]];
-		  Float_t hitLocalY = mMtdGeom->GetGeoModule(ibackleg,imodule)->GetCellLocalYCenter(icell,ibackleg,iidTruth);
+		  Float_t hitLocalY = mMtdGeom->GetGeoModule(ibackleg,imodule)->GetCellLocalYCenter(icell,ibackleg);
 		  Float_t dy = fabs(trkLocalY-hitLocalY);
 		  
 		  Float_t trkGlobalZ = vPosition[ttCandidates[j]].z();
@@ -1672,7 +1599,6 @@ void StMtdMatchMaker::finalMatchedMtdHits(mtdCellHitVector& singleHitCellsVec,mt
 	      cellHit.theta = vtheta[thiscandidate];
 	      cellHit.pathLength = vpathLength[thiscandidate];
 	      cellHit.expTof2MTD = vexpTof2MTD[thiscandidate];
-	      cellHit.idTruth = vidTruth[thiscandidate];
 	      
 	      finalMatchedCellsVec.push_back(cellHit);
 	      
@@ -1705,8 +1631,7 @@ void StMtdMatchMaker::fillPidTraits(mtdCellHitVector& finalMatchedCellsVec,Int_t
 		Float_t trkLocalZ  = finalMatchedCellsVec[ii].zhit;
 		Float_t trkGlobalZ = finalMatchedCellsVec[ii].hitPosition.z();
 
-		Int_t   hitIdTruth = finalMatchedCellsVec[ii].idTruth;
-		Float_t hitLocalY = mMtdGeom->GetGeoModule(backleg,module)->GetCellLocalYCenter(cell,backleg,hitIdTruth);
+		Float_t hitLocalY = mMtdGeom->GetGeoModule(backleg,module)->GetCellLocalYCenter(cell,backleg);
 		Float_t LeTimeWest = finalMatchedCellsVec[ii].leadingEdgeTime.first;
 		Float_t LeTimeEast = finalMatchedCellsVec[ii].leadingEdgeTime.second;
 		Float_t hitGlobalZ = getMtdHitGlobalZ(LeTimeWest, LeTimeEast, module);
@@ -1785,11 +1710,11 @@ void StMtdMatchMaker::fillPidTraits(mtdCellHitVector& finalMatchedCellsVec,Int_t
 			// get track-id from cell hit vector
 			StSPtrVecTrackNode &nodes = mEvent->trackNodes();
 			StGlobalTrack *globalTrack = dynamic_cast<StGlobalTrack*>(nodes[trackNode]->track(global));
+			StPrimaryTrack *primaryTrack =dynamic_cast<StPrimaryTrack*>(globalTrack->node()->track(primary));
 			if(!globalTrack) {
 				LOG_WARN << "Wrong global track!" << endm;
 				continue;
 			}
-			StPrimaryTrack *primaryTrack =dynamic_cast<StPrimaryTrack*>(globalTrack->node()->track(primary));
 
 			// Fill association in MTD Hit Collection
 			StMtdCollection *theMtd  = mEvent->mtdCollection();

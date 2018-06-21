@@ -1,16 +1,7 @@
 /***************************************************************************
  *
- * $Id: StMcTpcHit.hh,v 2.16 2016/09/18 22:43:02 fisyak Exp $
+ * $Id: StMcTpcHit.hh,v 2.13 2012/03/01 16:48:30 perev Exp $
  * $Log: StMcTpcHit.hh,v $
- * Revision 2.16  2016/09/18 22:43:02  fisyak
- * increament version no.
- *
- * Revision 2.15  2016/09/18 22:41:39  fisyak
- * Add no. of primary electrons
- *
- * Revision 2.14  2016/07/26 15:10:13  jwebb
- * Initialize members in ctor / coverity
- *
  * Revision 2.13  2012/03/01 16:48:30  perev
  * method Browse() added
  *
@@ -77,13 +68,7 @@
 
 class StMcTpcHit : public StMcHit {
 public:
-  StMcTpcHit() : StMcHit(),
-		 mLgamma(0),
-		 mAdc(0),
-		 mMcl_x(0),
-		 mMcl_t(0),
-		 mnP(0)
-  {}
+     StMcTpcHit() {}
 //   StMcTpcHit(const StThreeVectorF& x,const StThreeVectorF& p,
 // 	     Float_t de = 0, Float_t ds = 0, Float_t tof = 0, Long_t k = 0, Long_t volId = 0, StMcTrack* parent=0, 
 // 	     Float_t adc = 0, Float_t cl_x = 0, Float_t cl_t = 0): 
@@ -92,7 +77,7 @@ public:
     StMcHit(StThreeVectorF(pt->x[0], pt->x[1], pt->x[2]),
 	    StThreeVectorF(pt->p[0], pt->p[1], pt->p[2]), 
 	    pt->de, pt->ds, pt->tof, pt->id, pt->volume_id, 0), 
-    mLgamma(pt->lgam), mAdc(pt->adc), mMcl_x(pt->pad), mMcl_t(pt->timebucket), mnP(pt->np) {}
+    mLgamma(pt->lgam), mAdc(pt->adc), mMcl_x(pt->pad), mMcl_t(pt->timebucket) {}
   virtual ~StMcTpcHit() {}
   ULong_t sector()     const { return (mVolumeId%10000)/100; }// 1-24
   ULong_t padrow()     const { return (mVolumeId%100); }      // 1-45
@@ -110,8 +95,7 @@ private:
   Float_t     mAdc;        
   Float_t     mMcl_x;      /* average pad */
   Float_t     mMcl_t;      /* average timebucket */
-  Int_t       mnP;         /* no. of primary electrons */
-  ClassDef(StMcTpcHit,3)
+  ClassDef(StMcTpcHit,2)
 };
 
 ostream&  operator<<(ostream& os, const StMcTpcHit&);

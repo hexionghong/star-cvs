@@ -4,8 +4,6 @@
 #starver SL11d
 #stardev
 #setenv USE_64BITS 1
-#starver SL15l
-#
-# 7/14/16
-stardev
+starver SL15l
+
 #echo `STAR_LEVELS`
