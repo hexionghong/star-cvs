@@ -1,11 +1,8 @@
 /********************************************************************
- * $Id: StMtdGeometry.cxx,v 1.17 2016/08/05 16:12:34 marr Exp $
+ * $Id: StMtdGeometry.cxx,v 1.16 2015/07/29 14:52:47 smirnovd Exp $
  ********************************************************************
  *
  * $Log: StMtdGeometry.cxx,v $
- * Revision 1.17  2016/08/05 16:12:34  marr
- * Add MTD hit IdTruth to avoid applying dy shift for BL 8 and 24 for MC hits
- *
  * Revision 1.16  2015/07/29 14:52:47  smirnovd
  * Added class scope to static members (overlooked in previous commit)
  *
@@ -367,17 +364,12 @@ Float_t StMtdGeoModule::GetCellZCenter(Int_t iCell){
 }
 
 //_____________________________________________________________________________
-Float_t StMtdGeoModule::GetCellLocalYCenter(Int_t iCell, Int_t iBL, Int_t idTruth){
+Float_t StMtdGeoModule::GetCellLocalYCenter(Int_t iCell, Int_t iBL){
   Float_t cell_width = gMtdCellWidth+gMtdCellGap;
   Float_t y_center = (mModuleIndex<4? 1 : -1) * (iCell-gMtdNCells/2+0.5) * cell_width;
-  
-  if(idTruth==0)
-    {
-      // only needed for real hits
-      // MC hits are produced with ideal geometry
-      if(iBL==8)  y_center -= 3 * cell_width;
-      if(iBL==24) y_center += 2 * cell_width;
-    }
+
+  if(iBL==8)  y_center -= 3 * cell_width;
+  if(iBL==24) y_center += 2 * cell_width;
 
   return y_center;
 }

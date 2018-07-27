@@ -7,6 +7,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include <valgrind/callgrind.h>
+
 #ifndef HLTCA_STANDALONE
 #include <AliHLTTPCCAPerformance.h>
 #endif

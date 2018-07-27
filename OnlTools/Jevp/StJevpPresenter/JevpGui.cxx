@@ -237,7 +237,10 @@ void JevpGui::switchTabs(const char *newdisplay, const char *newbuilderlist) {
   RtsTimer_root clock;
   clock.record_time();
 
-  jl_displayFile->setDisplay(jl_displayFile->getDisplayNodeFromName(newdisplay));
+  int ret = jl_displayFile->setDisplay((char *)newdisplay);
+  if(ret == -1) {
+    LOG(ERR, "No display %s",newdisplay);
+  }
 
   static char evpMainDisplay[40];
   strcpy(evpMainDisplay, newdisplay);
@@ -245,8 +248,6 @@ void JevpGui::switchTabs(const char *newdisplay, const char *newbuilderlist) {
 
   LOG(NOTE, "Setting servertags to %s",newbuilderlist);
   jl_displayFile->setServerTags(newbuilderlist);
-
-  jl_displayFile->updateDisplayRoot();
 
   double t1 = clock.record_time();
 
@@ -701,8 +702,7 @@ int JevpGui::updateRunStatus()
     LOG(ERR,"Didn't get a RunStatus class: got %s\n",mess->GetClass()->GetName());
     exit(0);
   }
-
-  static int old_run_number = 0;
+ 
   CP;
   RunStatus *rs = (RunStatus *)mess->ReadObject(mess->GetClass());
   delete mess;
@@ -716,19 +716,9 @@ int JevpGui::updateRunStatus()
   char winlab[120];
   sprintf(winlab, "%s:  Run #%d  (%s for %d seconds)","Live",rs->run, rs->status, secs);
 
-  if(old_run_number != rs->run) {
-      // re-read the displayFile xxxxx
-      readDisplayFromServer();
-  }
-
-  old_run_number = rs->run;
   SetWindowName(winlab);
 
   delete rs;
-
-
-
-
   return 0;
 }
 
@@ -977,8 +967,6 @@ void JevpGui::readDisplayFromServer()
     msg.setArgs(evpMain->display);
     jl_send(&msg);
     
-    //printf("Getting response....\n");
-
     // get response...
     //printf("Waiting for tab data from server...\n");
     TMessage *mess;
@@ -1013,16 +1001,8 @@ void JevpGui::readDisplayFromServer()
     double t2 = clock.record_time();
 
 
-  
-    if(jl_displayFile) {
-	//printf("Delete display file\n");
-	delete jl_displayFile;
-    }
-
-    
+    CP;
     jl_displayFile = new DisplayFile();
-
-    //printf("tagdata->args: %d\n\n", strlen(tabdata->args));
 
     CP;
     jl_displayFile->ReadBuff(tabdata->args, strlen(tabdata->args));
@@ -1030,14 +1010,9 @@ void JevpGui::readDisplayFromServer()
     double t3 = clock.record_time();
     CP;
     
-    jl_displayFile->setDisplay(jl_displayFile->getDisplayNodeFromName(evpMain->display));
-    jl_displayFile->updateDisplayRoot();
+    jl_displayFile->setDisplay(evpMain->display);
     CP;
-     
-    free(serverTags);
-    serverTags = (char *)malloc(10);
-    strcpy(serverTags, "");
-
+    
     double t4 = clock.record_time();
     LOG(DBG, "Ethernet: set display %s (%lf %lf %lf %lf)",
 	evpMain->display, t1,t2,t3,t4);
@@ -1060,7 +1035,6 @@ void JevpGui::init()
     if(jl_ConnectToServerPort(evpMain->serverport,5) < 0) return;
     CP;
 
-    jl_displayFile = NULL;
     readDisplayFromServer();
 
     if(evpMain->display == NULL) {
@@ -1131,7 +1105,6 @@ void JevpGui::init()
     //  jl_displayFile->getDisplay(0);
 
     jl_displayFile->setServerTags("");
-    jl_displayFile->updateDisplayRoot();
     buildTabs(1);
 
     CP;
