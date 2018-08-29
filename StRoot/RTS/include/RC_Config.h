@@ -692,10 +692,7 @@ int putConfigFile(STAR_CFG *cfg, char *filename);
 //struct TrgCfg;
 struct TrgPS;
 
-char *confNum2String(int conf_num);
-int string2ConfNum(char *str);
-UINT32 getCrateMask4TrgDet(int det);
-UINT16 getTrgDetRequiredMask(char *node, int board=-1);
+UINT16 getTrgDetRequiredMask(char *node);
 
 void writeRCCNF(char *fn, STAR_CFG *cfg);   // write rc def file...
 

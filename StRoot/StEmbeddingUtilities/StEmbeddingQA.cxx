@@ -1,9 +1,6 @@
 /****************************************************************************************************
- * $Id: StEmbeddingQA.cxx,v 1.23 2016/10/27 15:50:20 zhux Exp $
+ * $Id: StEmbeddingQA.cxx,v 1.22 2012/03/05 10:32:19 cpowell Exp $
  * $Log: StEmbeddingQA.cxx,v $
- * Revision 1.23  2016/10/27 15:50:20  zhux
- * added an option to set the maximum pT cut, by Zachariah Miller
- *
  * Revision 1.22  2012/03/05 10:32:19  cpowell
  * Functions added to cut on refMult
  *
@@ -202,7 +199,6 @@ void StEmbeddingQA::init()
   mhdVz = 0 ;
   mhEventId = 0 ;
   mhRunNumber = 0 ;
-  mPtMax = 10. ;
 
   for(UInt_t ic=0; ic<StEmbeddingQAConst::mNCategory; ic++){
     mhNParticles[ic] = 0 ;
@@ -996,9 +992,9 @@ void StEmbeddingQA::expandHistograms(const Int_t categoryid, const Int_t geantid
   // Expand histograms
   mOutput->cd();
 
-  const Int_t ptBin    = 10 * mPtMax ;
+  const Int_t ptBin    = 100 ;
   const Float_t ptMin  = 0.0 ;
-  const Float_t ptMax  = mPtMax ;
+  const Float_t ptMax  = 10.0 ;
   const Int_t etaBin   = 100 ;
   const Float_t etaMin = -2.5 ;
   const Float_t etaMax =  2.5 ;
@@ -1232,8 +1228,3 @@ TString StEmbeddingQA::getIdCollection(const Int_t geantid, const Int_t parentid
   return Form("%d_%d_%d", geantid, parentid, parentparentid) ;
 }
 
-void StEmbeddingQA::setPtMax(Float_t ptmax)
-{
-  mPtMax = ptmax;
-  LOG_INFO << Form("Maximum p_T for histograms set to %f", mPtMax) << endm; 
-}
