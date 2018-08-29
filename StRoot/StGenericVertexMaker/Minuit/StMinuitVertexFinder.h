@@ -88,7 +88,7 @@
  *  myvertex.UseVertexConstraint(x0,y0,dzdy,dydz,weight)
  *
  *
- *  $Id: StMinuitVertexFinder.h,v 1.21 2016/08/18 17:46:13 smirnovd Exp $
+ *  $Id: StMinuitVertexFinder.h,v 1.13 2015/10/09 18:54:02 genevb Exp $
  *
  */
 
@@ -101,17 +101,16 @@
 class StEvent;
 class StTrack;
 class TMinuit;
-
-
-class StMinuitVertexFinder: public StGenericVertexFinder
-{
+class StDcaGeometry;
+class StMinuitVertexFinder: public StGenericVertexFinder {
 public:
-    StMinuitVertexFinder(VertexFit_t fitMode=VertexFit_t::NoBeamline);
+    StMinuitVertexFinder();
 
     // mandatory implementations
     virtual        ~StMinuitVertexFinder();
     Int_t           fit(StEvent*);       
     void            printInfo(ostream& = cout) const;
+    void            UseVertexConstraint(Double_t x0, Double_t y0, Double_t dxdz, Double_t dydz, Double_t weight);
     virtual void    InitRun  (Int_t runumber);
     void            Clear();
 
@@ -143,11 +142,8 @@ private:
     void    calculateRanks();
     Int_t   findSeeds();
 
-    virtual void UseVertexConstraint();
-
     static void fcn(Int_t&, Double_t*, Double_t&, Double_t*, Int_t); // fit function
     static void fcn1D(Int_t&, Double_t*, Double_t&, Double_t*, Int_t); // fit function
-    static void Chi2Beamline3D(Int_t&, Double_t*, Double_t&, Double_t*, Int_t);
     static Double_t Chi2atVertex(StThreeVectorD &vtx);
     
     bool                   mUseITTF;          // Use only tracks with ITTF encoded method
@@ -157,6 +153,7 @@ private:
     bool                   mRequireCTB;       // Set maker to use CTB
     UInt_t                 mMinNumberOfFitPointsOnTrack;
     Float_t                mDcaZMax;
+    Double_t               mWeight ;          // Weight in fit for vertex contraint
     Double_t               mRImpactMax;       // Max distance between helix and nominal beamline (0,0,z)
     Int_t                  mMinTrack;         // Min number of tracks
     Float_t                mZMin;             // Min z of possible vertex positions
@@ -165,12 +162,10 @@ private:
     StPhysicalHelixD*      mBeamHelix;        // Beam Line helix
     
     enum                   {maxSeed=500};
-
-    /// The number of vertex seeds found in current event
-    Int_t  mNSeed;
-
+    Int_t                  mNSeed;
     Float_t                mSeedZ[maxSeed];
     Int_t                  mBemcHit[120][20][2];  // modules, eta, sub
+    static vector<StDcaGeometry*>   mDCAs;
     static vector<StPhysicalHelixD> mHelices;
     static vector<UShort_t>         mHelixFlags;
     static vector<Double_t>         mSigma;
@@ -179,6 +174,12 @@ private:
     static Bool_t                   requireCTB;
     static Int_t                    nCTBHits;
     static Double_t                 mWidthScale;
+    static Double_t                 mX0  ; // starting point of beam parameterization
+    static Double_t                 mY0  ; // starting point of beam parameterization
+    static Double_t                 mdxdz; // beam slope
+    static Double_t                 mdydz; // beam slope
+    static Double_t beamX(Double_t z); // beamline parameterization
+    static Double_t beamY(Double_t z); // beamline parameterization
     Int_t                    mStatusMin;           // Minuit status flag 
     StThreeVectorD           mExternalSeed;
     Bool_t                   mExternalSeedPresent;
@@ -187,3 +188,77 @@ private:
     Float_t                  mCTBSum;
     TMinuit*                 mMinuit;
 };
+/***************************************************************************
+ *
+ * $Log: StMinuitVertexFinder.h,v $
+ * Revision 1.13  2015/10/09 18:54:02  genevb
+ * Use new vertex-finding parameters ZMin,ZMax
+ *
+ * Revision 1.12  2010/12/06 20:07:23  fisyak
+ * Increase maximum number of possible seeds
+ *
+ * Revision 1.11  2010/01/26 21:01:49  fisyak
+ * Clean up, switch from bit mask to attributes
+ *
+ * Revision 1.10  2008/07/31 18:11:10  genevb
+ * VFMinuit3 chain option for lower ranking of split vertices
+ *
+ * Revision 1.9  2008/04/12 10:53:20  mvl
+ * Changed calculation of BEMC matches based ranking to fix problems with run-7 Au+Au.
+ * See also: http://www.star.bnl.gov/protected/highpt/mvl/multi_vertex/update_R7.html
+ * Old calculation can be selected with UseOldBEMCRank()
+ *
+ * Revision 1.8  2007/10/23 05:29:44  genevb
+ * Replace minimum 1 track vertex code with minimum N tracks
+ *
+ * Revision 1.7  2007/05/17 01:50:35  fisyak
+ * Use PrimaryVertexCuts table
+ *
+ * Revision 1.6  2006/05/31 04:09:52  fisyak
+ * Use dca track parameters for primary vertex fit
+ *
+ * Revision 1.5  2006/05/10 17:16:21  mvl
+ * Added some comments to describe changes for multiple veretx finding (most importantly: ranking system)
+ *
+ * Revision 1.4  2006/05/09 17:51:05  mvl
+ * Added protection against event->emcCollection()==0
+ *
+ * Revision 1.3  2006/04/25 13:06:44  mvl
+ * Seed-finding range extended to -200<vtx_z<200
+ *
+ * Revision 1.2  2006/04/08 19:06:29  mvl
+ * Update for multiple vertex finding and rank calculation for identifying the
+ * triggered vertex. Ranks are based on mean dip angle of tracks, BEMC matches
+ * and tracks crossing the central membrane and optimised for Cu+Cu.
+ * The track cuts are now bit tighter (dca<2 in transverse direction and
+ * nfitpoints > 15) to suppress 'fake' vertices.
+ * In addition, a lower multiplicity cut of 5 tracks is implemented.
+ *
+ * Revision 1.9  2005/07/19 21:53:27  perev
+ * MultiVertex
+ *
+ * Revision 1.8  2005/06/21 02:16:36  balewski
+ * multiple prim vertices are stored in StEvent
+ *
+ * Revision 1.7  2004/08/04 21:57:56  balewski
+ * toward smarter ppLMV5
+ *
+ * Revision 1.6  2004/07/23 02:24:39  jeromel
+ * Oops ... Worng swithc (had twice Minuit). Now corrected.
+ *
+ * Revision 1.5  2004/07/23 00:59:36  jeromel
+ * Removed methods (moved in base class) + doxygenized
+ *
+ * Revision 1.4  2004/04/06 02:43:43  lbarnby
+ * Fixed identification of bad seeds (no z~0 problem now). Better flagging. Message manager used.
+ *
+ * Revision 1.3  2003/05/12 21:10:06  lbarnby
+ * Made destructor virtual
+ *
+ * Revision 1.2  2003/05/09 22:19:51  lbarnby
+ * Now also calculates and reports error on vertex. Corrected filter to use ITTF tracks. Some temporary protections against inf/Nan. Skip delete of TMinuit class since causing seg. fault.
+ *
+ * Revision 1.1  2002/12/05 23:42:46  hardtke
+ * Initial Version for development and integration
+ *
+ **************************************************************************/

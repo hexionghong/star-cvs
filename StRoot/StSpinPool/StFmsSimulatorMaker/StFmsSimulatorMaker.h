@@ -28,7 +28,7 @@ private:
   void fillStEvent(const StMcEvent*, StEvent*);
   void printStEventSummary(const StEvent*);
 
-  StFmsDbMaker*      mFmsDbMaker=0;  //!
+  StFmsDbMaker*      mFmsDbMaker;  //!
 
   ClassDef(StFmsSimulatorMaker,0);
 };

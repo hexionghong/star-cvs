@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: DbRead.cxx,v 1.10 2016/05/24 18:02:27 dmitry Exp $
+ * $Id: DbRead.cxx,v 1.9 2015/05/21 18:29:06 dmitry Exp $
  *
  * Author: S. Vanyashin 
  * Updated by:  R. Jeff Porter
@@ -12,9 +12,6 @@
  ***************************************************************************
  *
  * $Log: DbRead.cxx,v $
- * Revision 1.10  2016/05/24 18:02:27  dmitry
- * final fix for StDbBroker
- *
  * Revision 1.9  2015/05/21 18:29:06  dmitry
  * small memory leak and type conversion warnings fixed
  *
@@ -158,7 +155,7 @@ int latestDirTime;
  int i2, i3;
 
 //convert hhmmss from: 1999-06-17 12:48:33
- strncpy(row,mtable->getBeginDateTime(),19); row[19] = '\0';
+ strcpy(row,mtable->getBeginDateTime());
  
                 strncpy(validFrom,row,19);validFrom[19]='\0';
                 //start from blank at position row[0][10] 
@@ -186,7 +183,7 @@ int nextDirDate;
 int nextDirTime;
  
 //convert hhmmss from: 1999-06-17 12:48:33
- strncpy(row,mtable->getEndDateTime(),19); row[19] = '\0';
+ strcpy(row,mtable->getEndDateTime());
                 strncpy(validTo,row,19);validTo[19]='\0';
                 //start from blank at position row[0][10] 
                 ic=10;

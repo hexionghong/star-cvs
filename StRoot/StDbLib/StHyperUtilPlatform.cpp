@@ -26,7 +26,8 @@ std::string endian_as_string()
         break;
     case StHyperUtilPlatform::Endian::UNDEFINED:
     default:
-		break;
+        return "undefined";
+        break;
     }
 	return "undefined";
 }

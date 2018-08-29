@@ -18,48 +18,35 @@
 
 ClassImp(StMultiH2F)
 
-StMultiH2F::StMultiH2F() : subHists(0) {}
+StMultiH2F::StMultiH2F() {}
 
 StMultiH2F::StMultiH2F(const char *name,const char *title,Int_t nbinsx,
 		       Axis_t xlow,Axis_t xup,Int_t nbinsy,Axis_t ylow,
                        Axis_t yup,Int_t nbinsz) :
-  TH3F(name,title,nbinsx,xlow,xup,nbinsy,ylow,yup,nbinsz,-0.5,-0.5+nbinsz),
-  subHists(0) {}
-
-StMultiH2F::~StMultiH2F() {
-  if (subHists) {
-    int zbins = TMath::Min(GetNbinsZ(),StMultiH2FMaxBins);
-    for (int zbin=0; zbin<zbins; zbin++) delete subHists[zbin];
-  }
-}
+  TH3F(name,title,nbinsx,xlow,xup,nbinsy,ylow,yup,nbinsz,-0.5,-0.5+nbinsz) {}
 
 void StMultiH2F::Draw(Option_t *option) {
   // Probably only the "box" and "cont" options are reasonable here
 
-  int x0 = fXaxis.GetFirst();
-  int x1 = fXaxis.GetLast();
-  int y0 = fYaxis.GetFirst();
-  int y1 = fYaxis.GetLast();
+  Int_t x0 = fXaxis.GetFirst();
+  Int_t x1 = fXaxis.GetLast();
+  Int_t y0 = fYaxis.GetFirst();
+  Int_t y1 = fYaxis.GetLast();
   fXaxis.SetRange();
   fYaxis.SetRange();
-  int zbins = TMath::Min(GetNbinsZ(),StMultiH2FMaxBins);
-
-  // dummy histogram pointer(s)
-  if (!subHists) { subHists = new TH2D*[zbins]; memset(subHists,0,zbins*sizeof(TH2D*)); }
-
+  Int_t zbins = TMath::Min(GetNbinsZ(),StMultiH2FMaxBins);
   if (zbins == 1) {
-    delete subHists[0];
-    subHists[0] = XYProjection(GetName());
-    subHists[0]->SetStats((!TestBit(kNoStats)));
-    TAxis* taxisX = subHists[0]->GetXaxis();
-    TAxis* taxisY = subHists[0]->GetYaxis();
+    TH2D* temp0 = XYProjection(GetName());
+    temp0->SetStats((!TestBit(kNoStats)));
+    TAxis* taxisX = temp0->GetXaxis();
+    TAxis* taxisY = temp0->GetYaxis();
     fXaxis.Copy(*taxisX);
     fYaxis.Copy(*taxisY);
     taxisX->SetRange(x0,x1);
     taxisY->SetRange(y0,y1);
     fXaxis.SetRange(x0,x1);
     fYaxis.SetRange(y0,y1);
-    subHists[0]->Draw(option);
+    temp0->Draw(option);
     return;
   }
 
@@ -72,49 +59,50 @@ void StMultiH2F::Draw(Option_t *option) {
   legend->SetFillStyle(0);
   legend->SetMargin(0.25);
 
-  int zbin;
-  double maxval = -999999.;
-  int maxbin = -1;
+  Int_t zbin;
+  Double_t maxval = -999999.;
+  Int_t maxbin = -1;
+
+  // dummy histogram pointer
+  TH2D** temp = new TH2D*[zbins];
 
   TString n0;
   for (zbin=0; zbin<zbins; zbin++) {
     if ((zbin >= 10) || (names[zbin].IsNull())) n0 = GetName();
     else n0 = names[zbin];
-    int slice = zbin+1;
-    delete subHists[zbin];
-    subHists[zbin] = XYProjection(n0.Data(),slice);
-    subHists[zbin]->SetLineColor(60+40*(zbin/(zbins-1)));
-    subHists[zbin]->SetStats(kFALSE);
-    TAxis* taxisX = subHists[zbin]->GetXaxis();
-    TAxis* taxisY = subHists[zbin]->GetYaxis();
+    Int_t slice = zbin+1;
+    temp[zbin] = XYProjection(n0.Data(),slice);
+    temp[zbin]->SetLineColor(60+40*(zbin/(zbins-1)));
+    temp[zbin]->SetStats(kFALSE);
+    TAxis* taxisX = temp[zbin]->GetXaxis();
+    TAxis* taxisY = temp[zbin]->GetYaxis();
     fXaxis.Copy(*taxisX);
     fYaxis.Copy(*taxisY);
     taxisX->SetRange(x0,x1);
     taxisY->SetRange(y0,y1);
   
-    double binmax = subHists[zbin]->GetMaximum();
+    Double_t binmax = temp[zbin]->GetMaximum();
     if (binmax > maxval) {
       maxval = binmax;
       maxbin = zbin;
     }
-    legend->AddEntry(subHists[zbin],n0.Data(),"l");
+    legend->AddEntry(temp[zbin],n0.Data(),"l");
   }
 
-  subHists[maxbin]->SetTitle(GetTitle());
-  subHists[maxbin]->Draw(option);
+  temp[maxbin]->SetTitle(GetTitle());
+  temp[maxbin]->Draw(option);
   TString sameoption = option; sameoption += "same";
   for (zbin=0; zbin<zbins; zbin++) {
-    if (zbin != maxbin) subHists[zbin]->Draw(sameoption.Data());
+    if (zbin != maxbin) temp[zbin]->Draw(sameoption.Data());
   }
 
   // Draw statistics for full set if stats are turned on
   if (!TestBit(kNoStats)) {
-    delete subHists[0];
-    subHists[0] = XYProjection(GetName());
-    subHists[0]->Reset();
-    subHists[0]->SetEntries(GetEntries());
-    subHists[0]->SetStats(kTRUE);
-    subHists[0]->Draw(sameoption.Data());
+    temp[0] = XYProjection(GetName());
+    temp[0]->Reset();
+    temp[0]->SetEntries(GetEntries());
+    temp[0]->SetStats(kTRUE);
+    temp[0]->Draw(sameoption.Data());
     legend->SetX1(0.59);
     legend->SetX2(0.77);
   }
@@ -143,15 +131,15 @@ TH2D* StMultiH2F::XYProjection(const char* name, Int_t zbin) {
   TAttMarker::Copy(*temp);
   temp->GetXaxis()->SetRange(fXaxis.GetFirst(),fXaxis.GetLast());
   temp->GetYaxis()->SetRange(fYaxis.GetFirst(),fYaxis.GetLast());
-  return temp; // up to the user of this function delete
+  return temp;
 }
 
 void StMultiH2F::SavePrimitive(ostream& out, Option_t* option) {
   // Save primitive as a C++ statement(s) on output stream out
 
-  bool nonEqiX = kFALSE;
-  bool nonEqiY = kFALSE;
-  int i;
+  Bool_t nonEqiX = kFALSE;
+  Bool_t nonEqiY = kFALSE;
+  Int_t i;
 
   // Check if the histogram has equidistant X bins or not.  If not, we
   // create an array holding the bins.
@@ -197,9 +185,9 @@ void StMultiH2F::SavePrimitive(ostream& out, Option_t* option) {
   out << "," << GetZaxis()->GetNbins() << ");" << endl;
 
   // save bin contents
-  int bin;
+  Int_t bin;
   for (bin=0;bin<fNcells;bin++) {
-    double bc = GetBinContent(bin);
+    Double_t bc = GetBinContent(bin);
     if (bc) {
       out<<"   "<<GetName()<<"->SetBinContent("<<bin<<","<<bc<<");"<<endl;
     }
@@ -208,7 +196,7 @@ void StMultiH2F::SavePrimitive(ostream& out, Option_t* option) {
   // save bin errors
   if (fSumw2.fN) {
     for (bin=0;bin<fNcells;bin++) {
-      double be = GetBinError(bin);
+      Double_t be = GetBinError(bin);
       if (be) {
         out <<"   "<<GetName()<<"->SetBinError("<<bin<<","<<be<<");"<<endl;
       }
@@ -224,11 +212,8 @@ void StMultiH2F::SavePrimitive(ostream& out, Option_t* option) {
   TH1::SavePrimitiveHelp(out, option);
 }
 
-// $Id: StMultiH2F.cxx,v 1.8 2016/05/27 18:02:41 genevb Exp $
+// $Id: StMultiH2F.cxx,v 1.7 2015/07/20 18:27:47 genevb Exp $
 // $Log: StMultiH2F.cxx,v $
-// Revision 1.8  2016/05/27 18:02:41  genevb
-// Garbage collection (Coverity), remove unnecessary ROOT types
-//
 // Revision 1.7  2015/07/20 18:27:47  genevb
 // fix minor bug with SavePrimitive
 //

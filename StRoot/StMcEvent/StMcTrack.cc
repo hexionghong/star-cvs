@@ -9,14 +9,11 @@
  *
  ***************************************************************************
  *
- * $Id: StMcTrack.cc,v 2.38 2016/05/16 23:47:09 perev Exp $
+ * $Id: StMcTrack.cc,v 2.37 2015/07/22 19:30:02 jwebb Exp $
  *
  ***************************************************************************
  *
  * $Log: StMcTrack.cc,v $
- * Revision 2.38  2016/05/16 23:47:09  perev
- * Coverity fix
- *
  * Revision 2.37  2015/07/22 19:30:02  jwebb
  * Fix minor compiler warnings.
  *
@@ -92,11 +89,8 @@
  * Introduction of Ctb classes.  Modified several classes
  * accordingly.
 
- * $Id: StMcTrack.cc,v 2.38 2016/05/16 23:47:09 perev Exp $
+ * $Id: StMcTrack.cc,v 2.37 2015/07/22 19:30:02 jwebb Exp $
  * $Log: StMcTrack.cc,v $
- * Revision 2.38  2016/05/16 23:47:09  perev
- * Coverity fix
- *
  * Revision 2.37  2015/07/22 19:30:02  jwebb
  * Fix minor compiler warnings.
  *
@@ -241,7 +235,7 @@ using std::find;
 #include "tables/St_g2t_track_Table.h"
 #include "tables/St_particle_Table.h"
 
-static const char rcsid[] = "$Id: StMcTrack.cc,v 2.38 2016/05/16 23:47:09 perev Exp $";
+static const char rcsid[] = "$Id: StMcTrack.cc,v 2.37 2015/07/22 19:30:02 jwebb Exp $";
 
 ClassImp(StMcTrack);
 
@@ -325,7 +319,7 @@ void StMcTrack::initToZero()
     mPdgId           = 0;
     mKey             = 0;
     mEventGenLabel   = 0;
-    mIsPrimary	     = 0;
+
 }
 
 int StMcTrack::operator==(const StMcTrack& t) const

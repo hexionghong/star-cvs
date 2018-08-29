@@ -1,5 +1,5 @@
 /***************************************************************************
- * $Id: StGenericVertexFinder.cxx,v 1.34 2016/09/06 20:02:55 smirnovd Exp $
+ * $Id: StGenericVertexFinder.cxx,v 1.21 2016/04/12 19:48:47 smirnovd Exp $
  *
  * Author: Lee Barnby, April 2003
  *
@@ -12,28 +12,15 @@
 #include "StGenericVertexFinder.h"
 #include "StMessMgr.h"
 #include "StMaker.h"
-#include "StEvent/StDcaGeometry.h"
 #include "StEventTypes.h"
 
-
-
 // Initialize static variable with default values
-
-/// Pointers to DCA states to be used in a vertex fit
-StGenericVertexFinder::StDcaList&  StGenericVertexFinder::sDCAs()
-{
-   static StDcaList* sDCAs = new StDcaList();
-   return *sDCAs;
-}
-
-
-/// All measured parameters of the beamline
 vertexSeed_st StGenericVertexFinder::sBeamline;
 
 
 //______________________________________________________________________________
-StGenericVertexFinder::StGenericVertexFinder(VertexFit_t fitMode) :
-  mVertexConstrain(false), mMode(0), mVertexFitMode(fitMode), mDebugLevel(0)
+StGenericVertexFinder::StGenericVertexFinder() : 
+  mVertexConstrain(false), mMode(0), mDebugLevel(0)
 {
   
   mIsMC	  =0;            	// flag minor differences between Data & M-C
@@ -100,33 +87,6 @@ StGenericVertexFinder::Clear()
 }
 
 
-double StGenericVertexFinder::CalcChi2DCAs(const StThreeVectorD &point)
-{
-   static double scale = 100;
-
-   // Initialize f with value for beamline
-   double f = 0;
-
-   for (const StDcaGeometry* dca : sDCAs())
-   {
-      double err2;
-      double dist = dca->thelix().Dca( &point.x(), &err2);
-      double chi2 = dist*dist/err2;
-
-      f += scale*(1. - TMath::Exp(-chi2/scale)); // robust potential
-   }
-
-   return f;
-}
-
-
-double StGenericVertexFinder::CalcChi2DCAsBeamline(const StThreeVectorD &point)
-{
-   static double scale = 100;
-
-   return CalcChi2DCAs(point) + scale*(1. - TMath::Exp(-CalcChi2Beamline(point)/scale));
-}
-
 
 /**
  * Calculates chi^2 for the beamline and a point (xv, yv, zv) passed as input
@@ -145,7 +105,7 @@ double StGenericVertexFinder::CalcChi2DCAsBeamline(const StThreeVectorD &point)
  * \author Dmitri Smirnov
  * \date April, 2016
  */
-double StGenericVertexFinder::CalcChi2Beamline(const StThreeVectorD& point)
+double StGenericVertexFinder::CalcBeamlineChi2(const StThreeVectorD& point)
 {
    // Just for shorthand
    const vertexSeed_st& bl = sBeamline;
@@ -165,13 +125,6 @@ double StGenericVertexFinder::CalcChi2Beamline(const StThreeVectorD& point)
    double ky_dy_zv_2 = ky_dy_zv*ky_dy_zv;
    double kx_dx_zv_2 = kx_dx_zv*kx_dx_zv;
 
-   double denom_sqrt = kx2_ky2_1 * sqrt( ( (kx*dy - ky*dx)*(kx*dy - ky*dx) + (ky*zv - dy)*(ky*zv - dy) + (kx*zv - dx)*(kx*zv - dx) ) /kx2_ky2_1);
-
-   // The denominator is zero when the point is exactly on the beamline
-   // We just return a zero for the chi2 in this case. This makes sense for all
-   // non-zero errors and if they are zero they are unphysical anyway.
-   if (denom_sqrt == 0) return 0;
-
    // The distance between the line and the point
    StThreeVectorD dist_vec (
       (  (ky2 + 1)*dx -     kx*ky*dy -          kx*zv)/kx2_ky2_1,
@@ -179,6 +132,7 @@ double StGenericVertexFinder::CalcChi2Beamline(const StThreeVectorD& point)
       (       - kx*dx -        ky*dy + (kx2 + ky2)*zv)/kx2_ky2_1
    );
 
+   double denom_sqrt = kx2_ky2_1 * sqrt( ( (kx*dy - ky*dx)*(kx*dy - ky*dx) + (ky*zv - dy)*(ky*zv - dy) + (kx*zv - dx)*(kx*zv - dx) ) /kx2_ky2_1);
 
    double denom = kx2_ky2_1 * denom_sqrt;
 
@@ -215,51 +169,10 @@ double StGenericVertexFinder::CalcChi2Beamline(const StThreeVectorD& point)
 }
 
 
-/**
- * Estimates vertex position from track DCA states in sDCAs.
- * The beam position is not taken into account.
- *
- * \author Dmitri Smirnov
- * \date April 2016
- */
-StThreeVectorD StGenericVertexFinder::CalcVertexSeed(const StDcaList &trackDcas)
-{
-   // Estimate new seed position using provided tracks
-   StThreeVectorD vertexSeed(0, 0, 0);
-   StThreeVectorD totalWeigth(0, 0, 0);
-
-   if (trackDcas.size() == 0) {
-      LOG_WARN << "StGenericVertexFinder::CalcVertexSeed: Empty container with track DCAs. "
-	          "Returning default seed: StThreeVectorD(0, 0, 0)" << endm;
-      return vertexSeed;
-   }
-
-
-   double xyzp[6], covXyzp[21];
-
-   for (const StDcaGeometry* trackDca : trackDcas)
-   {
-      trackDca->GetXYZ(xyzp, covXyzp);
-
-      double x_weight = 1./covXyzp[0];
-      double y_weight = 1./covXyzp[2];
-      double z_weight = 1./covXyzp[5];
-
-      vertexSeed  += StThreeVectorD(xyzp[0]*x_weight, xyzp[1]*y_weight, xyzp[2]*z_weight);
-      totalWeigth += StThreeVectorD(x_weight, y_weight, z_weight);
-   }
-
-   vertexSeed.set(vertexSeed.x()/totalWeigth.x(), vertexSeed.y()/totalWeigth.y(), vertexSeed.z()/totalWeigth.z());
-
-   return vertexSeed;
-}
-
-
 //______________________________________________________________________________
 void StGenericVertexFinder::NoVertexConstraint() 
 {
   mVertexConstrain = false; 
-  mVertexFitMode = VertexFit_t::NoBeamline;
   LOG_INFO << "StGenericVertexFinder::No Vertex Constraint" << endm;
 }
 
@@ -272,13 +185,6 @@ void StGenericVertexFinder::UseVertexConstraint(const vertexSeed_st& beamline)
 {
    sBeamline = beamline;
 
-   LOG_INFO << "BeamLine constraint: weight =  " << sBeamline.weight << "\n"
-            << "x(z) = (" << sBeamline.x0   << " +/- max(0.01, "   << sBeamline.err_x0 << ") ) + "
-            <<        "(" << sBeamline.dxdz << " +/- max(0.0001, " << sBeamline.err_dxdz << ") ) * z\n"
-            << "y(z) = (" << sBeamline.y0   << " +/- max(0.01, "   << sBeamline.err_y0 << ") ) + "
-            <<        "(" << sBeamline.dydz << " +/- max(0.0001, " << sBeamline.err_dydz << ") ) * z"
-            << endm;
-
    sBeamline.err_x0 = std::max(0.01f, sBeamline.err_x0);
    sBeamline.err_y0 = std::max(0.01f, sBeamline.err_y0);
 
@@ -286,25 +192,80 @@ void StGenericVertexFinder::UseVertexConstraint(const vertexSeed_st& beamline)
    sBeamline.err_dxdz = std::max(0.0001f, sBeamline.err_dxdz);
    sBeamline.err_dydz = std::max(0.0001f, sBeamline.err_dydz);
 
-   UseVertexConstraint();
+   LOG_INFO << "BeamLine constraint: weight =  " << sBeamline.weight << endm;
+   LOG_INFO << "x(z) = (" << sBeamline.x0 << " +/- " << sBeamline.err_x0 << ") + (" << sBeamline.dxdz << " +/- " << sBeamline.err_dxdz << ") * z" << endm;
+   LOG_INFO << "y(z) = (" << sBeamline.y0 << " +/- " << sBeamline.err_y0 << ") + (" << sBeamline.dydz << " +/- " << sBeamline.err_dydz << ") * z" << endm;
 }
 
 
-/**
- * Returns x coordinate on the beamline (given by sBeamline) corresponding to
- * the passed value of z.
- */
-double StGenericVertexFinder::beamX(double z)
-{
-  return sBeamline.x0 + sBeamline.dxdz*z;
-}
-
-
-/**
- * Returns y coordinate on the beamline (given by sBeamline) corresponding to
- * the passed value of z.
- */
-double StGenericVertexFinder::beamY(double z)
-{
-  return sBeamline.y0 + sBeamline.dydz*z;
-}
+// $Log: StGenericVertexFinder.cxx,v $
+// Revision 1.21  2016/04/12 19:48:47  smirnovd
+// [Cosmetic] Prefixed included headers with path to corresponding module
+//
+// Revision 1.20  2016/04/11 20:53:20  smirnovd
+// StGenericVertexFinder: Added static method to calculate chi2 for beamline and a point
+//
+// Revision 1.19  2016/04/11 20:53:13  smirnovd
+// Use all available beamline (aka vertex seed) parameters from DB
+//
+// We overload StGenericVertexFinder::UseVertexConstraint for this puspose. The
+// parameters are cached in static StGenericVertexFinder::sBeamline. Note that if
+// there is a need to do so, UseVertexConstraint can do some preprocessing of the
+// raw DB values before caching them.
+//
+// Revision 1.18  2016/04/11 20:44:26  smirnovd
+// StGenericVertexFinder: Added static member to keep beamline parameters
+//
+// Revision 1.17  2016/02/29 22:58:22  jwebb
+// Moved include of StEventTypes from header of generic class to implementation files of generic and concrete classes.
+//
+// Revision 1.16  2013/08/16 20:49:38  perev
+// PPV with only StEvent dependency
+//
+// Revision 1.15  2010/09/10 21:06:45  rjreed
+// Added function UseBOTF and bool mUseBtof to switch the use of the TOF on and off in vertex finding.  Default value is off (false).
+//
+// Revision 1.14  2009/11/11 03:52:14  genevb
+// Re-order the vertices upon filling StEvent
+//
+// Revision 1.13  2008/10/23 20:37:31  genevb
+// Add switches for turning on/off use of Post-Crossing Tracks [default:off]
+//
+// Revision 1.12  2006/05/04 20:01:30  jeromel
+// Switched to logger
+//
+// Revision 1.11  2006/04/26 15:37:03  jeromel
+// mVertexOrderMethod (To be tested)
+//
+// Revision 1.10  2006/04/08 00:18:09  mvl
+// Added member for debuglevel
+//
+// Revision 1.9  2005/07/19 21:45:07  perev
+// MultiVertex
+//
+// Revision 1.8  2005/07/14 15:39:22  balewski
+// nothing, to force recompilation of this code by Autobuild
+//
+// Revision 1.7  2005/06/21 02:16:36  balewski
+// multiple prim vertices are stored in StEvent
+//
+// Revision 1.6  2004/12/13 20:39:58  fisyak
+// Add initaition of StGenericVertexFinder variables, replace mDumMaker by StMaker::GetChain() method
+//
+// Revision 1.5  2004/07/30 22:59:00  calderon
+// Setting the primary vertex flag to 1 for the moment, as per
+// dst_vertex.idl.  This was causing the FTPC code to reject the
+// primary vertex used as their seed.
+//
+// Revision 1.4  2004/07/24 02:57:40  balewski
+// clean up of ppLMV, CTB-util separated
+//
+// Revision 1.3  2004/07/23 00:57:43  jeromel
+// Base class method implementation
+//
+// Revision 1.2  2004/04/06 02:43:43  lbarnby
+// Fixed identification of bad seeds (no z~0 problem now). Better flagging. Message manager used.
+//
+// Revision 1.1  2003/05/09 22:22:46  lbarnby
+// Initial revision: a base class for STAR (StEvent-based) vertex finders
+//

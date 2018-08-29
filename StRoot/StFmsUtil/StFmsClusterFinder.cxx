@@ -1,12 +1,6 @@
-// $Id: StFmsClusterFinder.cxx,v 1.7 2016/06/08 19:58:33 akio Exp $
+// $Id: StFmsClusterFinder.cxx,v 1.5 2015/11/02 22:44:49 akio Exp $
 //
 // $Log: StFmsClusterFinder.cxx,v $
-// Revision 1.7  2016/06/08 19:58:33  akio
-// Applying Coverity report
-//
-// Revision 1.6  2016/06/07 15:51:44  akio
-// Making code better based on Coverity reports
-//
 // Revision 1.5  2015/11/02 22:44:49  akio
 // Fix photonEnergyInTower()
 //
@@ -71,7 +65,7 @@ using FMSCluster::StFmsTower;
  be (i.e. it is consistent with that hypothesis given this input).
  */
 bool couldBePeakTower(const StFmsTower* tower, const StFmsTower* other) {
-  return (tower->hit()->energy() >= PEAK_TOWER_FACTOR * other->hit()->energy()) ? true : false;
+  return tower->hit()->energy() >= PEAK_TOWER_FACTOR * other->hit()->energy();
 }
 
 /*
@@ -341,7 +335,7 @@ class TowerClusterAssociation : public TObject {
 };
 
 StFmsClusterFinder::StFmsClusterFinder(double energyCutoff)
-    : mEnergyCutoff(energyCutoff), mNClusts(0), mDetectorId(0) { }
+    : mEnergyCutoff(energyCutoff), mNClusts(0) { }
 
 StFmsClusterFinder::~StFmsClusterFinder() { }
 

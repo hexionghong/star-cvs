@@ -3,15 +3,8 @@
 //
 //   This is analysis for FMS-FPS correlations.
 // 
-//  $Id: StFmsFpsMaker.h,v 1.7 2016/06/07 17:58:06 akio Exp $
+//  $Id: StFmsFpsMaker.h,v 1.6 2016/01/26 19:53:14 akio Exp $
 //  $Log: StFmsFpsMaker.h,v $
-//  Revision 1.7  2016/06/07 17:58:06  akio
-//  Added more comments on setReadMuDST()
-//  Added setMeanVertexZ(float v)
-//  Added protection for setting >2.0 for setMaxDistanceToAssociate()
-//  Added c++ style data member initializations
-//  Added project() and distance() as private member function (from global scope)
-//
 //  Revision 1.6  2016/01/26 19:53:14  akio
 //  Drop QA/alignment histograms and just do the analysis/filling StEvent structure
 //  Offline QA and Alignment histograms will be moved to StRoot/StSpinPool/StFmsOfflineQaMaker
@@ -47,43 +40,34 @@ public:
     ~StFmsFpsMaker();
     Int_t Init();
     Int_t Make();
+    // Int_t Finish();
     
     //Read MuDST hits if available, and update FPS hits in StEvent using current DB values
-    //If this is set to 0 (default), use hits as is (new DB values will NOT be applied)
-    //You only need this when you want to apply new calibration from DB to overwrite
-    //old calibration which was in place when the Mudst is produced. This is the case
-    //typically when you are running on FastOffline Mudst to calibrate FPS.
+    //if this is set to 0 (default), use hits as is (new DB values will NOT be applied)
     void setReadMuDST(int v=1){mReadMuDST=v;}         
 
-    //mean z vertex to be used for interpration between FMS and vertex
-    void setMeanVertexZ(float v) {mMeanVertexZ=v;}
-
     //max distance to associate FPS slat to FMS point
-    void setMaxDistanceToAssociate(float v) {if(v>0.0 && v<2.0) mMaxDistanceToAssociate=v;}
+    void setMaxDistanceToAssociate(float v) {mMaxDistanceToAssociate=v;}
 
     //0=take closest slat, 1=take sum of all slat associated
     void setPidMethod(int v) {mPidMethod=v;}
     
 private:
-    StFmsDbMaker* mFmsDbMaker=0;
-    StFmsCollection* mFmsColl=0;
+    StFmsDbMaker* mFmsDbMaker;
+    StFmsCollection* mFmsColl;
     
-    int mReadMuDST=0; 
+    int mReadMuDST; 
     void readMuDST();
     
-    float mMeanVertexZ=0.0; //[cm]
-    float mMaxDistanceToAssociate=2.0; //[cm] making this >2cm causes more than 4 slats to associate with FMS hit!
-    int mPidMethod=1;
-    
+    int mMaxDistanceToAssociate;
+    int mPidMethod;
+	
     void corrFmsFps();
     void pid(int opt=0);
     void isolationCone();
-
-    Float_t project(float x, float z, float zp, float vz);
-    Float_t distance(float x, float y, float x0, float y0, float xw, float yw);    
-
+    
     virtual const char *GetCVS() const
-    {static const char cvs[]="Tag $Name:  $ $Id: StFmsFpsMaker.h,v 1.7 2016/06/07 17:58:06 akio Exp $ built " __DATE__ " " __TIME__ ; return cvs;}
+    {static const char cvs[]="Tag $Name:  $ $Id: StFmsFpsMaker.h,v 1.6 2016/01/26 19:53:14 akio Exp $ built " __DATE__ " " __TIME__ ; return cvs;}
     
     ClassDef(StFmsFpsMaker,0);
 };

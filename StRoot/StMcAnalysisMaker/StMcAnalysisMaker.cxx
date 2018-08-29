@@ -1,10 +1,7 @@
 /*************************************************
  *
- * $Id: StMcAnalysisMaker.cxx,v 1.41 2016/06/21 20:39:03 jwebb Exp $
+ * $Id: StMcAnalysisMaker.cxx,v 1.40 2015/03/13 18:44:50 perev Exp $
  * $Log: StMcAnalysisMaker.cxx,v $
- * Revision 1.41  2016/06/21 20:39:03  jwebb
- * Init members.  Protected against div by zero.
- *
  * Revision 1.40  2015/03/13 18:44:50  perev
  * Roll back
  *
@@ -225,23 +222,7 @@ ClassImp(StMcAnalysisMaker)
 
 //_________________________________________________
 StMcAnalysisMaker::StMcAnalysisMaker(const char *name, const char *title):
-  StMaker(name,title), 
-  currentChain(0),
-  mMomResolution(0),
-  mHitResolution(0),
-  mSvtHitResolution(0),
-  mSsdHitResolution(0),
-  coordRec(0),
-  coordMcPartner(0),
-  mNtupleFile(0),
-  mTrackNtuple(0),
-  mTpcHitNtuple(0),
-  mSvtHitNtuple(0),
-  mSsdHitNtuple(0),
-  mAssociationCanvas(0),
-  mPadColumns(0),
-  mPadRows(0),
-  drawinit(0)
+  StMaker(name,title), mNtupleFile(0)
 {
     //  StMcAnalysisMaker Constructor
     // - zero all pointers defined in the header file
@@ -875,7 +856,7 @@ Int_t StMcAnalysisMaker::Make()
     for (multimap<int,float>::iterator mi=mostCommRange.first; mi!=mostCommRange.second; ++mi) {
 	idQuality+=mi->second;
     }
-    if (cachedNHitsIdTruth) { idQuality/=cachedNHitsIdTruth; }
+    idQuality/=cachedNHitsIdTruth;
     
     values[13] = mostCommonIdTruth;
     values[14] = cachedNHitsIdTruth;

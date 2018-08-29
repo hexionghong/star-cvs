@@ -1,4 +1,4 @@
-// @(#)STAR/eg:$Id: StGenParticle.h,v 1.6 2016/06/21 20:28:51 jwebb Exp $
+// @(#)STAR/eg:$Id: StGenParticle.h,v 1.5 2009/06/23 19:52:05 jeromel Exp $
 
 /*!
   \class  StGenParticle 
@@ -178,7 +178,7 @@ class StGenParticleMaster  {
 
 protected:
                                 // ****** constructors and destructor
-  StGenParticleMaster() : mNTk(0) {;}
+   StGenParticleMaster(){;}
 
 public:
 int Size() const { return mNTk;}

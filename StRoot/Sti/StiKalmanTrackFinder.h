@@ -5,6 +5,9 @@
 #include "Sti/StiTrackFinder.h"
 #include "Sti/Base/Named.h"
 #include "Sti/Base/Described.h"
+#ifdef DO_TPCCATRACKER 
+class StiTPCCATrackerInterface;
+#endif /* DO_TPCCATRACKER */
 class TStopwatch;
 class StiDetector;
 class StiDetectorBuilder;
@@ -28,18 +31,21 @@ template<class Factorized>class Factory;
 ///to us gracioulsy by Jouri Belikov from the ALICE       
 ///collaboration. i.e. code reproduced with autorization. 
 ///
-class StiKalmanTrackFinder : public StiTrackFinder
+class StiKalmanTrackFinder : public StiTrackFinder, public Named, public Described
 {
 public:
   StiKalmanTrackFinder() {}
   StiKalmanTrackFinder(StiToolkit *toolkit);
-  void addSeedFinder(StiTrackFinder* sf) {_seedFinders.push_back(sf);}
   virtual ~StiKalmanTrackFinder() {}
   /// Initialize the finder
   virtual void initialize();
   /// Set timing of tracking
           void setTiming();
   /// Find all tracks of the currently loaded event
+#ifdef DO_TPCCATRACKER 
+  virtual void findTpcTracks(StiTPCCATrackerInterface &caTrackerInt); 
+#endif /* DO_TPCCATRACKER */  
+  virtual void findAllTracks(); 
   virtual void findTracks(); 
   /// Find/extend the given track, in the given direction
           bool find(StiTrack *track, int direction, double rmin=0);
@@ -73,6 +79,9 @@ public:
   void doNextTrackStep();
   static void setDebug(int m = 0) {_debug = m;}
   static int  debug() {return _debug;}
+#ifdef DO_TPCCATRACKER
+  static void PrintFitStatus(const int status, const StiKalmanTrack* track); // print message according to the status value
+#endif /* DO_TPCCATRACKER */  
   typedef enum{ // type of return value for the Fit() procedure
     kNoErrors = 0,
     kApproxFail,
@@ -100,19 +109,18 @@ class QAFind;
     void printState();
     StiToolkit                  * _toolkit;
     Filter<StiTrack>            * _trackFilter;
+    StiTrackFinder              * _trackSeedFinder;
     Factory<StiKalmanTrackNode> * _trackNodeFactory;
     StiDetectorContainer        * _detectorContainer;
     StiHitContainer             * _hitContainer;
     StiTrackContainer           * _trackContainer;
-    std::vector<StiTrackFinder*>  _seedFinders;
     int                           _nPrimTracks;
-    int         mEventPerm;	//Count number of permutations
-
 private:
         
     double    chi2;
     TStopwatch *mTimg[3]; 	//seeds,traks,prims
     int         mTrackPerm;	//Count number of permutations
+    int         mEventPerm;	//Count number of permutations
     int         mUseComb;	//useComb() saved 
     static int   _debug;
 };
