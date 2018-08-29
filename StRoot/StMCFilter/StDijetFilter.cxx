@@ -109,17 +109,11 @@ int StDijetFilter::RejectGT(const StGenParticleMaster &ptl) const
 	jf.push_back(finalparticles[l]);
 	nChange++;
       }
-      if (j) delete j; // plug leak
       j = combineTracks(jf);
       nIter++;
     }
-    if(jf.size() == 0){ 
-      if(j) delete j;
-      continue;
-    }
+    if(jf.size() == 0)continue;
     jetFour.push_back(jf);
-
-    if (j) delete j; // plug leak
   }
 
   jetFour = EtOrderedList(jetFour);
@@ -443,7 +437,6 @@ vector< vector<JetFourVec*> > StDijetFilter::doSplitMerge(vector< vector<JetFour
 	vector< vector<JetFourVec*> >::iterator njit2;
 	njit1 = find(jetFour.begin(),jetFour.end(),*iter1);
 	njit2 = find(jetFour.begin(),jetFour.end(),*iter2);
-	if ( njit1 != jetFour.end() && njit2 != jetFour.end() ) {
 	if(oe > mSplitfraction){
 	  vector<JetFourVec*> mj = merge(*iter1,*iter2);
 	  (*njit1).clear();
@@ -451,14 +444,13 @@ vector< vector<JetFourVec*> > StDijetFilter::doSplitMerge(vector< vector<JetFour
 	  jetFour.erase(njit2);
 	  jetFour.erase(njit1);
 	  jetFour.insert(jetFour.begin(),mj);
-	  if(nj) delete nj;
+	  delete nj;
 	  continue;
 	}else{
 	  split(*njit1,*njit2);
-	  if(nj) delete nj;
+	  delete nj;
 	  continue;
-	}}
-	delete nj;
+	}
       }
       delete j;
     }

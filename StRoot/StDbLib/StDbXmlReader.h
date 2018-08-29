@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: StDbXmlReader.h,v 1.10 2016/05/25 20:17:51 dmitry Exp $
+ * $Id: StDbXmlReader.h,v 1.9 2004/01/15 00:02:25 fisyak Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -10,9 +10,6 @@
  ***************************************************************************
  *
  * $Log: StDbXmlReader.h,v $
- * Revision 1.10  2016/05/25 20:17:51  dmitry
- * coverity - uninit ctor
- *
  * Revision 1.9  2004/01/15 00:02:25  fisyak
  * Replace ostringstream => StString, add option for alpha
  *
@@ -67,8 +64,8 @@ protected:
 
 
   char* loca[20024];//!
-  dbTable* tab = 0;//!
-  int maxlines = 0;
+  dbTable* tab;//!
+  int maxlines;
 
    void buildDbTable();
    void buildStruct();

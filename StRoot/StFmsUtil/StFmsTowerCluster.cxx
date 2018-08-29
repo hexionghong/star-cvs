@@ -1,9 +1,6 @@
-// $Id: StFmsTowerCluster.cxx,v 1.7 2016/06/07 15:51:44 akio Exp $
+// $Id: StFmsTowerCluster.cxx,v 1.6 2016/01/26 14:42:48 akio Exp $
 //
 // $Log: StFmsTowerCluster.cxx,v $
-// Revision 1.7  2016/06/07 15:51:44  akio
-// Making code better based on Coverity reports
-//
 // Revision 1.6  2016/01/26 14:42:48  akio
 // better chi2 handling
 //
@@ -49,7 +46,7 @@
 
 namespace FMSCluster {
 StFmsTowerCluster::StFmsTowerCluster(StFmsCluster* cluster, Int_t detectorId)
-    : mIndex(0), mDetectorId(detectorId), mEtot(0.0), mEnergyCutoff(0.5), mCluster(cluster) {
+    : mDetectorId(detectorId),mEtot(0.0), mEnergyCutoff(0.5), mCluster(cluster) {
   Clear();
 }
 

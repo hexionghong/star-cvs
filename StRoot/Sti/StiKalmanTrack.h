@@ -24,9 +24,8 @@
 using namespace std;
 //Sti
 #include "Sti/Base/Factory.h"
-#include "Sti/StiKTNIterator.h"
-#include "Sti/StiTrack.h"
-#include "Sti/StiTrackNodeHelper.h"
+#include "StiKTNIterator.h"
+#include "StiTrack.h"
 
 #include "StThreeVectorD.hh"
 #include "StMCTruth.h"
@@ -241,8 +240,11 @@ class StiKalmanTrack : public StiTrack
    StiKalmanTrackNode * getOuterMostHitNode(int qua=0)  const;
    		/// Accessor method returns the inner most hit node associated with the track.
    StiKalmanTrackNode * getInnerMostHitNode(int qua=0)   const;
+#ifdef DO_TPCCATRACKER
+   StiKalmanTrackNode * getInnerMostTPCHitNode(int qua=0)   const;
+#endif /* DO_TPCCATRACKER */
    int                  getNNodes(int qua=0) const;
-   int                  releaseHits(double rMin=0,double rMax=50);
+   int                  releaseHits(double rMin=4,double rMax=50);
    /// Accessor method returns the first node associated with the track.
    StiKalmanTrackNode * getFirstNode()  const { return firstNode; };
    /// Accessor method returns the last node associated with the track.
@@ -259,12 +261,18 @@ class StiKalmanTrack : public StiTrack
    virtual void add(StiTrackNode * node,int direction,StiTrackNode *near=0);
 
   /// Convenience method to initialize a track based on seed information 
-  virtual int initialize (const vector<StiHit*> &);
-  virtual int initialize0(const std::vector<StiHit*> &hits, StiNodePars *firstPars=0, StiNodePars *lastPars=0, StiNodeErrs *firstErrs=0, StiNodeErrs *lastErrs=0);
-    
-  virtual vector<StiHit*> getHits();
-  virtual vector<const StMeasuredPoint*> stHits() const;
-  virtual vector<StiKalmanTrackNode*> getNodes(int detectorGroupId) const;
+  int initialize(const vector<StiHit*> &);
+#ifdef DO_TPCCATRACKER
+  int initialize0(const std::vector<StiHit*> &hits, StiNodePars *firstPars = 0, StiNodePars *lastPars = 0, StiNodeErrs *firstErrs = 0, StiNodeErrs *lastErrs = 0);
+#endif /* DO_TPCCATRACKER */
+    /// Method to return the pointer to the fitter parameters.
+  
+   StThreeVector<double> getMomentumAtOrigin() const;
+   StThreeVector<double> getPoint(int firstLast=0) const;
+
+   virtual vector<StiHit*> getHits();
+   virtual vector<const StMeasuredPoint*> stHits() const;
+   virtual vector<StiKalmanTrackNode*> getNodes(int detectorGroupId) const;
 	 
 
   double  getMass() const;   // mass when pid known
@@ -276,7 +284,7 @@ class StiKalmanTrack : public StiTrack
   bool find(int direction=kOutsideIn);
   int  refit();
   int  refitL();
-  void reserveHits(int yes=1);
+  void reserveHits();
   StiTrackNode *extendToVertex(StiHit* vertex);
 #if 0
   bool extendToVertex(StiHit* vertex, const StiDetector*alternate);
@@ -286,7 +294,7 @@ class StiKalmanTrack : public StiTrack
 
   StiKalmanTrackNode * extrapolateToBeam();
   StiKalmanTrackNode * extrapolateToRadius(double radius);
-  int approx(int mode=0,int nNodes=999);
+  int approx(int mode=0);
   
   void reduce();
 
@@ -312,20 +320,6 @@ class StiKalmanTrack : public StiTrack
   
 protected:
   friend ostream& operator<<(ostream& os, const StiKalmanTrack& track);
-
-  // hidden static variables for refit & refiL
-  static StiTrackNodeHelper sTNH;
-  static double diff(const StiNodePars &p1,const StiNodeErrs &e1
-                    ,const StiNodePars &p2,const StiNodeErrs &e2,int &igor);
-  // end of hidden static variables for refit & refiL
-
-  /**
-   * Two return values can be obtained by calling this protected version of
-   * refit(). By default the original value is used in the publicly available
-   * refit() of this class while the other is used in derived class
-   * StiCAKalmanTrack.
-   */
-
 protected:
     
   static int mgMaxRefiter;		//max number of refit iteratins allowed

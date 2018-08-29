@@ -265,7 +265,7 @@ inline bool StiHitContainer::hasDetector(const StiDetector* layer)
 {  
    double refangle = layer->getPlacement()->getLayerAngle();
    double position = layer->getPlacement()->getLayerRadius();
-   return  hasKey(refangle,position);  
+   return  layer ? hasKey(refangle,position) : false;  
 }
 /// Get all hits from the specified detector component
 inline vector<StiHit*>& StiHitContainer::getHits(const StiDetector* layer)

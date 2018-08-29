@@ -44,7 +44,9 @@ class 	StiHitContainer;
 class 	StiTrackContainer;
 // service and convenience class objects.
 class 	StiTrackFinder;
+class 	StiTrackFinder;
 class 	StiTrackFitter;
+class 	StiTrackMerger;
 class   StiVertexFinder;
 class   EditableParameter;
 
@@ -76,10 +78,9 @@ public:
   
   // service and convenience class objects.
   virtual StiTrackFinder        * getTrackSeedFinder()=0;
-  virtual StiTrackFinder        * getTrackSeedFinderCA()=0;
-  virtual StiTrackFinder        * getTrackSeedFinderKNN()=0;
   virtual StiTrackFinder        * getTrackFinder()=0;
   virtual StiTrackFitter        * getTrackFitter()=0;
+  virtual StiTrackMerger        * getTrackMerger()=0;
   virtual StiVertexFinder       * getVertexFinder()=0;
   virtual StiHitLoader<StEvent,StiDetectorBuilder> * getHitLoader()=0;
 
@@ -99,7 +100,6 @@ public:
 
   static void setToolkit(StiToolkit*toolkit);
   static StiToolkit *instance();
-  static StiToolkit *Inst(){return instance();}
   static void kill();
   
  protected:

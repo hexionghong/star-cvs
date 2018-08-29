@@ -1,10 +1,7 @@
 /***************************************************************************
  *
- * $Id: StMcTofHit.hh,v 2.7 2016/05/16 23:47:09 perev Exp $
+ * $Id: StMcTofHit.hh,v 2.6 2011/10/17 00:24:01 fisyak Exp $
  * $Log: StMcTofHit.hh,v $
- * Revision 2.7  2016/05/16 23:47:09  perev
- * Coverity fix
- *
  * Revision 2.6  2011/10/17 00:24:01  fisyak
  * Add time of flight for hits
  *
@@ -36,14 +33,14 @@
 
 class StMcTofHit : public StMcHit {
 public:
-  StMcTofHit() {mStrack=0;}
+  StMcTofHit() {}
   StMcTofHit(const StThreeVectorF& x,const StThreeVectorF& p,
 	     Float_t de = 0, Float_t ds = 0, Float_t tof = 0, Long_t k = 0, Long_t volId = 0, StMcTrack* parent=0) : 
-    StMcHit(x,p,de,ds,tof,k,volId,parent) {mStrack=0;}
+    StMcHit(x,p,de,ds,tof,k,volId,parent) {}
   StMcTofHit(g2t_ctf_hit_st* pt, Float_t cl_x=0, Float_t cl_t=0): 
     StMcHit(StThreeVectorF(pt->x[0], pt->x[1], pt->x[2]),
 	    StThreeVectorF(pt->p[0], pt->p[1], pt->p[2]), 
-	    pt->de, pt->ds, pt->tof, pt->id, pt->volume_id, 0) {mStrack=0;}
+	    pt->de, pt->ds, pt->tof, pt->id, pt->volume_id, 0) {}
   ~StMcTofHit() {}
   Float_t sTrack() const {return mStrack;}
   virtual void Print(Option_t *option="") const; // *MENU* 

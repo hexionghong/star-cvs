@@ -6,20 +6,11 @@
  *
  * The MTD MatchMaker matches STAR tracks to the MTD MRPCs.
  * 
- * $Id: StMtdMatchMaker.h,v 1.17 2016/08/05 16:12:24 marr Exp $
+ * $Id: StMtdMatchMaker.h,v 1.14 2015/10/16 19:04:55 marr Exp $
  */
 /*****************************************************************
  *
  * $Log: StMtdMatchMaker.h,v $
- * Revision 1.17  2016/08/05 16:12:24  marr
- * Add MTD hit IdTruth to avoid applying dy shift for BL 8 and 24 for MC hits
- *
- * Revision 1.16  2016/07/28 14:31:23  marr
- * Fix coverity check: initialization of data member
- *
- * Revision 1.15  2016/07/27 15:46:34  marr
- * Fix coverity check: initialization of data members
- *
  * Revision 1.14  2015/10/16 19:04:55  marr
  * Remove filling trees
  *
@@ -182,7 +173,9 @@ class StMtdMatchMaker: public StMaker
 
 
 	protected:
+		string		 mOutName;
 		StPhysicalHelixD* mBeamHelix;
+		Float_t mBeamX, mBeamY;
 		Bool_t  doPrintMemoryInfo;     
 		Bool_t  doPrintCpuInfo;
 		Bool_t  mCosmicFlag;
@@ -190,6 +183,7 @@ class StMtdMatchMaker: public StMaker
 		Int_t   mMinFitPointsPerTrack;  //! minimum fit points per track
 		Int_t   mMindEdxFitPoints;  //! minimum dE/dx fit points per track
 		Float_t mMinFitPointsOverMax; //! minimum ratio
+		Float_t mNSigReso; //! n sigma of z and y resolution of MTD
 		Float_t mMinEta; //! minimum pseudorapidity 
 		Float_t mMaxEta; //! maximum pseudorapidity 
 		Float_t mMinPt;  //! minimum transverse momentum 
@@ -263,6 +257,7 @@ class StMtdMatchMaker: public StMaker
 
 		StEvent *mEvent;
 		StMuDst *mMuDst;
+  		StTriggerData *trgData;
 		StMtdGeometry *mMtdGeom;
 #ifndef ST_NO_TEMPLATE_DEF_ARGS
 		typedef vector<Int_t> idVector;
@@ -290,7 +285,6 @@ class StMtdMatchMaker: public StMaker
 			Double_t theta;
 			Double_t pathLength;
 			Double_t expTof2MTD;
-		        Int_t idTruth;
 		};
 		Bool_t  mELossFlag;
 		Bool_t  mLockBField;
@@ -328,7 +322,7 @@ class StMtdMatchMaker: public StMaker
 		bool matchTrack2Mtd(mtdCellHitVector daqCellsHitVec,const StPhysicalHelixD &helix, Int_t gq, mtdCellHitVector& allCellsHitVec,unsigned int iNode, StThreeVectorD globalPos);
 
 		virtual const char *GetCVS() const
-	 		{static const char cvs[]="Tag $Name:  $ $Id: StMtdMatchMaker.h,v 1.17 2016/08/05 16:12:24 marr Exp $ built " __DATE__ " " __TIME__ ; return cvs;}
+	 		{static const char cvs[]="Tag $Name:  $ $Id: StMtdMatchMaker.h,v 1.14 2015/10/16 19:04:55 marr Exp $ built " __DATE__ " " __TIME__ ; return cvs;}
 		ClassDef(StMtdMatchMaker,2)
 };
 

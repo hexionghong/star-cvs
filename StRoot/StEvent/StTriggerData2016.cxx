@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: StTriggerData2016.cxx,v 2.5 2016/09/14 15:11:37 ullrich Exp $
+ * $Id: StTriggerData2016.cxx,v 2.3 2016/04/12 14:26:10 ullrich Exp $
  *
  * Author: Akio Ogawa, Dec 2015
  ***************************************************************************
@@ -10,12 +10,6 @@
  ***************************************************************************
  *
  * $Log: StTriggerData2016.cxx,v $
- * Revision 2.5  2016/09/14 15:11:37  ullrich
- * Added missing check for validity of mBBC[buffer]
- *
- * Revision 2.4  2016/06/07 15:51:34  akio
- * Making code better based on Coverity reports
- *
  * Revision 2.3  2016/04/12 14:26:10  ullrich
  * method bbcVP101() added.
  *
@@ -260,33 +254,6 @@ unsigned short StTriggerData2016::tcuBits() const
 	return EvtDesc->DSMInput;
 }
 
-
-unsigned int StTriggerData2016::tcuCounter() const
-{
-        unsigned int p = EvtDesc->physicsWord;
-        unsigned int t = EvtDesc->TriggerWord;
-	//        return (p<<16) + t;
-        return (t<<16) + p;
-}
-
-unsigned int StTriggerData2016::rccCounter(int crate) const
-{
-        if(crate >= y16L1_CONF_NUM && crate <= y16QT4_CONF_NUM){
-           return TrgSum->LocalClocks[crate];
-	}
-        return 0;
-} 
-
-unsigned long long StTriggerData2016::bunchCounter() const
-{
-        unsigned long long bxinghi,bxing1,bxinglo, bx;
-        bxinghi = L1_DSM->BCdata[3];
-        bxing1 =  L1_DSM->BCdata[10];
-        bxinglo = (bxing1 << 16) + L1_DSM->BCdata[11];
-        bx = (bxinghi << 32) + bxinglo;
-        return bx;
-}
-
 unsigned int StTriggerData2016::bunchCounterHigh() const
 {
 	return EvtDesc->bunchXing_hi;
@@ -299,7 +266,12 @@ unsigned int StTriggerData2016::bunchCounterLow() const
 
 unsigned int StTriggerData2016::bunchId48Bit() const
 {
-	return (int)(bunchCounter() % 120);
+	unsigned long long bxinghi,bxing1,bxinglo, bx;
+	bxinghi = L1_DSM->BCdata[3];
+	bxing1 =  L1_DSM->BCdata[10];
+	bxinglo = (bxing1 << 16) + L1_DSM->BCdata[11];
+	bx = (bxinghi << 32) + bxinglo;
+	return (int)(bx % 120);
 } 
 
 unsigned int StTriggerData2016::bunchId7Bit() const
@@ -435,11 +407,6 @@ unsigned short StTriggerData2016::bbcTimeDifference() const
 {
 	return L1_DSM->VTX[3]%8192;
 }
-
-unsigned short StTriggerData2016::bbcTacSum() const
-{
-        return (((L1_DSM->VTX[3]) >> 13) & 0x1);
-}  
 
 unsigned short StTriggerData2016::bbcEarliestTDCLarge(StBeamDirection eastwest, int prepost) const
 {
@@ -1118,11 +1085,11 @@ unsigned short StTriggerData2016::vpdTimeDifference() const
 
 unsigned short StTriggerData2016::bbcVP101(int ch, int prepost) const
 {
-    int map[8]={3, 2, 1, 0, 7, 6, 5, 4};
+        int map[8]={3, 2, 1, 0, 7, 6, 5, 4};
     if(ch<0 || ch>7) return 0;
         int buffer = prepostAddress(prepost);
-        if (buffer >= 0 && mBBC[buffer]){
-	    return mBBC[buffer]->VPD[map[ch]];	    
+        if (buffer >= 0){
+                return mBBC[buffer]->VPD[map[ch]];
         }
         return 0;
 }

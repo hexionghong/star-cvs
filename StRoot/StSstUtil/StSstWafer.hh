@@ -1,15 +1,6 @@
-//$Id: StSstWafer.hh,v 1.8 2016/06/08 20:53:24 bouchet Exp $
+//$Id: StSstWafer.hh,v 1.5 2015/07/21 14:54:28 bouchet Exp $
 //
 //$Log: StSstWafer.hh,v $
-//Revision 1.8  2016/06/08 20:53:24  bouchet
-//coverity : PASS_BY_VALUE
-//
-//Revision 1.7  2016/06/07 21:40:14  bouchet
-//setMatcheds() changed to void (since it returns nothing)
-//
-//Revision 1.6  2016/05/30 21:39:28  bouchet
-//coverity : FORWARD_NULL fixed ; cleanup + simplified method
-//
 //Revision 1.5  2015/07/21 14:54:28  bouchet
 //removed unused variables ; Int_t doLorentzShiftSide moved to void()
 //
@@ -57,7 +48,7 @@ class StSstWafer: public TGeoHMatrix {
   StSstWafer(Int_t id);
   ~StSstWafer();
   StSstWafer(const StSstWafer & originalWafer);
-  StSstWafer& operator=(const StSstWafer & originalWafer);
+  StSstWafer& operator=(const StSstWafer originalWafer);
 
   void init(Int_t rId, Double_t *rD, Double_t *rN, Double_t *rT, Double_t *rX);
 
@@ -97,7 +88,7 @@ class StSstWafer: public TGeoHMatrix {
   Double_t          matchDistr(StSstClusterControl *clusterControl, Double_t x);
   static Double_t   myErf(Double_t x);
   void              setIsActive(Int_t rIsActive, Int_t iSide, Int_t rNStrip);
-  void              setMatcheds(sstDimensions_st *dimensions, StSstPoint *Point, StSstCluster *pMatched, StSstCluster *nMatched);
+  Int_t             setMatcheds(sstDimensions_st *dimensions, StSstPoint *Point, StSstCluster *pMatched, StSstCluster *nMatched);
   void              setPedestalSigmaStrip(Int_t iStrip, Int_t iSide, Int_t iPedestal, Int_t iSigma, StSstDynamicControl *dynamicControl);
 
   void              Reset();
@@ -114,7 +105,7 @@ class StSstWafer: public TGeoHMatrix {
   Int_t             doSolvePerfect(sstDimensions_st *dimensions, StSstClusterControl *clusterControl,Float_t CalibArray);
   void              doStatPerfect(Int_t nPerfectPoint, StSstClusterControl *clusterControl);
   void              doLorentzShift(sstDimensions_st *dimensions,Float_t mShift_hole,Float_t mShift_elec);
-  void              doLorentzShiftSide(Float_t shift, Float_t pitch, StSstClusterList *currentList);
+  void              doLorentzShiftSide(Int_t side,Float_t shift,sstDimensions_st *dimensions);
   void              convertAnalogToDigit(Double_t pairCreationEnergy);
   void              convertAnalogToDigit(Long_t nElectronInAMip,Long_t adcDynamic,Long_t nbitEncoding, Float_t daqCutValue);
   Int_t             convertDigitToAnalog(Double_t pairCreationEnergy);

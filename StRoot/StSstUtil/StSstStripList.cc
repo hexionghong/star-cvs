@@ -1,12 +1,6 @@
-//$Id: StSstStripList.cc,v 1.4 2016/06/10 19:27:41 bouchet Exp $
+//$Id: StSstStripList.cc,v 1.2 2015/06/24 17:37:21 smirnovd Exp $
 //
 //$Log: StSstStripList.cc,v $
-//Revision 1.4  2016/06/10 19:27:41  bouchet
-//coverity : FORWARD_NULL
-//
-//Revision 1.3  2016/05/30 21:40:29  bouchet
-//coverity : REVERSE_INULL fixed
-//
 //Revision 1.2  2015/06/24 17:37:21  smirnovd
 //StSstUtil: Prepend included headers with path to submodule
 //
@@ -221,14 +215,7 @@ int* StSstStripList::getListAdc(Int_t idStrip, Int_t sizeCluster)
 {
   StSstStrip *CurrentStrip = first();
   int* localListAdc = new int[sizeCluster];
-  while(CurrentStrip){
-    if(CurrentStrip->getNStrip() == idStrip){
-      break;
-    }
-    if(CurrentStrip!=last()){
-      CurrentStrip = next(CurrentStrip);
-    }
-  }
+  while((CurrentStrip->getNStrip()!=idStrip)&&(CurrentStrip)) CurrentStrip = next(CurrentStrip);
   if (!CurrentStrip) return localListAdc;
   Int_t iStrip = 0;
   for (iStrip=0; iStrip<sizeCluster;iStrip++) 
@@ -328,6 +315,23 @@ void StSstStripList::updateStrip(StSstStrip *ptr)
       delete ptr;
       return;
     }
+}
+
+StSstStripList* StSstStripList::addStripList(StSstStripList *list)
+{
+  Int_t size2 = list->getSize();
+  if (!size2) return this;
+  
+  StSstStrip *st1 =0 ;
+  StSstStrip *st2 = list->first();
+  Int_t i = 0;
+  for (i=0 ; i < size2 ; i++)
+    {
+      st2->copyTo(st1);
+      addNewStrip(st1);
+      st2 = list->next(st2);
+    }
+  return this;  
 }
 //________________________________________________________________________________
 void StSstStripList::updateStripList(StSpaListNoise *ptr)

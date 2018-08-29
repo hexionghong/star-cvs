@@ -5,7 +5,7 @@
  */
 /***************************************************************************
  *
- * $Id: StSstDaqMaker.cxx,v 1.13 2016/07/01 18:30:52 bouchet Exp $
+ * $Id: StSstDaqMaker.cxx,v 1.7 2016/02/03 15:50:20 zhoulong Exp $
  *
  * Author: Long Zhou, Nov 2013
  ***************************************************************************
@@ -17,26 +17,6 @@
  ***************************************************************************
  *
  * $Log: StSstDaqMaker.cxx,v $
- * Revision 1.13  2016/07/01 18:30:52  bouchet
- * COVERITY : STACK_USE, UNINIT_CTOR fixed
- *
- * Revision 1.12  2016/06/23 20:23:34  bouchet
- * sstBadStrips table decoding and use ; COVERITY : DIVIDE_BY_ZERO, NO_EFFECT fixed
- *
- * Revision 1.11  2016/05/25 15:47:38  smirnovd
- * StSstDaqMaker: Removed commented-out code destined to rot
- *
- * Revision 1.10  2016/05/25 15:47:30  smirnovd
- * StSstDaqMaker: Initializing variable once is enough
- *
- * Revision 1.9  2016/05/25 15:47:23  smirnovd
- * StSstDaqMaker: Got rid of unused local variable
- *
- * Revision 1.8  2016/05/25 15:47:15  smirnovd
- * StSstDaqMaker: Refactored how output file name is formed
- *
- * Memory leak fixed. Note different width for time field for values less < 999
- *
  * Revision 1.7  2016/02/03 15:50:20  zhoulong
  * Added some protection to avoid chain crash when there is no available calibration table
  *
@@ -112,7 +92,6 @@
 #include "StIOMaker/StIOMaker.h"
 #include "tables/St_sstChipCorrect_Table.h"
 #include "tables/St_sstNoise_Table.h"
-#include "tables/St_sstBadStrips_Table.h"
 #include <map>
 #include <vector>
 using std::vector;
@@ -170,37 +149,7 @@ const Int_t StSstDaqMaker::Rev_ReadOutMap[128] = {
 StSstDaqMaker::StSstDaqMaker(const Char_t *name)
   : StRTSBaseMaker("sst", name),mMode(1)
 {
-   mConfig=0;
-   mConfigTable=0;
-   spa_strip=0;
-   stripCal=0;
-   mRdoData=0;
-   mRdoDataLength=0;
-   mHeaderData=0;
-   mTrailerData=0;
-   mTrailerDataLength=0;
-   mMode=0;
-   mRdoFlag=0;
-   mTrigger=0;
-   mSec=0;
-   mFiber=0;
-   mPed=0;
-   mRms=0;
-   mRDO=0;
-   mEventnumber=0;
-   mEventrunumber=0;
-   mEventTime=0;
-   mPEventTime=0;
-   mRunNum=0;
-   for(int i=0;i<8;i++){
-     mAdc[i] = 0;
-     mAdcHeader[i] = 0;
-     mAdcLength[i] = 0;
-     mFiberFlag[i] = 0;
-     mFlag[i] = 0;
-     mChannel[i] = 0;
-     mDataMode[i] = 0;
-   }
+  memset(mBeg,0,mEnd-mBeg+1);
 }
 //-----------------------------------------------
 StSstDaqMaker::~StSstDaqMaker()
@@ -254,15 +203,6 @@ Int_t StSstDaqMaker::InitRun(Int_t runumber)
      // For Run16, we will not use this table. defaults value will not touch the real data.
      LOG_WARN << "InitRun : We will not use ChipCorrection Table any more )" << endm;
      FillDefaultChipNoiseTable();
-   }
-
-   if (mRunNum >= 16) { // Only for Run16
-     LOG_DEBUG << " searching for a bad Strip table" << endm;
-     St_sstBadStrips *mBadStrip = (St_sstBadStrips*)GetDataBase("Calibrations/sst/sstBadStrips");
-     if (mBadStrip) {
-       LOG_DEBUG << "sst bad strips table found ... initialize" << endm;
-       FillBadStripsTable(mBadStrip->GetTable());
-     }
    }
 
    St_sstConfiguration *configTable = (St_sstConfiguration *) GetInputDB("Geometry/sst/sstConfiguration");
@@ -327,8 +267,8 @@ Int_t StSstDaqMaker::Make()
    }
 
    //pedestal mode   
-   sstStripCalib_st *noise_strip = new sstStripCalib_st();
-   memset(noise_strip,0,491520*(sizeof(Short_t) + sizeof(Char_t)));
+   // St_sstStripCalib *stripCal = new St_sstStripCalib("sstStripCalib",nSstSide*nSstLadder*nSstStripsPerWafer*nSstWaferPerLadder);
+   sstStripCalib_st noise_strip;
    while ( (rts_table = GetNextDaqElement("sst/pedrms")) != 0 ) {
       mMode    = 1;
       mRdoData = (UInt_t *)rts_table->At(0);
@@ -339,13 +279,15 @@ Int_t StSstDaqMaker::Make()
       Int_t id_side, ladder;
       Int_t ladderCountN[20] = {0};
       Int_t ladderCountP[20] = {0};
+      // Int_t count = 1;
       Int_t c_correct;
       Int_t channelindex = 0;
       mSec     = rts_table->Sector();
       mRDO     = rts_table->Rdo();
       mFiber   = rts_table->Pad();
 
-      if (mSec != 1) mRDO = mRDO + 3;//sector 2
+      if (mSec == 1) mRDO = mRDO; //sector 1
+      else mRDO = mRDO + 3;       //sector 2
 
       if (mRDO < 1 || mRDO > 5)     flag = 1;
 
@@ -382,9 +324,10 @@ Int_t StSstDaqMaker::Make()
 		 + ladder*nSstWaferPerLadder*nSstStripsPerWafer
 		 + h*nSstStripsPerWafer
 		 + c_correct;		 // + s;
-               noise_strip->rms[channelindex]       = mRms;
-               noise_strip->pedestals[channelindex] = mPed;
-   	       // cout<<"--->Channel is : "<<channelindex<<endl;
+               noise_strip.rms[channelindex]       = mRms;
+               noise_strip.pedestals[channelindex] = mPed;
+               // stripCal->AddAt(&noise_strip);
+	       // cout<<"--->Channel is : "<<channelindex<<endl;
                if (id_side == 0) ladderCountP[ladder]++;
                else            ladderCountN[ladder]++;
             }
@@ -419,17 +362,36 @@ Int_t StSstDaqMaker::Make()
 
    // Directly write sstStripCalib table in strip ordering.
    if(mMode == 1) {
-     char name[50];
-     sprintf(name, "sstStripCalib.%d.%06d.root", GetDate(), GetTime());
+     char* myLabel = new char[100];
+     char* myTime  = new char[100]; 
+     char* myDate  = new char[100];
+     char* name    = new char[100] ;
 
+     if (GetTime()<999)
+       sprintf(myTime,"000%d",GetTime());
+     else
+       if ((GetTime()<9999)&&(GetTime()>999))
+	 sprintf(myTime,"00%d",GetTime());
+       else
+	 if ((GetTime()<99999)&&(GetTime()>9999))
+	   sprintf(myTime,"0%d",GetTime());
+	 else 
+	   sprintf(myTime,"%d",GetTime());
+
+     sprintf(myDate,"%d%s",GetDate(),".");
+     sprintf(myLabel,"%s%s",myDate,myTime);
+     LOG_INFO<<"TimeStamp : "<<myLabel<<endm;
+
+     sprintf(name,"%s%s%s","sstStripCalib.",myLabel,".root");
      TFile f1(name,"RECREATE","SSD ped and noise file",9);
-     stripCal->AddAt(noise_strip);
+     stripCal->AddAt(&noise_strip);
      stripCal->Print();
      stripCal->Write();
      f1.Close();
    }
 
-   delete noise_strip;
+   // delete stripCal;
+
    return kStOk;
 }
 //-------------------------------------------------
@@ -668,9 +630,10 @@ void StSstDaqMaker::DecodeRawWords(UInt_t *val, Int_t vallength, Int_t channel)
    Int_t readout_correct[3] = {0};
    Int_t ladder             = 0;
    Int_t id_side            = 0;
-   Int_t count              = 1;
+   Int_t count              = 0;
 
    //initialize St_spa_strip and St_ssdPedStrip table.
+   //St_spa_strip *spa_strip = (St_spa_strip *) m_DataSet->Find("spa_strip");
    spa_strip = dynamic_cast<St_spa_strip *>( m_DataSet->Find("spa_strip"));
 
    if (!spa_strip) {
@@ -679,6 +642,7 @@ void StSstDaqMaker::DecodeRawWords(UInt_t *val, Int_t vallength, Int_t channel)
    }
 
    spa_strip_st   out_strip;
+   count = 1;
    LOG_DEBUG << "DECODING RAW MODE data....." << endm;
    //grab ladder and side
    FindLadderSide(mRDO, channel, ladder, id_side);
@@ -816,6 +780,8 @@ void StSstDaqMaker::DecodeRawWords(UInt_t *val, Int_t vallength, Int_t channel)
          LOG_DEBUG << "Make()/  spa_strip->NRows= " << spa_strip->GetNRows() << endm;
       }
    }
+
+   //delete spa_strip;
 }
 //-------------------------------------------------
 void StSstDaqMaker::DecodeRawWords_r15(UInt_t *val, Int_t vallength, Int_t channel)
@@ -837,8 +803,10 @@ void StSstDaqMaker::DecodeRawWords_r15(UInt_t *val, Int_t vallength, Int_t chann
   Int_t readout_correct[3] = {0};
   Int_t ladder             = 0;
   Int_t id_side            = 0;
+  Int_t count              = 0;
   Int_t readoutindex       = 0;
 
+  count = 1;
   LOG_DEBUG << "DECODING RAW MODE data....." << endm;
   //grab ladder and side
   FindLadderSide(mRDO, channel, ladder, id_side);
@@ -942,7 +910,7 @@ void StSstDaqMaker::DecodeCompressedWords(UInt_t *val, Int_t vallength, Int_t ch
    Int_t  strip_number     = 0;
    Int_t  id_side          = 0;
    Int_t  id_wafer         = 0;
-   Int_t  count            = 1;
+   Int_t  count            = 0;
    Int_t  data             = 0;
    Int_t  wafer            = 0;
    Int_t  strip            = 0;
@@ -953,11 +921,9 @@ void StSstDaqMaker::DecodeCompressedWords(UInt_t *val, Int_t vallength, Int_t ch
    Int_t  oldchip          = 0;
    Int_t  chipflag         = 0;	// CMN algorithm faild flag.
    UInt_t errorcode        = 0;	// CMN algorithm error code.
-   int wafDecodeBadStrip = 0; // used for bad strip table
-   int stripDecodeBadStrip = 0;// used for decoding bad strip table 
-   int indexDecodeBadStrip = 0; // used for bad strip table
  
    LOG_DEBUG << "Current Event data length : " << vallength << endm;
+   //St_spa_strip *spa_strip = (St_spa_strip *) m_DataSet->Find("spa_strip");
    spa_strip = dynamic_cast<St_spa_strip *>( m_DataSet->Find("spa_strip"));
 
    if (!spa_strip) {
@@ -966,6 +932,7 @@ void StSstDaqMaker::DecodeCompressedWords(UInt_t *val, Int_t vallength, Int_t ch
    }
 
    spa_strip_st  out_strip;
+   count = 1;
    //grab ladder and side
    FindLadderSide(mRDO, channel, ladder, id_side); //convert channel to real Ladder number and side
 
@@ -1007,24 +974,6 @@ void StSstDaqMaker::DecodeCompressedWords(UInt_t *val, Int_t vallength, Int_t ch
       if( mRunNum >= 14 && mRunNum <=15) {
 	if (gStSstDbMaker->maskChip(id_side, ladder, wafer, chip)) continue;
       }
-
-      if(mRunNum >= 16){
-	if(id_side == 0){
-	  wafDecodeBadStrip = nSstWaferPerLadder - wafer - 1;
-	  stripDecodeBadStrip = strip + 1;
-	}
-	else {
-	  wafDecodeBadStrip = wafer + 1 - 1;
-	  stripDecodeBadStrip = nSstStripsPerWafer - strip;	
-	}
-	
-	indexDecodeBadStrip = id_side * nSstLadder * nSstWaferPerLadder * nSstStripsPerWafer 
-	  + ladder * nSstWaferPerLadder * nSstStripsPerWafer 
-	  + wafDecodeBadStrip * nSstStripsPerWafer
-	  + stripDecodeBadStrip -1;
-	if(mBadStrip[indexDecodeBadStrip]!=0) continue;
-      }
-
       //save only strips with data>0, otherwise it increases the datastrip volume for nothing
       if(data>0){
 	out_strip.id          = count;
@@ -1077,6 +1026,8 @@ void StSstDaqMaker::DecodeCompressedWords(UInt_t *val, Int_t vallength, Int_t ch
          LOG_DEBUG << "Make()/  spa_strip->NRows= " << spa_strip->GetNRows() << endm;
       }
    }
+
+   //delete spa_strip;
 }
 
 //-------------------------------------------------
@@ -1231,11 +1182,14 @@ void StSstDaqMaker::FillDefaultNoiseTable()
 //------------------------------------------------
 void StSstDaqMaker::FillChipNoiseTable(sstChipCorrect_st *chipCorrectTable){
   int side=0,ladder=0,wafer=0,chip=0;
+  //mChipCorrect = (St_sstChipCorrect*)GetDataBase("Calibrations/sst/sstChipCorrect");
+  //if(mChipCorrect){
   LOG_DEBUG<<"New ChipNoiseTable was used! "<<endm;
   int totChipSst       = nSstSide*nSstLadder*nSstWaferPerLadder*nSstChipPerWafer;
   int totChipSstSide   = nSstLadder*nSstWaferPerLadder*nSstChipPerWafer;
   int totChipSstLadder = nSstWaferPerLadder*nSstChipPerWafer;
   
+  //sstChipCorrect_st *g  = mChipCorrect->GetTable() ;
   for(Int_t i=0; i<totChipSst;i++){
     side   = i/totChipSstSide;
     ladder = (i - side*totChipSstSide)/totChipSstLadder;
@@ -1266,13 +1220,6 @@ void StSstDaqMaker::FillDefaultChipNoiseTable(){
     }
   }
 }
-//------------------------------------------------
-void StSstDaqMaker::FillBadStripsTable(sstBadStrips_st* badStripTable){
-  int totChipSst = nSstSide*nSstLadder*nSstWaferPerLadder*nSstStripsPerWafer;  
-  for(Int_t i=0; i<totChipSst;i++){    
-    mBadStrip[i] = badStripTable[0].status[i];
-  }
-}			       
 //------------------------------------------------
 Float_t StSstDaqMaker::CalculateCommonModeNoiseSimple(vector<int> vadc) //Simplify algorithm
 {
@@ -1315,7 +1262,7 @@ Float_t StSstDaqMaker::CalculateCommonModeNoiseSimple(vector<int> vadc) //Simpli
     counter = counter + 1;
   }
 
-  return (counter>0)?(sum/counter):0;
+  return sum / counter;
 }
 //------------------------------------------------
 void StSstDaqMaker::FillData(vector<vector<int> > vadc, vector<vector<float> > vcmnoise, Int_t id_side, Int_t ladder, Int_t vallength)

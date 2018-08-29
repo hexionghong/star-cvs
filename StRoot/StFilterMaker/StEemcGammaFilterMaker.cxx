@@ -1,4 +1,4 @@
-// $Id: StEemcGammaFilterMaker.cxx,v 1.4 2016/05/25 21:35:26 jwebb Exp $
+// $Id: StEemcGammaFilterMaker.cxx,v 1.3 2010/08/09 21:51:22 seluzhen Exp $
 
 // STL
 #include <vector>
@@ -290,7 +290,7 @@ Int_t StEemcGammaFilterMaker::Make()
     if(status == kStOK)
     {
       ++mAccepted;
-//    LOG_INFO << "Make() : Event " << mEvent->id() << " accepted!" << endm; // Reduce noise and coverity complaint about possible NULL ptr
+      LOG_INFO << "Make() : Event " << mEvent->id() << " accepted!" << endm;
     }
     
     if (mFilterMode==0) status = kStOK;
@@ -392,7 +392,7 @@ Int_t StEemcGammaFilterMaker::makeEEMC(StEmcCollection *emcCollection, double zV
 	    if(neighborEta > int(nEemcEtaBins - 1)) continue;
 	    
 	    neighborPhi = (p + j) % nEemcPhiBins;
-//	    if(neighborPhi == - 1) neighborPhi = nEemcPhiBins - 1; // Cannot be < 0 after % on previous line
+	    if(neighborPhi == - 1) neighborPhi = nEemcPhiBins - 1;
 	    LOG_DEBUG << "\t\tTower (eta, phi) = (" << neighborEta << ", " << neighborPhi 
 	    << "), E = " << mEemcTowerHits[neighborEta * nEemcPhiBins + neighborPhi] << endm;
 	    clusterEnergy += mEemcTowerHits[neighborEta * nEemcPhiBins + neighborPhi];
@@ -450,9 +450,6 @@ Int_t StEemcGammaFilterMaker::Finish()
 }
 
 // $Log: StEemcGammaFilterMaker.cxx,v $
-// Revision 1.4  2016/05/25 21:35:26  jwebb
-// Removed deadcode (coverity) and removed uneccessary printout.
-//
 // Revision 1.3  2010/08/09 21:51:22  seluzhen
 // updated comment field
 //

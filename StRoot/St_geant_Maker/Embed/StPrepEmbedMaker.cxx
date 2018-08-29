@@ -15,7 +15,7 @@
  * the Make method of the St_geant_Maker, or the simulated and real
  * event will not be appropriately matched.
  *
- * $Id: StPrepEmbedMaker.cxx,v 1.14 2016/10/14 07:12:26 zhux Exp $
+ * $Id: StPrepEmbedMaker.cxx,v 1.12 2013/03/26 13:38:18 fisyak Exp $
  *
  */
 
@@ -95,12 +95,10 @@ StPrepEmbedMaker::StPrepEmbedMaker(const Char_t *name) : StMaker(name)
   mFile = 0;
   mMoreFile = 0 ;
   mTree = 0;
-  mMoreTree = 0;
   mSkipMode = kFALSE; /// Do not skip the false vertex
   mSpreadMode = kFALSE; /// Do not smear z-vertex
   mOpenFzFile = kFALSE; /// Do not write .fz file
   mPrimeMode = kFALSE; /// Do not prime the first event
-  mSavePid = 0;
   mPrimed = kFALSE;
   mVpdVzCutMode = kFALSE; /// Do not cut on VpdVz
   mPVRankCutMode = kFALSE; /// Do not cut on PVRank
@@ -263,36 +261,9 @@ Int_t StPrepEmbedMaker::Make()
     LOG_ERROR << "StPrepEmbedMaker::Make reject this event" << endm;
     return kStErr;
   }
-
-  if( mMoreTree )
-  {
-     nFound = mMoreTree->Draw("nRefMult",
-	     Form("RunId==%i&&EvtId==%i",EvtHddr->GetRunNumber(),EvtHddr->GetEventNumber()),
-	     "goff");
-     if (nFound != 1) {
-	  LOG_ERROR << "StPrepEmbedMaker::Make Run/Event = " << EvtHddr->GetRunNumber() << "/" << EvtHddr->GetEventNumber()
-	     << " has been found in moretag file" << nFound << " times" <<  endm;
-	  return kStErr;
-     }
-     LOG_INFO << "StPrepEmbedMaker::Make Run/Event = " << EvtHddr->GetRunNumber()
-	  << "/" << EvtHddr->GetEventNumber()
-	  << " has been found (in moretags) with uncorrectedNumberOfPrimaries = " <<  mMoreTree->GetV1()[0] << endm;
-
-     if (mMoreTree->GetV1()[0] <= 0 )
-     {
-	  LOG_ERROR << "StPrepEmbedMaker::Make reject this event" << endm;
-	  return kStErr;
-     }
-     if ( fabs(mMoreTree->GetV1()[0]- mTree->GetV1()[0]) > 0.1 )
-     {
-	  LOG_INFO << "StPrepEmbedMaker::Make Run/Event = " << EvtHddr->GetRunNumber()
-	     << "/" << EvtHddr->GetEventNumber()
-	     << " has different uncorrectedNumberOfPrimaries from tags and moretags" << endm;
-     }
-  }
-
+ 
   // Extract info for mult for this event
-  const Int_t numberOfPrimaryTracks = (Int_t) mMoreTree ? mMoreTree->GetV1()[0] : mTree->GetV1()[0];
+  const Int_t numberOfPrimaryTracks = (Int_t) mTree->GetV1()[0];
   const Int_t npart = getMultiplicity( *EvtHddr, numberOfPrimaryTracks ) ;
 
   nFound = (Int_t) mTree->Draw("primaryVertexX:primaryVertexY:primaryVertexZ:TriggerId",
@@ -300,31 +271,7 @@ Int_t StPrepEmbedMaker::Make()
 				    EvtHddr->GetRunNumber(),
 				    EvtHddr->GetEventNumber()),
 			       "goff");
-
-  if ( mMoreTree )
-  {
-     nFound = (Int_t) mMoreTree->Draw("VX:VY:VZ",
-	     Form("RunId==%i&&EvtId==%i",
-		  EvtHddr->GetRunNumber(),
-		  EvtHddr->GetEventNumber()),
-	     "goff");
-  }
-
-  Double_t xyztmp[3];
-  if ( mMoreTree )
-  {
-     xyztmp[0] = mMoreTree->GetV1()[0];
-     xyztmp[1] = mMoreTree->GetV2()[0];
-     xyztmp[2] = mMoreTree->GetV3()[0];
-  }
-  else
-  {
-     xyztmp[0] = mTree->GetV1()[0];
-     xyztmp[1] = mTree->GetV2()[0];
-     xyztmp[2] = mTree->GetV3()[0];
-  }
-
-  const Double_t xyz[3] = {xyztmp[0],xyztmp[1],xyztmp[2]};
+  const Double_t xyz[3] = {mTree->GetV1()[0],mTree->GetV2()[0],mTree->GetV3()[0]};
 
   // Skip event if no primary vertex - effectively if tags say it is 0,0,0
   if (fabs(xyz[0])<1e-7 && fabs(xyz[1])<1e-7 && fabs(xyz[2])<1e-7 ){
@@ -415,13 +362,6 @@ Int_t StPrepEmbedMaker::Make()
 	     << "), VpdVz = " << vpdvz
 	     << " - VpdVz is too small (i.e. no BTOF in this run), skipping." << endm;
 	  return kStSKIP;
-     }
-     if( fabs(vpdvz) >= 100. ) {
-	  LOG_INFO << "StPrepEmbedMaker::Make  Event " << EvtHddr->GetEventNumber()
-	     << " has tags with vertex at (" << xyz[0] << "," << xyz[1] << "," << xyz[2]
-	     << "), VpdVz = " << vpdvz
-	     << " - VpdVz is too large, skipping." << endm;
-        return kStSKIP;
      }
      if( fabs(xyz[2]-vpdvz) > mSettings->vpdvz ) {
 	  LOG_INFO << "StPrepEmbedMaker::Make  Event " << EvtHddr->GetEventNumber()
@@ -749,11 +689,11 @@ Int_t StPrepEmbedMaker::getMultiplicity(const StEvtHddr& EvtHddr, const Int_t np
   if(mSettings->mult < 1.) 
     {
       npart=int(mSettings->mult * nprimarytracks);
-      if (npart < 5)
+      if (! npart)
       {
 	LOG_INFO << "StPrepEmbedMaker::Event " << EvtHddr.GetEventNumber() 
-	      << " has too small numberOfPrimaryTracks " << nprimarytracks << " for the mult fraction requested. Forcing npart to 5." << endm; 
-	npart=5;
+	      << " has too small numberOfPrimaryTracks " << nprimarytracks << " for the mult fraction requested. Forcing npart to 1." << endm; 
+	npart=1;
       }
   
     }
@@ -890,13 +830,6 @@ void StPrepEmbedMaker::gkine(const Int_t mult, const Double_t vzmin, const Doubl
 
 /* -------------------------------------------------------------------------
  * $Log: StPrepEmbedMaker.cxx,v $
- * Revision 1.14  2016/10/14 07:12:26  zhux
- * "refmult" and "vx,vy,vz" will be read from moretags.root file if it exists.
- * The minimum number of embedded particles are now set to 5 instead of 1, when the number of embeded particles is set to be proportional to refmult.
- *
- * Revision 1.13  2016/06/21 16:05:18  jwebb
- * Init all members.
- *
  * Revision 1.12  2013/03/26 13:38:18  fisyak
  * restore back modififcations as not related to drop in no. of reconstructed tracks
  *
