@@ -12,8 +12,6 @@
 #include "TCernLib.h"
 #endif
 
-//#define __CHECKIT__ // Enable unused paramter and error checks
-
 #define NICE(a) ( ((a) <= -M_PI)? ((a)+2*M_PI) :\
                   ((a) >   M_PI)? ((a)-2*M_PI) : (a))
 
@@ -69,14 +67,10 @@ void StiTrackNodeHelper::set(StiKalmanTrackNode *pNode,StiKalmanTrackNode *sNode
   if (mParentNode) {
     mParentHz = mParentNode->getHz();
     assert(fabs(mParentHz-mParentNode->mFP.hz()) < EC*0.1); // allow the difference in 100 Gauss. TODO check why 10 is not enough
-#ifdef __CHECKIT__
     mParentNode->mFP.check("2StiTrackNodeHelper::set");
-#endif
   }
   if (mTargetNode->isValid()) {
-#ifdef __CHECKIT__
     mTargetNode->mFP.check("1StiTrackNodeHelper::set");
-#endif
     assert(fabs(mTargetHz-mTargetNode->mFP.hz()) < EC*0.1);
   }
 
@@ -101,9 +95,7 @@ int StiTrackNodeHelper::propagatePars(const StiNodePars &parPars
   int ierr = 0;
   alpha = mTargetNode->_alpha - mParentNode->_alpha;
   ca=1;sa=0;
-#ifdef __CHECKIT__
   parPars.check("1propagatePars");
-#endif
   rotPars = parPars;
   if (fabs(alpha) > 1.e-6) { //rotation part
 
@@ -124,18 +116,18 @@ int StiTrackNodeHelper::propagatePars(const StiNodePars &parPars
     rotPars._sinCA /= nor;
     rotPars.eta()= NICE(parPars.eta()-alpha); 
   }// end of rotation part
-  ierr = rotPars.check(); // check parameter validity to continue
+  ierr = rotPars.check();
   if (ierr) return 1;
   
 //  	Propagation 
   x1 = rotPars.x();
   x2 = (mDetector)? mDetector->getPlacement()->getNormalRadius():mHitPars[0];
   dx = x2-x1;
-  if (fabs(dx)<1e-5) { proPars = rotPars; return 0;}
   rho = 0.5*(mTargetHz*rotPars.ptin()+rotPars.curv());
   dsin = rho*dx;
   sinCA2=rotPars._sinCA + dsin; 
-  if (fabs(sinCA2) > 0.99) return 2;
+  if (sinCA2> 0.95) sinCA2= 0.95;
+  if (sinCA2<-0.95) sinCA2=-0.95;
   cosCA2 = ::sqrt((1.-sinCA2)*(1.+sinCA2));
   sumSin   = rotPars._sinCA+sinCA2;
   sumCos   = rotPars._cosCA+cosCA2;
@@ -276,19 +268,14 @@ StiDebug::Break(nCall);
       mBestDelta = sqrt(er1*er2/(er1+er2));
 
     }
-#ifdef __CHECKIT__
     mBestParentPars.check("1makeFit"); 
-#endif
     mFitdParentPars = mFitdPars;
     mFitdParentErrs = mFitdErrs;
-#ifdef __CHECKIT__
     mFitdParentPars.check("2makeFit");
     mFitdParentErrs.check("3makeFit");
-#endif
 
     ierr = propagatePars(mBestParentPars,mBestParentRotPars,mBestPars);
     if(ierr) return 1;
-
     ierr = propagateMtx();	if(ierr) return 2;
     ierr = propagateMCS();	if(ierr) return 3;
     ierr = propagateFitd();	if(ierr) return 4;
@@ -678,7 +665,7 @@ static const int keepElossBug = StiDebug::iFlag("keepElossBug");
 assert(pt<1e3);
   double relRadThickness;
   // Half path length in previous node
-  double pL1=0,pL2=0,pL3=0,d1=0,d2=0,d3=0,dxEloss=0,dx=0;
+  double pL1,pL2,pL3,d1,d2,d3,dxEloss,dx;
   pL1=0.5*pathIn(mParentNode->getDetector(),&mBestParentPars);
   // Half path length in this node
   pL3=0.5*pathIn(mDetector,&mBestPars);
@@ -863,6 +850,7 @@ double StiTrackNodeHelper::evalChi2()
   if (fabs(mPredPars.curv())      >kMaxCur)      return 1e41;
   if (!mDetector) 	{ //Primay vertex
     mHitPars[0] = mPredPars.x();
+//    chi2 = joinVtx(mHitPars,mHrr.G(),mPredPars.P,mPredErrs.G());
     chi2 = joinVtx(mHitPars,mHrr,mPredPars,mPredErrs);
   } else 		{ //Normal hit
 
@@ -912,6 +900,7 @@ double StiTrackNodeHelper::recvChi2()
   if (fabs(mJoinPars.eta())       >kMaxEta) 	return 1e41;
   if (fabs(mJoinPars.curv())      >kMaxCur)     return 1e41;
   if (!mDetector) {//Primary vertex
+//  double chi2 =joinVtx(mHitPars,mHrr.G(),mPredPars.P,mPredErrs.G());
     double chi2 =joinVtx(mHitPars,mHrr    ,mPredPars  ,mPredErrs    );
     return chi2;
   }

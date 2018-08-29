@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: StDbXmlWriter.cc,v 1.10 2016/05/27 16:26:23 dmitry Exp $
+ * $Id: StDbXmlWriter.cc,v 1.8 2015/05/15 19:37:11 dmitry Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -10,12 +10,6 @@
  ***************************************************************************
  *
  * $Log: StDbXmlWriter.cc,v $
- * Revision 1.10  2016/05/27 16:26:23  dmitry
- * more coverity
- *
- * Revision 1.9  2016/05/26 15:15:30  dmitry
- * unused variable in unused code - commented out
- *
  * Revision 1.8  2015/05/15 19:37:11  dmitry
  * fixed type issue, as signed int was assumed
  *
@@ -110,8 +104,8 @@ StDbXmlWriter::ioTable(StDbTable* table){
     endAccessor();
 
     int k;
-    int nrows = 1;
-//    int* elements = table->getElementID(nrows);
+    int nrows;
+    int* elements = table->getElementID(nrows);
 
 //    if(!elements){
 //      elements = new int[nrows];

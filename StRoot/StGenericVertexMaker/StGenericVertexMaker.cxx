@@ -99,20 +99,10 @@ Int_t StGenericVertexMaker::Init()
   eval          = IAttr("eval");
   minTracks     = IAttr("minTracks");
 
-  // Recognize different beamline options to be used with some vertex finders
-  StGenericVertexFinder::VertexFit_t vertexFitMode;
-
-  if ( IAttr("beamline") )
-     vertexFitMode = StGenericVertexFinder::VertexFit_t::Beamline1D;
-  else if ( IAttr("beamline3D") )
-     vertexFitMode = StGenericVertexFinder::VertexFit_t::Beamline3D;
-  else
-     vertexFitMode = StGenericVertexFinder::VertexFit_t::NoBeamline;
-
   Bool_t isMinuit=kFALSE;
 
   if ( IAttr("VFMinuit") || IAttr("VFMinuit2") || IAttr("VFMinuit3")){ // 3 versions of Minuit for ranking modes
-    theFinder= new StMinuitVertexFinder(vertexFitMode);
+    theFinder= new StMinuitVertexFinder();
     if (IAttr("VFMinuit") ) ((StMinuitVertexFinder*) theFinder)->useOldBEMCRank();
     if (IAttr("VFMinuit3") ) ((StMinuitVertexFinder*) theFinder)->lowerSplitVtxRank();
     if (minTracks > 0) ((StMinuitVertexFinder*) theFinder)->SetMinimumTracks(minTracks);
@@ -128,7 +118,7 @@ Int_t StGenericVertexMaker::Init()
 
   } else if ( (IAttr("VFPPV") ||  IAttr("VFPPVnoCTB")) && !IAttr("VFPPVev")) { // 2 version of PPV w/ & w/o CTB
       LOG_INFO << "StGenericVertexMaker::Init: uses PPVertex finder"<<  endm;
-      theFinder= new StPPVertexFinder(vertexFitMode);
+      theFinder= new StPPVertexFinder();
     if ( IAttr("VFPPVnoCTB")) theFinder->UseCTB(kFALSE);	
     if(GetMaker("emcY2")) {//very dirty, but detects if it is M-C or real data
       ((StPPVertexFinder*) theFinder)->setMC(kTRUE);
@@ -169,6 +159,8 @@ Int_t StGenericVertexMaker::Init()
     assert(!eval); // current implementation support only Minuit Vertex finder, JB 
   }
  
+  //    theFinder->UseVertexConstraint(-0.265,0.4088,-0.00135,0.0004333,0.0001);
+  //theFinder->UseVertexConstraint(0.0,0.0,0.0,0.0,0.0001);
   if (eval) mEvalNtuple = new TNtuple("results","results","thX:thY:thZ:thStat:goodGlob:evX:evY:evZ:evStat:nPrim:nCTB:geantX:geantY:geantZ");
 
   theFinder->Init();
@@ -194,7 +186,7 @@ void StGenericVertexMaker::Clear(const char* opt){
  */
 Int_t StGenericVertexMaker::InitRun(int runnumber){
   theFinder->InitRun(runnumber);
-  if (useBeamline || IAttr("Beamline3D")) {
+  if (useBeamline) {
 
      // Get Current Beam Line Constraint from database
      TDataSet* dbDataSet = this->GetDataBase("Calibrations/rhic/vertexSeed");
@@ -215,7 +207,7 @@ Int_t StGenericVertexMaker::InitRun(int runnumber){
        LOG_INFO << "BeamLine Constraint: " << endm;
        LOG_INFO << "x(z) = " << x0 << " + " << dxdz << " * z" << endm;
        LOG_INFO << "y(z) = " << y0 << " + " << dydz << " * z" << endm;
-
+       theFinder->UseVertexConstraint(x0,y0,dxdz,dydz,0.0001);
        theFinder->UseVertexConstraint(*vSeed);
 
      } else {
@@ -276,6 +268,7 @@ Int_t StGenericVertexMaker::Make()
 {
   nEvTotal++;
   primV  = NULL;
+  mEvent = NULL;
   mEvent = (StEvent *)GetInputDS("StEvent");
   LOG_DEBUG << "StGenericVertexMaker::Make: StEvent pointer " << mEvent << endm;
   LOG_DEBUG << "StGenericVertexMaker::Make: external find use " << externalFindUse << endm;

@@ -1,11 +1,8 @@
 // \class StFmsOfflineQaMaker
 // \author Akio Ogawa
 //
-//  $Id: StFmsOfflineQaMaker.cxx,v 1.2 2016/06/08 19:55:11 akio Exp $
+//  $Id: StFmsOfflineQaMaker.cxx,v 1.1 2016/01/26 19:54:33 akio Exp $
 //  $Log: StFmsOfflineQaMaker.cxx,v $
-//  Revision 1.2  2016/06/08 19:55:11  akio
-//  applying coverity report
-//
 //  Revision 1.1  2016/01/26 19:54:33  akio
 //  Separated from StFmsFpsMaker... This is for FMS offline QA and also FMS-FPS alignments
 //
@@ -77,7 +74,7 @@ int getFmsTrigId(const StTriggerId& trgid, int print=1){
 ClassImp(StFmsOfflineQaMaker);
 
 StFmsOfflineQaMaker::StFmsOfflineQaMaker(const Char_t* name):
-    StMaker(name),mFilename((char *)"fmsqa.root")
+    StMaker(name),mFilename((char *)"fmsqa.root"),mPrint(0)
 {}
 
 StFmsOfflineQaMaker::~StFmsOfflineQaMaker(){}
@@ -266,7 +263,6 @@ Int_t StFmsOfflineQaMaker::Make(){
 	if(clu->energy()<5.0) continue;
 	int det=clu->detectorId();
 	int ls=mFmsDbMaker->largeSmall(det);
-	if(ls<0) continue;
 	float nt=float(clu->nTowers());
 	mNTow[ls]->Fill(nt);
 	mNTowE[ls]->Fill(nt,clu->energy());

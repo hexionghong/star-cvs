@@ -1,5 +1,5 @@
- /***************************************************************************
- * $Id: StFmsDbMaker.cxx,v 1.19 2016/06/08 19:58:03 akio Exp $
+/***************************************************************************
+ * $Id: StFmsDbMaker.cxx,v 1.17 2015/11/12 16:46:40 akio Exp $
  * \author: akio ogawa
  ***************************************************************************
  *
@@ -8,12 +8,6 @@
  ***************************************************************************
  *
  * $Log: StFmsDbMaker.cxx,v $
- * Revision 1.19  2016/06/08 19:58:03  akio
- * Applying Coverity report
- *
- * Revision 1.18  2016/06/07 15:51:39  akio
- * Making code better based on Coverity reports
- *
  * Revision 1.17  2015/11/12 16:46:40  akio
  * *** empty log message ***
  *
@@ -93,8 +87,16 @@
 
 ClassImp(StFmsDbMaker)
 
-StFmsDbMaker::StFmsDbMaker(const Char_t *name) : StMaker(name), mRecConfig(StFmsDbConfig::Instance()) {}; 
-StFmsDbMaker::~StFmsDbMaker() {deleteArrays();}
+StFmsDbMaker::StFmsDbMaker(const Char_t *name) : StMaker(name), mDebug(0),
+  mChannelGeometry(0),mDetectorPosition(0),mMap(0),mmMap(0),mPatchPanelMap(0),
+  mQTMap(0),mGain(0),mmGain(0),mGainCorrection(0),mmGainCorrection(0),mRecPar(0),
+  mRecConfig(StFmsDbConfig::Instance()),
+    mForceUniformGain(0.0), mForceUniformGainCorrection(0.0),mReadGainFile(0),mReadRecParam(0),
+  mFpsConstant(0),mMaxSlatId(0),mFpsChannelGeometry(0),mFpsSlatId(0),mFpsReverseSlatId(0),
+  mFpsPosition(0),mFpsMap(0),mFpsReverseMap(0),mFpsGain(0),mFpsStatus(0)  
+{}; //{gStFmsDbMaker = this;}
+
+StFmsDbMaker::~StFmsDbMaker() {deleteArrays(); /*gStFmsDbMaker = 0;*/}
 Int_t StFmsDbMaker::Init(){LOG_DEBUG<<"StFmsDbMaker Init Start"<<endm; return StMaker::Init();}
 Int_t StFmsDbMaker::Make(){LOG_DEBUG<<"StFmsDbMaker Make"<<endm; return kStOK;}
 void StFmsDbMaker::Clear(const Char_t*){LOG_DEBUG<<"StFmsDbMaker Clear"<<endm; StMaker::Clear();}
@@ -185,13 +187,13 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
   //!fmsChannelGeometry
   fmsChannelGeometry_st *tChannelGeometry = 0;
   tChannelGeometry = (fmsChannelGeometry_st*) dbChannelGeometry->GetTable();
-  UShort_t max = dbChannelGeometry->GetNRows();
+  Int_t max = dbChannelGeometry->GetNRows();
   mMaxDetectorId = 0;
   for(Int_t i=0; i<max; i++){
     if(mMaxDetectorId < tChannelGeometry[i].detectorId) mMaxDetectorId = tChannelGeometry[i].detectorId;     
   }
-  mChannelGeometry = new fmsChannelGeometry_st[mMaxDetectorId+1]();
-  //memset(mChannelGeometry,0,sizeof(fmsChannelGeometry_st)*(mMaxDetectorId+1));
+  mChannelGeometry = new fmsChannelGeometry_st[mMaxDetectorId+1];
+  memset(mChannelGeometry,0,sizeof(fmsChannelGeometry_st)*(mMaxDetectorId+1));
   for(Int_t i=0; i<max; i++){ 
     memcpy(&mChannelGeometry[tChannelGeometry[i].detectorId], &tChannelGeometry[i], sizeof(fmsChannelGeometry_st));
   }
@@ -200,8 +202,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
   //!fmsDetectorPosition
   fmsDetectorPosition_st *tDetectorPosition = 0;
   tDetectorPosition = (fmsDetectorPosition_st*) dbDetectorPosition->GetTable();
-  mDetectorPosition = new fmsDetectorPosition_st[mMaxDetectorId+1]();
-  // memset(mDetectorPosition,0,sizeof(fmsDetectorPosition_st)*(mMaxDetectorId+1));
+  mDetectorPosition = new fmsDetectorPosition_st[mMaxDetectorId+1];
+  memset(mDetectorPosition,0,sizeof(fmsDetectorPosition_st)*(mMaxDetectorId+1));
   max = dbDetectorPosition->GetNRows();
   for(Int_t i=0; i<max; i++){
     memcpy(&mDetectorPosition[tDetectorPosition[i].detectorId], &tDetectorPosition[i], sizeof(fmsDetectorPosition_st));
@@ -231,8 +233,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
   //!fmsMap
   mMap = (fmsMap_st*) dbMap->GetTable();
   mMaxMap = dbMap->GetNRows();
-  mmMap = new fmsMap_st* [mMaxDetectorId+1]();
-  //memset(mmMap,0,sizeof(fmsMap_st*)*(mMaxDetectorId+1));
+  mmMap = new fmsMap_st* [mMaxDetectorId+1];
+  memset(mmMap,0,sizeof(fmsMap_st*)*(mMaxDetectorId+1));
   memset(mReverseMapDetectorId,0,sizeof(mReverseMapDetectorId));
   memset(mReverseMapChannel,0,sizeof(mReverseMapChannel));
   for(Int_t i=0; i<mMaxMap; i++){
@@ -247,8 +249,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       return kStFatal;
     }
     if(mmMap[d]==0){
-      mmMap[d] = new fmsMap_st [maxChannel(d)]();
-      //memset(mmMap[d],0,sizeof(fmsMap_st)*maxChannel(d));
+      mmMap[d] = new fmsMap_st [maxChannel(d)];
+      memset(mmMap[d],0,sizeof(fmsMap_st)*maxChannel(d));
     }
     memcpy(&mmMap[d][c-1],&mMap[i],sizeof(fmsMap_st));
     //creating reverse mapping
@@ -263,7 +265,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
   //!fmsGain
   mGain = (fmsGain_st*) dbGain->GetTable();
   mMaxGain = dbGain->GetNRows();
-  mmGain = new fmsGain_st* [mMaxDetectorId+1]();
+  mmGain = new fmsGain_st* [mMaxDetectorId+1];
+  memset(mmGain,0,sizeof(fmsGain_st*)*(mMaxDetectorId+1));
   for(Int_t i=0; i<mMaxGain; i++){
     Int_t d=mGain[i].detectorId;
     Int_t c=mGain[i].ch;
@@ -281,8 +284,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       continue;
     }
     if(mmGain[d]==0){
-      mmGain[d] = new fmsGain_st [maxChannel(d)]();
-      //memset(mmGain[d],0,sizeof(fmsGain_st)*maxChannel(d));
+      mmGain[d] = new fmsGain_st [maxChannel(d)];
+      memset(mmGain[d],0,sizeof(fmsGain_st)*maxChannel(d));
     }
     if(mmGain[d][c-1].ch==0){
 	memcpy(&mmGain[d][c-1],&mGain[i],sizeof(fmsGain_st));
@@ -312,9 +315,9 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
 	  //printf("Reading FmsGain.txt  %1d %1d %2d %3d %f\n",ew,nstb,dd,ch,gain);
 	  mmGain[dd][ch-1].gain=gain;
 	}
-      }
-      fclose(f);
+       }
     }
+    fclose(f);
     LOG_INFO << "StFmsDbMaker::InitRun - Calibration/fms/fmsGain was overwritten by FmsGain.txt"<<endm;
   }
   LOG_DEBUG << "StFmsDbMaker::InitRun - Got Calibration/fms/fmsGain with mMaxGain = "<<mMaxGain<< endm;
@@ -322,8 +325,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
   //!fmsGainCorrection
   mGainCorrection = (fmsGainCorrection_st*) dbGainCorrection->GetTable();
   mMaxGainCorrection = dbGainCorrection->GetNRows();
-  mmGainCorrection = new fmsGainCorrection_st* [mMaxDetectorId+1]();
-  //memset(mmGainCorrection,0,sizeof(fmsGainCorrection_st*)*(mMaxDetectorId+1));
+  mmGainCorrection = new fmsGainCorrection_st* [mMaxDetectorId+1];
+  memset(mmGainCorrection,0,sizeof(fmsGainCorrection_st*)*(mMaxDetectorId+1));
   for(Int_t i=0; i<mMaxGainCorrection; i++){
     Int_t d=mGainCorrection[i].detectorId;
     Int_t c=mGainCorrection[i].ch;
@@ -341,8 +344,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       continue;
     }
     if(mmGainCorrection[d]==0){
-      mmGainCorrection[d] = new fmsGainCorrection_st [maxChannel(d)]();
-      //memset(mmGainCorrection[d],0,sizeof(fmsGainCorrection_st)*maxChannel(d));
+      mmGainCorrection[d] = new fmsGainCorrection_st [maxChannel(d)];
+      memset(mmGainCorrection[d],0,sizeof(fmsGainCorrection_st)*maxChannel(d));
     }
     if(mmGainCorrection[d][c-1].ch==0){
 	memcpy(&mmGainCorrection[d][c-1],&mGainCorrection[i],sizeof(fmsGainCorrection_st));
@@ -489,8 +492,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       }
       if(max>fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsPosition has more row than fpsConstant"<<endm;
       if( mI>fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsPosition has more slatId than fpsConstant"<<endm;
-      mFpsPosition = new fpsPosition_st[max]();
-      //memset(mFpsPosition,0,sizeof(*mFpsPosition));
+      mFpsPosition = new fpsPosition_st[max];
+      memset(mFpsPosition,0,sizeof(*mFpsPosition));
       for(Int_t i=0; i<max; i++){ 
 	  if(tFpsPosition[i].slatid==0 && tFpsPosition[i].xoffset==0.0 && tFpsPosition[i].yoffset==0.0) continue;
 	  memcpy(&mFpsPosition[tFpsPosition[i].slatid],&tFpsPosition[i],sizeof(fpsPosition_st));
@@ -536,8 +539,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       }
       if(max>fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsGain has more row than fpsConstant"<<endm;
       if(mI >fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsGain has more slatId than fpsConstant"<<endm;
-      mFpsGain = new fpsGain_st[max]();
-      //memset(mFpsGain,0,sizeof(*mFpsGain));
+      mFpsGain = new fpsGain_st[max];
+      memset(mFpsGain,0,sizeof(*mFpsGain));
       for(Int_t i=0; i<max; i++){
 	  memcpy(&mFpsGain[tFpsGain[i].slatid],&tFpsGain[i],sizeof(fpsGain_st));
       }
@@ -555,8 +558,8 @@ Int_t StFmsDbMaker::InitRun(Int_t runNumber) {
       }
       if(max>fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsStatus has more row than fpsConstant"<<endm;
       if(mI >fpsMaxSlatId()) LOG_WARN << "StFmsDbMaker::InitRun - fpsStatus has more slatId than fpsConstant"<<endm;
-      mFpsStatus = new fpsStatus_st[max]();
-      //memset(mFpsStatus,0,sizeof(*mFpsStatus));
+      mFpsStatus = new fpsStatus_st[max];
+      memset(mFpsStatus,0,sizeof(*mFpsStatus));
       for(Int_t i=0; i<max; i++){
 	  memcpy(&mFpsStatus[tFpsStatus[i].slatid],&tFpsStatus[i],sizeof(fpsStatus_st));
       }
@@ -679,7 +682,7 @@ StThreeVectorF StFmsDbMaker::getStarXYZ(Int_t detectorId,Float_t FmsX, Float_t F
     y = FmsY - mDetectorPosition[detectorId].yoffset; //row# start from bottom 
     z = mDetectorPosition[detectorId].zoffset;
   }else{
-    float x1=0.0,x2=0.0,y1=0.0,y2=0.0;
+    float x1,x2,y1,y2;
     float lx = FmsX/getXWidth(detectorId);         
     float ly = nRow(detectorId) - FmsY/getYWidth(detectorId); //row# in getCellPosition2015xx start from top, so reverse it
     int   c  = int(lx);
@@ -689,7 +692,6 @@ StThreeVectorF StFmsDbMaker::getStarXYZ(Int_t detectorId,Float_t FmsX, Float_t F
     float dy = 1.0-(ly-r);
     if(mPositionModel==1)      {getCellPosition2015pp(detectorId-7,r,c,x1,y1,x2,y2,z);}
     else if(mPositionModel==2) {getCellPosition2015pA(detectorId-7,r,c,x1,y1,x2,y2,z);}
-    else { LOG_ERROR << Form("mPositionModel=%d is not valid!",mPositionModel) <<endm;}
     x = x1*(1.0-dx) + x2*dx;
     y = y1*(1.0-dy) + y2*dy;
     z = z + 15.0; // Detector front face + ShowerMax depth                                                     
@@ -726,7 +728,7 @@ fpsMap_st*              StFmsDbMaker::FpsMap()            {return mFpsMap;}
 fpsGain_st*             StFmsDbMaker::FpsGain()           {return mFpsGain;}
 
 //!ChannelGeometry
-UShort_t StFmsDbMaker::maxDetectorId()             {return mMaxDetectorId;}
+Int_t StFmsDbMaker::maxDetectorId()             {return mMaxDetectorId;}
 Int_t StFmsDbMaker::eastWest(Int_t detectorId){
   if(detectorId>=0 && detectorId<=mMaxDetectorId && maxChannel(detectorId)>0) return mChannelGeometry[detectorId].ew;
   else{
@@ -775,13 +777,12 @@ Int_t StFmsDbMaker::nColumn(Int_t detectorId){
   }
 }
 
-UShort_t StFmsDbMaker::maxChannel(Int_t detectorId){
-  if(detectorId>=0 && detectorId<=mMaxDetectorId && 
-     mChannelGeometry[detectorId].nX>0 && mChannelGeometry[detectorId].nY>0)
+Int_t StFmsDbMaker::maxChannel(Int_t detectorId){
+  if(detectorId>=0 && detectorId<=mMaxDetectorId && mChannelGeometry[detectorId].nX>0)
     return mChannelGeometry[detectorId].nX*mChannelGeometry[detectorId].nY;
   else{
     //LOG_WARN<<"StFmsDbMaker::maxChannel: Corresponding channel geometry not found."<<endm;
-    return 0;
+    return -1;
   }
 }
 

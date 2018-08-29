@@ -71,10 +71,8 @@ bool remove_dir_fifo(std::string unlink_path, const std::string& base_path, doub
 		tmp.name = fullname_resolved;
 		tmp.size = StHyperUtilFilesystem::filesize(fullname_resolved.c_str());
 		ierr = stat(fullname_resolved.c_str(), &st);
-		if ( ierr == 0 ) {
-		    tmp.time = st.st_mtime;
-			file_queue.push_back(tmp);
-		}
+	    tmp.time = st.st_mtime;
+		file_queue.push_back(tmp);
     }
     closedir(dp);
 	std::sort(file_queue.begin(), file_queue.end());
@@ -85,9 +83,7 @@ bool remove_dir_fifo(std::string unlink_path, const std::string& base_path, doub
 	while (!file_queue.empty() && cur_bytes_free < bytes_free) {
 		cached_file_st tmp = file_queue.front();
 		cur_bytes_free += tmp.size;
-		if ( remove(tmp.name.c_str()) != 0 ) {
-			// FIXME: error, file was not removed for some reason
-		}
+		remove(tmp.name.c_str());
 	}
 	get_free_space_percentage(path_resolved.c_str(), cur_bytes_free, cur_bytes_total);
 	if (cur_bytes_free > bytes_free) { return true; }
@@ -119,10 +115,8 @@ bool remove_dir_lru(std::string unlink_path, const std::string& base_path, doubl
 		tmp.name = fullname_resolved;
 		tmp.size = StHyperUtilFilesystem::filesize(fullname_resolved.c_str());
 		ierr = stat(fullname_resolved.c_str(), &st);
-		if ( ierr == 0 ) {
-		    tmp.time = st.st_atime;
-			file_queue.push_back(tmp);
-		}
+	    tmp.time = st.st_atime;
+		file_queue.push_back(tmp);
     }
     closedir(dp);
 	std::sort(file_queue.begin(), file_queue.end());
@@ -133,9 +127,7 @@ bool remove_dir_lru(std::string unlink_path, const std::string& base_path, doubl
 	while (!file_queue.empty() && cur_bytes_free < bytes_free) {
 		cached_file_st tmp = file_queue.front();
 		cur_bytes_free += tmp.size;
-		if ( remove(tmp.name.c_str()) != 0 ) {
-			// FIXME: error, file was not removed for some reason
-		}
+		remove(tmp.name.c_str());
 	}
 	get_free_space_percentage(path_resolved.c_str(), cur_bytes_free, cur_bytes_total);
 	if (cur_bytes_free > bytes_free) { return true; }
@@ -169,19 +161,14 @@ void create_dir_recursive(std::string path) {
             if (*p == '/') {
                 *p = '\0';
                 if(access(opath, F_OK)) {
-                    if ( mkdir(opath, S_IRWXU) != 0 ) {
-						// FIXME: directory was not created for some reason
-					}
+                    mkdir(opath, S_IRWXU);
 				}
                 *p = '/';
             }
 		}
-        if ( access(opath, F_OK)) {        /* if path is not terminated with / */
-            if ( mkdir(opath, S_IRWXU) != 0 ) {
-				// FIXME: directory was not created for some reason
-			}
+        if(access(opath, F_OK)) {        /* if path is not terminated with / */
+            mkdir(opath, S_IRWXU);
 		}
-		free (opath);
 }
 
 unsigned long remove_dir_recursive(std::string unlink_path, const std::string& base_path)
@@ -225,9 +212,7 @@ unsigned long remove_dir_recursive(std::string unlink_path, const std::string& b
 			StHyperLock lock(fullname_resolved);
 			if (lock.try_lock(0)) {
 				lock.unlock();
-            	if ( remove(fullname_resolved.c_str()) != 0 ) {
-					// FIXME: error, file was not removed for some reason
-				}
+            	remove(fullname_resolved.c_str());
 			}
 			
         }
@@ -235,9 +220,7 @@ unsigned long remove_dir_recursive(std::string unlink_path, const std::string& b
     closedir(dp);
     if (path_resolved != "/") {
         if (path_resolved.compare(0, base_path.size(), base_path) == 0) {
-            if ( remove(path_resolved.c_str()) != 0 ) {
-				// FIXME: error, file was not removed for some reason
-			}
+            remove(path_resolved.c_str());
         } else {
             //std::cerr << "ATTEMPT TO DELETE OUTSIDE OF BASE PATH: " << path_resolved << std::endl; // FIXME
         }

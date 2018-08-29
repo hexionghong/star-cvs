@@ -1,18 +1,6 @@
-//$Id: StSstBarrel.cc,v 1.8 2016/06/10 19:26:55 bouchet Exp $
+//$Id: StSstBarrel.cc,v 1.4 2015/11/17 18:09:51 bouchet Exp $
 //
 //$Log: StSstBarrel.cc,v $
-//Revision 1.8  2016/06/10 19:26:55  bouchet
-//coverity : FORWARD_NULL
-//
-//Revision 1.7  2016/06/08 20:52:57  bouchet
-//coverity : PASS_BY_VALUE
-//
-//Revision 1.6  2016/05/29 19:34:51  bouchet
-//coverity : CTOR_DTOR_LEAK fixed
-//
-//Revision 1.5  2016/05/27 15:21:13  bouchet
-//cleanup cout
-//
 //Revision 1.4  2015/11/17 18:09:51  bouchet
 //Long Zhou modification, move cout to LOG_DEBUG
 //
@@ -126,10 +114,7 @@ StSstBarrel::StSstBarrel(sstDimensions_st  *dimensions, sstConfiguration_st *con
   }
 }
 //________________________________________________________________________________
-StSstBarrel::~StSstBarrel(){
-  delete [] mLadders;
-  fSstBarrel = 0;
-}
+StSstBarrel::~StSstBarrel(){for (Int_t iLad = 0 ; iLad < mNLadder; iLad++) delete mLadders[iLad]; fSstBarrel = 0;}
 //________________________________________________________________________________
 void StSstBarrel::setSstParameters(sstDimensions_st *geom_par){
   mDimensions          = geom_par;
@@ -385,6 +370,7 @@ Int_t  StSstBarrel::readNoiseFromTable(St_ssdNoise *strip_noise, StSstDynamicCon
 }
 //________________________________________________________________________________
 Int_t StSstBarrel::readNoiseFromTable(sstStripCalib_st *noise, StSstDynamicControl *dynamicControl){
+  std::cout <<" StSsdBarrel::readNoiseFromTable() " << std::endl;
   Int_t NumberOfNoise     = 0;
   Int_t iWaf              = 0;
   Int_t iLad              = 0;
@@ -643,22 +629,22 @@ Int_t StSstBarrel::writePointToContainer(St_scm_spt *scm_spt, StSstHitCollection
 	    
             StSstClusterList *currentListP_j = mLadders[iLad]->mWafers[iWaf]->getClusterP();
             StSstCluster     *cluster_P_j   = currentListP_j->first();
-	    do{
+            while(cluster_P_j)
+	    {
 	      if(cluster_P_j->getNCluster()==Id_P_Side) 
                 break;
               cluster_P_j = currentListP_j->next(cluster_P_j);
 	    }
-            while(cluster_P_j!=currentListP_j->last());
 
             StSstClusterList *currentListN_j = mLadders[iLad]->mWafers[iWaf]->getClusterN();
             StSstCluster *cluster_N_j       = currentListN_j->first();
-	    do{
+            while(cluster_N_j)
+	    {
 	      if(cluster_N_j->getNCluster()==Id_N_Side) 
 		break;
 	      cluster_N_j = currentListN_j->next(cluster_N_j);
 	    }
-            while(cluster_N_j!=currentListN_j->last());
-	      
+
 	    // encode the hardware position
 	    // 2^3  detector ID number (8) 
 	    // 2^4  4-12 num_wafer (0-319)
@@ -804,23 +790,21 @@ Int_t StSstBarrel::writePointToContainer(St_scm_spt *scm_spt, StSstHitCollection
 	    
 	    StSstClusterList *currentListP_j = mLadders[iLad]->mWafers[iWaf]->getClusterP();
 	    StSstCluster     *cluster_P_j   = currentListP_j->first();
-
-	    do{
-	      if(cluster_P_j->getNCluster()==Id_P_Side) 
-		break;
-	      cluster_P_j = currentListP_j->next(cluster_P_j);
-	    }
-            while(cluster_P_j!=currentListP_j->last());
-
+	    while(cluster_P_j)
+	      {
+		if(cluster_P_j->getNCluster()==Id_P_Side) 
+		  break;
+		cluster_P_j = currentListP_j->next(cluster_P_j);
+	      }
 	    StSstClusterList *currentListN_j = mLadders[iLad]->mWafers[iWaf]->getClusterN();
 	    StSstCluster *cluster_N_j       = currentListN_j->first();
-	    do{
-	      if(cluster_N_j->getNCluster()==Id_N_Side) 
-		break;
-	      cluster_N_j = currentListN_j->next(cluster_N_j);
-	    }	
-            while(cluster_N_j!=currentListN_j->last());
-    
+	    while(cluster_N_j)
+	      {
+		if(cluster_N_j->getNCluster()==Id_N_Side) 
+		  break;
+		cluster_N_j = currentListN_j->next(cluster_N_j);
+	      }
+	    
 	    // encode the hardware position
 	    // 2^3  detector ID number (8) 
 	    // 2^4  4-12 num_wafer (0-319)
@@ -1207,7 +1191,7 @@ StSstBarrel::StSstBarrel(const StSstBarrel & originalBarrel)
     mLadders[iLad] = new StSstLadder(iLad,mSstLayer,mNWaferPerLadder,mNStripPerSide);
 }
 
-StSstBarrel& StSstBarrel::operator=(const StSstBarrel & originalBarrel)
+StSstBarrel& StSstBarrel::operator=(const StSstBarrel  originalBarrel)
 {
   mSstLayer             = originalBarrel.mSstLayer;
   mNLadder              = originalBarrel.mNLadder;

@@ -1,4 +1,4 @@
-// $Id: StiMaker.cxx,v 1.231 2016/06/30 18:49:41 perev Exp $
+// $Id: StiMaker.cxx,v 1.229 2016/03/28 00:15:53 perev Exp $
 /// \File StiMaker.cxx
 /// \author M.L. Miller 5/00
 /// \author C Pruneau 3/02
@@ -100,7 +100,7 @@ More detailed: 				<br>
 #include "Sti/StiVertexFinder.h"
 #include "Sti/StiDetectorContainer.h"
 #include "StiMaker/StiStEventFiller.h"
-#include "Sti/StiDefaultToolkit.h"
+#include "StiDefaultToolkit.h"
 #include "StiMaker.h"
 #include "TFile.h"
 #include "TCanvas.h"
@@ -134,10 +134,6 @@ More detailed: 				<br>
 /// Now minimal possible error is 1 micron
 static const float MIN_VTX_ERR2 = 1e-4*1e-4;
 enum { kHitTimg,kGloTimg,kVtxTimg,kPriTimg,kFilTimg};
-
-void CountHits();
-
-
 ClassImp(StiMaker)
 
 //_____________________________________________________________________________
@@ -169,6 +165,7 @@ StiMaker::StiMaker(const Char_t *name) :
   SetAttr("activeTpc"		,kTRUE);
 
   SetAttr("useSvt"		,kTRUE);
+//SetAttr("activeSvt"		,kTRUE);
   SetAttr("useSsd"		,kTRUE);
 
   //SetAttr("usePixel"		,kTRUE);
@@ -334,54 +331,9 @@ Int_t StiMaker::InitRun(int run)
       _hitLoader  = _toolkit->getHitLoader();
       _tracker=0;
       mMaxTimes = IAttr("setMaxTimes");
-
-
       if (IAttr("useTracker")) {
 
-        _tracker = (StiKalmanTrackFinder *)(_toolkit->getTrackFinder());
-
-        do  {
-
-          TString seedFinders = SAttr("seedFinders");
-
-// 		Return without changing anything if attribute's value is empty
-  	  if (seedFinders.Length()) {	//found list of ssedfinders
-
-            TObjArray *sub_strings = seedFinders.Tokenize(" .,");
-
-  	    for (int i=0; i <= sub_strings->GetLast(); i++) {
-              int n = 0;
-              TString &sub_string = static_cast<TObjString*>( sub_strings->At(i))->String();
-              if (sub_string[0]=='!') continue; 	//commented out
-              if ( !sub_string.CompareTo("CA", TString::kIgnoreCase) ) 
-                {n++;_tracker->addSeedFinder(_toolkit->getTrackSeedFinderCA());}
-              if ( !sub_string.CompareTo("Def", TString::kIgnoreCase) ) 
-                {n++;_tracker->addSeedFinder(_toolkit->getTrackSeedFinder());}
-              if ( !sub_string.CompareTo("KNN", TString::kIgnoreCase) ) 
-                {n++;_tracker->addSeedFinder(_toolkit->getTrackSeedFinderKNN());}
-              assert(n);
-            }
-            delete sub_strings; break;
-           }// end seedfinder list
-
-         if (IAttr("StiCA")) {
-            _tracker->addSeedFinder(_toolkit->getTrackSeedFinderCA());
-            _tracker->addSeedFinder(_toolkit->getTrackSeedFinder());
-            break;
-         }
-//		Default case, Sti seed finder only               
-	_tracker->addSeedFinder(_toolkit->getTrackSeedFinder());
-
-        }while(0);
- 
-
-     }//end tracker
-
-
-
-
-
-
+        _tracker = dynamic_cast<StiKalmanTrackFinder *>(_toolkit->getTrackFinder());
 
 //		useTreeSearch flag means
 //		useTreeSearch == tpcFlag *4 + hftFlag
@@ -394,6 +346,9 @@ Int_t StiMaker::InitRun(int run)
 
         if (*SAttr("useTreeSearch")) _tracker->setComb(IAttr("useTreeSearch"));
         if ( IAttr("useTiming"    )) _tracker->setTiming();
+#if 0
+	if ( IAttr("Alignment"    )) _tracker->DoAlignment(kTRUE);
+#endif
         _fitter  = dynamic_cast<StiKalmanTrackFitter *>(_toolkit->getTrackFitter());
 
 //        if (*SAttr("useMCS")) StiKalmanTrackNode::setMCS(IAttr("useMCS"));
@@ -415,6 +370,7 @@ Int_t StiMaker::InitRun(int run)
       }
       _initialized=true;
       cout <<"StiMaker::InitRun() -I- Initialization Segment Completed"<<endl;
+    }
 
   return StMaker::InitRun(run);
 }
@@ -423,13 +379,15 @@ Int_t StiMaker::InitRun(int run)
 Int_t StiMaker::Make()
 {
   cout <<"StiMaker::Make() -I- Starting on new event"<<endl;
-  Int_t iAns=kStOK,iAnz=0; if (iAns){};
+  Int_t iAns=kStOK,iAnz=0;
   if (! _tracker) return kStWarn;
   StEvent   * event = dynamic_cast<StEvent*>( GetInputDS("StEvent") );
   if (!event) return kStWarn;
   eventIsFinished = false;
+  try {		// try new event
 
     _tracker->clear();
+
     if (mTimg[kHitTimg]) mTimg[kHitTimg]->Start(0);
     _hitLoader->loadEvent(event,_loaderTrackFilter,_loaderHitFilter);
     if (mMaxTimes) _hitLoader->setMaxTimes(mMaxTimes);
@@ -437,7 +395,6 @@ Int_t StiMaker::Make()
 
     iAnz = MakeGlobalTracks(event);
     if (iAnz) {MyClear(); return iAnz;}
-    CountHits();
 
     if (_vertexFinder) {
       iAnz = MakePrimaryTracks(event);
@@ -451,7 +408,14 @@ Int_t StiMaker::Make()
     if (iAnz) return iAnz;
     if (mTotPrimTks[1] && mTotPrimTks[0]>mTotPrimTks[1]) return kStStop;
     if (IAttr("Alignment") &&  ! _tracker->getNTracks()) return kStErr;
-    return (!iAns)? kStOK:kStWarn;
+    return kStOK;
+  }
+  catch (runtime_error &rte) {
+    Error("Make","Catch exception %s",rte.what());
+    if (!strncmp(rte.what(),"FATAL::",6)) return kStFATAL;
+    MyClear();
+    return kStErr;
+  }
 }
 
 //_____________________________________________________________________________
@@ -515,10 +479,6 @@ void StiMaker::MyClear()
       _toolkit->getTrackFactory()->clear();
 //      StMemStat::PrintMem("After  StiFactory clear()");
 }
-
-
-
-
 //_____________________________________________________________________________
 Int_t StiMaker::InitPulls()
 {
@@ -651,23 +611,8 @@ void StiMaker::FinishTracks (int gloPri)
 }
 
 
-// $Id: StiMaker.cxx,v 1.231 2016/06/30 18:49:41 perev Exp $
+// $Id: StiMaker.cxx,v 1.229 2016/03/28 00:15:53 perev Exp $
 // $Log: StiMaker.cxx,v $
-// Revision 1.231  2016/06/30 18:49:41  perev
-// 1. include StiCADefaultToolkit.h removed. No such file anymore
-// 2. local function CountHits() added for print only
-// 3. added seed finders SeedFinderKNN,SeedFinderCA
-// 4. Flag StiCA means CA seed finder and after standard Sti one
-//
-// Revision 1.227.4.6  2016/06/29 20:10:11  perev
-// CleanGlobalTracks added
-//
-// Revision 1.227.4.5  2016/06/03 17:00:49  smirnovd
-// Sti and StiCA refactoring
-//
-// Revision 1.227.4.4  2016/06/03 16:07:15  smirnovd
-// Sync with MAIN branch as of 2016-05-31
-//
 // Revision 1.229  2016/03/28 00:15:53  perev
 // Add max number of tracks assigned to one hit
 //
@@ -1060,22 +1005,3 @@ void StiMaker::FinishTracks (int gloPri)
 // Revision 1.96  2002/06/04 19:45:31  pruneau
 // including changes for inside out tracking
 //
-//_____________________________________________________________________________
-void CountHits()
-{
- int nTimesUsed=0;
- StiTrackContainer* tkV  = StiToolkit::instance()->getTrackContainer();
- if (!tkV) return;
-   for (int itk=0; itk<(int)tkV->size(); itk++)
-   {
-     StiKalmanTrack *track = (StiKalmanTrack*)(*tkV)[itk];
-     StiKalmanTrackNode *node;
-     StiKTNIterator it = track->begin();
-     for (;(node=it());it++){
-       const StiHit *hit = node->getHit();
-       if (!hit) 		continue;
-       if (!hit->detector()) 	continue;
-       assert(node->getChi2()<1000.);
-       nTimesUsed++;
-   } }
-}

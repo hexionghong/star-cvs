@@ -41,6 +41,9 @@ using namespace std;
 #include "StDetectorDbMaker/StiKalmanTrackFinderParameters.h"
 #include "StMessMgr.h"
 #include "StTpcHit.h"
+#ifdef DO_TPCCATRACKER
+#include "StiTpcSeedFinder.h"
+#endif /* DO_TPCCATRACKER */
 #define TIME_StiKalmanTrackFinder
 #ifdef TIME_StiKalmanTrackFinder
 #include "Sti/StiTimer.h"
@@ -48,6 +51,9 @@ using namespace std;
 
 #include "StiKalmanTrackFitter.h" // just for err check
 #include "StiTrackFinderFilter.h" // just for err check
+#ifdef DO_TPCCATRACKER
+#include "StiTPCCATrackerInterface.h"
+#endif /* DO_TPCCATRACKER */
 #include "StiHitTest.h"
 
 
@@ -66,6 +72,7 @@ void StiKalmanTrackFinder::initialize()
   _trackNodeFactory  = _toolkit->getTrackNodeFactory();
   _detectorContainer = _toolkit->getDetectorContainer();
   _detectorContainer->clear();
+  _trackSeedFinder   = _toolkit->getTrackSeedFinder();
   _hitContainer      = _toolkit->getHitContainer();
   _trackContainer    = _toolkit->getTrackContainer();
   /*
@@ -90,6 +97,7 @@ StiKalmanTrackFinder::StiKalmanTrackFinder(StiToolkit*toolkit)
 :
 _toolkit(toolkit),
 _trackFilter(0),
+_trackSeedFinder(0),
 _trackNodeFactory(0),
 _detectorContainer(0),
 _hitContainer(0),
@@ -117,7 +125,7 @@ void StiKalmanTrackFinder::reset()
   _trackContainer->clear();
   _trackNodeFactory->reset();
   _hitContainer->reset();
-  for (int j=0;j<(int)_seedFinders.size();j++) { _seedFinders[j]->reset();}
+  _trackSeedFinder->reset();
   //cout << "StiKalmanTrackFinder::reset() -I- Done" <<endl;
 }
 
@@ -137,7 +145,7 @@ void StiKalmanTrackFinder::clear()
   _hitContainer->clear();
   _detectorContainer->clear();
   _trackContainer->clear();
-  for (int j=0;j<(int)_seedFinders.size();j++) { _seedFinders[j]->clear();}
+  _trackSeedFinder->clear();
   //cout << "StiKalmanTrackFinder::clear() -I- Done" <<endl;
 }
 
@@ -154,8 +162,39 @@ filter is set or if they satisfy the track filter requirements.
 void StiKalmanTrackFinder::findTracks()
 {
   mEventPerm = kMaxEventPerm;
+
   assert(_trackContainer );
+  assert(_trackSeedFinder);
+//   _trackSeedFinder->reset();
+//   _trackContainer->clear();
+//   if (_trackFilter) _trackFilter->reset();
+#ifdef DO_TPCCATRACKER 
+  StiTPCCATrackerInterface& caTrackerInt = StiTPCCATrackerInterface::Instance();
+  caTrackerInt.SetNewEvent();
+  findTpcTracks(caTrackerInt); // find track starting with TPC (CA seed finder)
+#endif /* DO_TPCCATRACKER */  
+  findAllTracks(); // find track left
+#ifdef DO_TPCCATRACKER 
+  caTrackerInt.SetStiTracks(_trackContainer);
+  caTrackerInt.RunPerformance();
+#endif /* DO_TPCCATRACKER */
+}
+#ifdef DO_TPCCATRACKER
+//________________________________________________________________________________
+void StiKalmanTrackFinder::findTpcTracks(StiTPCCATrackerInterface &caTrackerInt) {
+  StiTpcSeedFinder::findTpcTracks(caTrackerInt);
+}
+#endif /* DO_TPCCATRACKER */
+//________________________________________________________________________________
+void StiKalmanTrackFinder::findAllTracks() {
+  
+  
+//  extendSeeds (0.);
+
+
   extendSeeds (0.);
+//  _trackContainer->sort();
+//  extendTracks( 0.);
 }
 //________________________________________________________________________________
 Int_t StiKalmanTrackFinder::Fit(StiKalmanTrack *track, Double_t rMin) {
@@ -166,13 +205,22 @@ Int_t StiKalmanTrackFinder::Fit(StiKalmanTrack *track, Double_t rMin) {
 
   do { //technical do
     track->setFlag(-1);
-//     status = track->approx(0); // should be filled by track->initialize()
-//     if (status) 	{nTSeed++; errType = abs(status)*100 + kApproxFail; break;}
+#ifndef DO_TPCCATRACKER
+    status = track->approx(0); // should be filled by track->initialize()
+    if (status) 	{nTSeed++; errType = abs(status)*100 + kApproxFail; break;}
+#endif /* !DO_TPCCATRACKER */
     status = track->fit(kOutsideIn);
     if (status) 	{nTSeed++; errType = abs(status)*100 + kFitFail; break;}
-    status = extendTrack(track,rMin); // 0 = OK 
-    if (!status) status = _trackFilter->filter(track);
-    if (status) {nTFilt++; errType = abs(status)*100 + kCheckFail;}
+    status = extendTrack(track,rMin); // 0 - can't extend. 1 - can extend and refit -1 - can extend and can't refit. 
+#ifndef DO_TPCCATRACKER
+    if (status != kExtended)                               {nTFail++; errType = abs(status)*100 + kExtendFail; break;}
+#else /* DO_TPCCATRACKER */
+    if ((status != kExtended) && (status != kNotExtended)) {nTFail++; errType = abs(status)*100 + kExtendFail; break;}
+#endif /* !DO_TPCCATRACKER */
+    if (_trackFilter){
+      status = _trackFilter->filter(track);
+      if (status) {nTFilt++; errType = abs(status)*100 + kCheckFail; break;}
+    }
     if (errType!=kNoErrors) {track->reduce(); return errType;}
 
     //cout << "  ++++++++++++++++++++++++++++++ Adding Track"<<endl;
@@ -208,42 +256,26 @@ void StiKalmanTrackFinder::extendSeeds(double rMin)
 {
   static int nCall=0;nCall++;
   StiKalmanTrack *track;
-  int nTTot=0,nTOK=0;
-  for (int isf = 0; isf<(int)_seedFinders.size();isf++) {
-    _seedFinders[isf]->startEvent();
-    int nTtot=0,nTok=0;
-    while (true ){
+  Int_t nTTot=0;
+
+  while (true ){
 // 		obtain track seed from seed finder
     
-      if (mTimg[kSeedTimg]) mTimg[kSeedTimg]->Start(0);
+    if (mTimg[kSeedTimg]) mTimg[kSeedTimg]->Start(0);
 
-      track = (StiKalmanTrack*)_seedFinders[isf]->findTrack(rMin);
+    track = (StiKalmanTrack*)_trackSeedFinder->findTrack(rMin);
 
-      if (mTimg[kSeedTimg]) mTimg[kSeedTimg]->Stop();
-      if (!track) break; // no more seeds
-      track->reserveHits(0); 	//Set timesUsed hits to zero
-
-      nTTot++;nTtot++;
-      if (mTimg[kTrakTimg]) mTimg[kTrakTimg]->Start(0);
-      Int_t errType = Fit(track,rMin);
-      _seedFinders[isf]->FeedBack(errType == kNoErrors);
-      if (errType) {
-        BFactory::Free(track);
-      }else        {
-        nTOK++;
-        int nHits = track->getFitPointCount(kTpcId);
-        if (nHits>=15) nTok++;
-	StiDebug::Count("extendSeedsNHits",nHits);
-	assert(track->getChi2()<1000);
-      }
-      if (mTimg[kTrakTimg]) mTimg[kTrakTimg]->Stop();
-    } 
-    Info("extendSeeds:","Pass_%d NSeeds=%d NTraks=%d",isf,nTtot,nTok);
-    TString ts("ExendSeeds_Pass#"); ts+=isf;
-    StiDebug::Count(ts.Data(),nTtot,nTok);
+    if (mTimg[kSeedTimg]) mTimg[kSeedTimg]->Stop();
+    if (!track) break; // no more seeds
+    nTTot++;
+    if (mTimg[kTrakTimg]) mTimg[kTrakTimg]->Start(0);
+    Int_t errType = Fit(track,rMin);
+    _trackSeedFinder->FeedBack(errType == kNoErrors);
+    if (errType != kNoErrors) {BFactory::Free(track);}
+    else                      {assert(track->getChi2()<1000);}
+    if (mTimg[kTrakTimg]) mTimg[kTrakTimg]->Stop();
+    
   }
-  Info("extendSeeds","nTTot = %d nTOK = %d\n",nTTot,nTOK);
-
 }
 //______________________________________________________________________________
 void StiKalmanTrackFinder::extendTracks(double rMin)
@@ -262,9 +294,12 @@ int StiKalmanTrackFinder::extendTrack(StiKalmanTrack *track,double rMin)
   {
     if (debug()) cout << "StiKalmanTrack::find seed " << *((StiTrack *) track);
     trackExtended = find(track,kOutsideIn,rMin);
-    if (trackExtended){/* in CA case not extended is ok*/}
+    if (trackExtended) {
+StiHftHits::hftHist("HFTBefore",track);//???????????????????????
     status = track->refit();
-    if(status) return kNotRefitedIn;
+StiHftHits::hftHist("HFTAfter",track);//???????????????????????
+      if(status) return kNotRefitedIn;
+    }	
 
   }
     // decide if an outward pass is needed.
@@ -474,12 +509,13 @@ assert(direction || leadNode==track->getLastNode());
   StiKalmanTrackNode testNode;
   int position;
   StiHit * stiHit;
-  double  leadRadius;
+  double  leadAngle,leadRadius;
 
   const StiDetector *leadDet = leadNode->getDetector();
   leadRadius = leadDet->getPlacement()->getLayerRadius();
   assert(leadRadius>0 && leadRadius<1000);
   if (leadRadius < qa.rmin()) {gLevelOfFind--;qa.setQA(-4);return;}
+  leadAngle  = leadDet->getPlacement()->getLayerAngle();  
   
   double xg = leadNode->x_g();
   double yg = leadNode->y_g();
@@ -724,4 +760,139 @@ bool CloserAngle::operator()(const StiDetector*lhs, const StiDetector* rhs)
   double rhsda = fabs(rhsa-_refAngle); if (rhsda>3.1415) rhsda-=3.1415;
   return lhsda<rhsda;
 }
+#ifdef DO_TPCCATRACKER
+void StiKalmanTrackFinder::PrintFitStatus(const int status, const StiKalmanTrack* track) 
+{
+     // let's analyse the error
+   int status1 = status%100; // take only status of Fitter
+   int status1r = status/100;
+   switch (status1) {
+     case StiKalmanTrackFinder::kNoErrors: {
+       if (track) cout << " fitted with " << track->getFitPointCount() << " hits."<< endl;
+       else cout << " fitted." << endl;
+     }
+       break;
+     case StiKalmanTrackFinder::kApproxFail: {
+       cout << " fit failed:" << endl;
+       cout << "      Initial approximation of track failed." << endl; 
+     }
+       break;
+     case StiKalmanTrackFinder::kFitFail: {
+       cout << " fit failed:" << endl;
+       cout << "      Track fit failed.";  
+       int status2 = status1r%100; // take only status of Fitter
+       switch (status2) {
+         case StiKalmanTrackFitter::kNoErrors: {
+           cout << " Check the code.";
+         }
+           break;
+         case StiKalmanTrackFitter::kShortTrackBeforeFit: {
+           cout << " Not enough hits in the track: ";
+         }
+           break;
+         case StiKalmanTrackFitter::kShortTrackAfterFit: {
+           if (track) cout << " Not enough hits can be fitted: " << track->getNNodes(kGoodHit) << " .";
+           else cout << " Not enough hits can be fitted.";
+         }
+           break;
+         case StiKalmanTrackFitter::kManyErrors: {
+           cout << " Too many problems with this track.";
+         }
+           break;
+       }
+       cout << endl;
+     }
+       break;
+     case StiKalmanTrackFinder::kExtendFail: {
+       cout << " fit failed: " << endl;
+       cout << "      Track extend failed.";
+       int status2 = status1r%100; // take only status of Fitter
+       int status2r = status1r/100;
+       switch (status2) {
+         case StiKalmanTrackFinder::kExtended: {
+           cout << " Check the code.";
+         }
+           break;
+         case StiKalmanTrackFinder::kNotExtended: {
+           cout << " Check the code.";
+         }
+           break;
+         case StiKalmanTrackFinder::kNotRefitedIn:
+         case StiKalmanTrackFinder::kNotRefitedOut: {
+           cout << " Track can't be refitted after extension ";
+           if (status2 == StiKalmanTrackFinder::kNotRefitedIn) cout << "inside.";
+           else cout << "outside.";
+
+           int status3 = status2r%100; // take only status of Fitter
+           switch (status3) { // TODO: make information more clear
+             case StiKalmanTrack::kNoErrors: {
+               cout << " Check the code.";
+             }
+               break;
+             case StiKalmanTrack::kRefitFail: {
+               cout << " Refit procedure fail.";
+             }
+               break;
+             case StiKalmanTrack::kNotEnoughUsed: {
+               cout << " sTNH.getUsed() <= 3 .";
+             }
+               break;
+             case StiKalmanTrack::kInNodeNotValid: {
+               cout << " Inner most node is not valid.";
+             }
+               break;
+             case StiKalmanTrack::kBadQA: {
+               cout << " qA is inappropriate.";
+             }
+               break;
+             case StiKalmanTrack::kVertexNodeInvalid: {
+               cout << " Prim node invalid.";
+             }
+               break;
+             case StiKalmanTrack::kNodeNotValid: {
+               cout << " Prim node Chi2 too big.";
+             }
+               break;
+             case StiKalmanTrack::kTooManyDroppedNodes: {
+               cout << " Too many dropped nodes.";
+             }
+               break;
+           }
+           
+         }
+           break;
+       }
+       cout << endl;       
+     }
+       break;
+     case StiKalmanTrackFinder::kCheckFail: {
+       cout << " fit failed " << endl;
+       cout << "      Track check failed.";
+       int status2 = status1r%100; // take only status of Fitter
+       switch (status2) {
+         case StiTrackFinderFilter::kNoErrors: {
+           cout << " Check the code.";
+         }
+           break;
+         case StiTrackFinderFilter::kNoEnoughValidHits: {
+           if (track) cout << " Not enough valid hits in the track: " << track->getPointCount() << " .";
+           else cout << " Not enough valid hits in the track.";
+         }
+           break;
+         case StiTrackFinderFilter::kNoEnoughFittedValidHits: {
+           if (track) cout << " Not enough fitted hits in the track: " << track->getFitPointCount() << " .";
+           else cout << " Not enough fitted hits in the track.";
+         }
+           break;
+         case StiTrackFinderFilter::kWeird: {
+           cout << " Weird track, see StiTrackFinderFilter::accept().";
+         }
+           break;
+       }
+       cout << endl;
+     }
+       break;
+   } // switch
+} // void StiKalmanTrackFinder::PrintFitStatus(const int status, const StiKalmanTrack* track)
+#endif /* DO_TPCCATRACKER */
 

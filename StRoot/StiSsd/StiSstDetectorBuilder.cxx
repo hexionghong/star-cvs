@@ -23,7 +23,7 @@
 #include "Sti/StiNeverActiveFunctor.h"
 #include "StiSsd/StiSsdIsActiveFunctor.h"
 #include "StSsdUtil/StSstConsts.h"
-#include "StDetectorDbMaker/StiSstHitErrorCalculator.h"
+#include "StDetectorDbMaker/StiSsdHitErrorCalculator.h"
 
 
 /**
@@ -36,7 +36,7 @@
  * transformation stored in the survey DB tables
  */
 StiSstDetectorBuilder::StiSstDetectorBuilder(bool active, bool buildIdealGeom)
-   : StiDetectorBuilder("Sst", active), mBuildIdealGeom(buildIdealGeom), mSstDb(0)
+   : StiDetectorBuilder("Ssd", active), mBuildIdealGeom(buildIdealGeom), mSstDb(0)
 {
    setGroupId(kSstId);
 }
@@ -149,7 +149,7 @@ void StiSstDetectorBuilder::useVMCGeometry()
          static_cast<StiIsActiveFunctor*>(new StiNeverActiveFunctor);
 
       stiDetector->setProperties(geoPath.str(), isActive, stiShape, pPlacement, getGasMat(), silicon);
-      stiDetector->setHitErrorCalculator(StiSstHitErrorCalculator::instance());
+      stiDetector->setHitErrorCalculator(StiSsdHitErrorCalculator::instance());
 
       add(stiRow, iLadder-1, stiDetector);
    }

@@ -247,20 +247,20 @@ namespace stl_xml_tree {
 class StlXmlTree
 {
  private:
-  StlXmlTree* Filter = 0;
+  StlXmlTree* Filter;
 #ifndef __CINT__
   xmlTextReaderPtr reader;
 #endif
   std::multimap<std::string,std::string> XmlTree;
-  char* xmlfilename = 0;
+  char* xmlfilename;
   std::multimap<std::string,std::string>::const_iterator OnTheTree;
-  int Depth = 0;
-  int PreviousDepth = 0;
-  int MaxDepthWanted = 0;
+  int Depth;
+  int PreviousDepth;
+  int MaxDepthWanted;
   std::string XmlTreeNodeName;
   std::string NodeName;
   std::string IdString;
-  short MyStatus = 0;
+  short MyStatus;
 
   void ProcessNode();
 #ifdef DEBUG

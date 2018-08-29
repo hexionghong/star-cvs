@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: StDbSql.hh,v 1.11 2016/05/25 20:17:51 dmitry Exp $
+ * $Id: StDbSql.hh,v 1.10 2005/11/07 14:46:44 deph Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -10,9 +10,6 @@
  ***************************************************************************
  *
  * $Log: StDbSql.hh,v $
- * Revision 1.11  2016/05/25 20:17:51  dmitry
- * coverity - uninit ctor
- *
  * Revision 1.10  2005/11/07 14:46:44  deph
  * added protoype for function that accepts IN for non contiguous elementIDs
  *
@@ -96,15 +93,15 @@ class StDbSql : public StDataBaseI {
 
 protected:
 
-  StDbManager* mgr = 0;
+  StDbManager* mgr;
 
   // A found descriptor list -> can be faster than asking DB if already found 
   DescList mdescriptors;
 
-  char* mretString = 0; // memory holder for internal string passing
-  int   mtableCatalog = 0; // 0==hasn't checked, 1==doesn't have it, 2==has it
-  char* mdefaultEndDateTime = 0;
-  unsigned int mdefaultEndTime = 0;
+  char* mretString; // memory holder for internal string passing
+  int   mtableCatalog; // 0==hasn't checked, 1==doesn't have it, 2==has it
+  char* mdefaultEndDateTime;
+  unsigned int mdefaultEndTime;
 
   // descriptor tracking methods
   StDbTableDescriptor* findDescriptor(int structID, int schemaID);

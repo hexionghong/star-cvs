@@ -69,6 +69,6 @@ StTriggerData *JevpBuilder::getStTriggerData(daqReader *rdr)
     }
 
 
-    LOG(DBG, "No trigger data exists: evt=%d tkn=%d", rdr->seq, rdr->token);
+    LOG(ERR, "No trigger data exists: evt=%d tkn=%d", rdr->seq, rdr->token);
     return NULL;
 }

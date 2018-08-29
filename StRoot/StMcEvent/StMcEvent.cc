@@ -8,14 +8,8 @@
  *
  ***************************************************************************
  *
- * $Id: StMcEvent.cc,v 2.40 2016/05/17 19:41:50 perev Exp $
+ * $Id: StMcEvent.cc,v 2.38 2015/03/13 18:44:58 perev Exp $
  * $Log: StMcEvent.cc,v $
- * Revision 2.40  2016/05/17 19:41:50  perev
- * Coverity
- *
- * Revision 2.39  2016/05/16 23:47:09  perev
- * Coverity fix
- *
  * Revision 2.38  2015/03/13 18:44:58  perev
  * Roll back
  *
@@ -184,8 +178,8 @@
 #include "TDataSetIter.h"
 
 
-TString StMcEvent::mCvsTag = "$Id: StMcEvent.cc,v 2.40 2016/05/17 19:41:50 perev Exp $";
-static const char rcsid[] = "$Id: StMcEvent.cc,v 2.40 2016/05/17 19:41:50 perev Exp $";
+TString StMcEvent::mCvsTag = "$Id: StMcEvent.cc,v 2.38 2015/03/13 18:44:58 perev Exp $";
+static const char rcsid[] = "$Id: StMcEvent.cc,v 2.38 2015/03/13 18:44:58 perev Exp $";
 ClassImp(StMcEvent);
 //______________________________________________________________________________
 void StMcEvent::initToZero()
@@ -220,28 +214,27 @@ StMcEvent::StMcEvent() :TDataSet("StMcEvent")
 
 //______________________________________________________________________________
 StMcEvent::StMcEvent(g2t_event_st* evTable)
-    :TDataSet("StMcEvent")
+    :TDataSet("StMcEvent"),
+     mEventGeneratorEventLabel(evTable->eg_label),
+     mEventNumber(evTable->n_event),
+     mRunNumber(evTable->n_run),
+     mType (evTable->event_type),
+     mZWest(evTable->n_part_prot_west),
+     mNWest(evTable->n_part_neut_west),
+     mZEast(evTable->n_part_prot_east),
+     mNEast(evTable->n_part_neut_east),
+     mEvGenFSTracks(evTable->n_track_eg_fs),
+     mPrimaryTracks(evTable->n_track_prim),
+     mSubProcessId(evTable->subprocess_id),
+     mImpactParameter(evTable->b_impact),
+     mPhiReactionPlane(evTable->phi_impact),
+     mTriggerTimeOffset(evTable->time_offset),
+     mNBinary(evTable->n_binary),
+     mNWoundedEast(evTable->n_wounded_east),
+     mNWoundedWest(evTable->n_wounded_west),
+     mNJets(evTable->njets)
 {
-     initToZero();
-     mEventGeneratorEventLabel = evTable->eg_label;
-     mEventNumber = evTable->n_event;
-     mRunNumber = evTable->n_run;
-     mType  = evTable->event_type;
-     mZWest = evTable->n_part_prot_west;
-     mNWest = evTable->n_part_neut_west;
-     mZEast = evTable->n_part_prot_east;
-     mNEast = evTable->n_part_neut_east;
-     mEvGenFSTracks = evTable->n_track_eg_fs;
-     mPrimaryTracks = evTable->n_track_prim;
-     mSubProcessId = evTable->subprocess_id;
-     mImpactParameter = evTable->b_impact;
-     mPhiReactionPlane = evTable->phi_impact;
-     mTriggerTimeOffset = evTable->time_offset;
-     mNBinary = evTable->n_binary;
-     mNWoundedEast = evTable->n_wounded_east;
-     mNWoundedWest = evTable->n_wounded_west;
-     mNJets = evTable->njets;
-     makeColls();
+    makeColls();
 }
 
 
@@ -254,10 +247,10 @@ const StMcEvent& StMcEvent::operator=(const StMcEvent&) { return *this;} // priv
 //______________________________________________________________________________
 StMcEvent::~StMcEvent()
 {
-  for (auto jk=mBegColl; jk<mEndColl;jk++) { 
-    delete *jk; *jk=0;
+  for (int jk=1; mBegColl+jk<mEndColl;jk++) { 
+    delete mBegColl[jk]; mBegColl[jk]=0;
   }
-  for(auto jk=0;jk<(int)mTracks.size()  ;jk++) {delete mTracks[jk]  ;}    
+  for(int jk=0;jk<(int)mTracks.size()  ;jk++) {delete mTracks[jk]  ;}    
   mTracks.clear();
   
   for(int jk=0;jk<(int)mVertices.size();jk++) {delete mVertices[jk];}
@@ -665,8 +658,8 @@ void StMcEvent::Print(Option_t *option) const {
 void StMcEvent::Browse(TBrowser *b)
 {
   // Browse this event (called by TBrowser).
-   for (auto jk=mBegColl; jk<mEndColl;jk++) { 
-     TObject *obj = *jk; if (!obj) continue;
+   for (int jk=1; mBegColl+jk<mEndColl;jk++) { 
+     TObject *obj = mBegColl[jk]; if (!obj) continue;
      b->Add(obj,obj->GetName());
    }
    TDataSet::Browse(b);

@@ -1,6 +1,6 @@
 /***************************************************************************
  *   
- * $Id: StDbManager.cc,v 1.32 2016/05/25 20:57:11 dmitry Exp $
+ * $Id: StDbManager.cc,v 1.31 2004/01/15 00:02:25 fisyak Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -10,9 +10,6 @@
  ***************************************************************************
  *
  * $Log: StDbManager.cc,v $
- * Revision 1.32  2016/05/25 20:57:11  dmitry
- * coverity - resource leakage
- *
  * Revision 1.31  2004/01/15 00:02:25  fisyak
  * Replace ostringstream => StString, add option for alpha
  *
@@ -162,9 +159,8 @@ StDbManager::StDbManager(): misVerbose(false), misQuiet(false), muserName(0), mp
    updateMessLevel();
 };
 StDbManager::~StDbManager(){
-  if (muserName) delete [] muserName;
-  if (mpWord) delete [] mpWord;
-  if (Messenger) delete Messenger;
+  if(muserName) delete [] muserName;
+  if(mpWord) delete [] mpWord;
   mInstance=0;
 }
 

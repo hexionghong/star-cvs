@@ -1,6 +1,6 @@
 /************************************************************
  *
- * $Id: StppLMVVertexFinder.cxx,v 1.28 2016/08/18 17:46:14 smirnovd Exp $
+ * $Id: StppLMVVertexFinder.cxx,v 1.25 2014/07/28 18:07:59 jeromel Exp $
  *
  * Author: Jan Balewski
  ************************************************************
@@ -30,6 +30,7 @@ StppLMVVertexFinder::StppLMVVertexFinder() {
   mBeamHelix           = 0;
   mVertexConstrain     = false;
   mTotEve              = 0;
+  mdxdz=mdydz=mX0=mY0  = 0;
   mMode                = 1;
 }
 
@@ -240,13 +241,20 @@ StppLMVVertexFinder::printInfo(ostream& os) const
 //======================================================
 //======================================================
 void 
-StppLMVVertexFinder::UseVertexConstraint() {
+StppLMVVertexFinder::UseVertexConstraint(double x0, double y0, 
+					 double dxdz, double dydz, double weight) {
   mVertexConstrain = true;
-  double mX0 = sBeamline.x0;
-  double mY0 = sBeamline.y0;
-  double mdxdz = sBeamline.dxdz;
-  double mdydz = sBeamline.dydz;
+  mX0 = x0;
+  mY0 = y0;
+  mdxdz = dxdz;
+  mdydz = dydz;
+  mWeight = weight;
   LOG_INFO << "StppLMVVertexFinder::Using Constrained Vertex" << endm;
+  LOG_INFO << "x origin = " << mX0 << endm;
+  LOG_INFO << "y origin = " << mY0 << endm;
+  LOG_INFO << "slope dxdz = " << mdxdz << endm;
+  LOG_INFO << "slope dydz = " << mdydz << endm;
+  LOG_INFO << "NOT used (JB) weight in fit = " << weight <<  endm;
   StThreeVectorD origin(mX0,mY0,0.0);
   double pt  = 88889999;   
   double nxy=::sqrt(mdxdz*mdxdz +  mdydz*mdydz);
@@ -279,7 +287,7 @@ StppLMVVertexFinder::matchTrack2CTB (StTrack* track, float & sigma) {
 
   sigma=0;
   const double Rctb=213.6; // (cm) radius of the CTB 
-  uint nFitP=0;
+  uint nPoss=0, nFitP=0, nSvtP=0;
 
   if (!track) return false; // it should never happen
   if(!finite(track->geometry()->helix().curvature())){
@@ -297,7 +305,7 @@ StppLMVVertexFinder::matchTrack2CTB (StTrack* track, float & sigma) {
   StPhysicalHelixD TrkHlxIn=track->geometry()->helix();
 
   //           check Rxy_min condition  close to beam    
-  double spath = TrkHlxIn.pathLength(sBeamline.x0, sBeamline.y0);
+  double spath = TrkHlxIn.pathLength(mX0, mY0 );
   StThreeVectorD posDCA = TrkHlxIn.at(spath);
   //  cout<<" DCA Position: "<<posDCA<<endl;
   double x_m = posDCA.x(), y_m = posDCA.y();
@@ -307,6 +315,8 @@ StppLMVVertexFinder::matchTrack2CTB (StTrack* track, float & sigma) {
   n2++;
   
   nFitP = track->detectorInfo()->numberOfPoints(kTpcId);
+  nSvtP = track->detectorInfo()->numberOfPoints(kSvtId);
+  nPoss=track->numberOfPossiblePoints(kTpcId);
 
   if(  nFitP <= mMinNumberOfFitPointsOnTrack) return false;
   n3++;
@@ -340,7 +350,7 @@ StppLMVVertexFinder::matchTrack2CTB (StTrack* track, float & sigma) {
   float strag=0.0136/beta/pmomM*spathL; 
   if(fabs(mBfield)<0.01) strag=0.0136*spathL; // no field case, pT makes no sense
 
-  //  printf("stragling=%f %f p=%f %f nFp=%d nPp=%d\n",strag,beta,pmom.mag(),spath, track->fitTraits().numberOfFitPoints(), track->numberOfPossiblePoints(kTpcId) );
+  //  printf("stragling=%f %f p=%f %f nFp=%d nPp=%d\n",strag,beta,pmom.mag(),spath, track->fitTraits().numberOfFitPoints(),nPoss );
   
 
   if ( !track->outerGeometry() )  return false;
@@ -388,7 +398,7 @@ StppLMVVertexFinder::matchTrack2CTB (StTrack* track, float & sigma) {
     // printf("  CTB match OK:  del_eta=%.2f, del_phi/deg=%.1f \n", del_eta,del_phi/C_PI*180);
     sigma=strag;
     n6++;    
-    //  printf("add tr %d w/ sigma=%f p/GeV=%f spath/cm=%f nFitP=%d nSVT=%d\n",mPrimCand.size(),sigma,pmom.mag(),spath,nFitP, track->detectorInfo()->numberOfPoints(kSvtId) );
+    //  printf("add tr %d w/ sigma=%f p/GeV=%f spath/cm=%f nFitP=%d nPoss=%d nSVT=%d\n",mPrimCand.size(),sigma,pmom.mag(),spath,nFitP, nPoss,nSvtP);
     
     return true;
   }
@@ -410,18 +420,15 @@ StppLMVVertexFinder::ppLMV5() {
   //printf("passed %d tracks match to CTB,  BeamLine=%d\n",totTr,mVertexConstrain );
   LOG_DEBUG << "passed " << totTr << " tracks match to CTB,  BeamLine=" << mVertexConstrain << endm;
    
-  double xo = sBeamline.x0;
-  double yo = sBeamline.y0;
+  double xo=0.0,yo=0.0;
+  xo=mX0;
+  yo=mY0; 
  
   //Do the actual vertex fitting, continue until good
-  double A11=0.0,A12=0.0,A13=0.0;
-  double A21=0.0,A22=0.0,A23=0.0;
+  double A11=0.0,A12=0.0,A13=0.0,A21=0.0,A22=0.0,A23=0.0;
   double A31=0.0,A32=0.0,A33=0.0; // Matrix Elements
-
-  double C11=0.0,C12=0.0,C13=0.0;
-  double C21=0.0,C22=0.0,C23=0.0;
+  double C11=0.0,C12=0.0,C13=0.0,C21=0.0,C22=0.0,C23=0.0;
   double C31=0.0,C32=0.0,C33=0.0; // C = A^-1
-
   int done = 0;
   int vertIter=0;
   double chi2=0;
@@ -435,14 +442,10 @@ StppLMVVertexFinder::ppLMV5() {
     }
   
     // Begin by doing a fit
-    A11=0.0,A12=0.0,A13=0.0;
-    A21=0.0,A22=0.0,A23=0.0;
+    A11=0.0,A12=0.0,A13=0.0,A21=0.0,A22=0.0,A23=0.0;
     A31=0.0,A32=0.0,A33=0.0; // Matrix Elements
-
-    C11=0.0,C12=0.0,C13=0.0;
-    C21=0.0,C22=0.0,C23=0.0;
+    C11=0.0,C12=0.0,C13=0.0,C21=0.0,C22=0.0,C23=0.0;
     C31=0.0,C32=0.0,C33=0.0; // C = A^-1
-
     double b1=0.0,b2=0.0,b3=0.0;
 
     // Compute matrix A and vector b
@@ -451,7 +454,6 @@ StppLMVVertexFinder::ppLMV5() {
       double spath = mPrimCand[itr].helix.pathLength(xo,yo);
       StThreeVectorD XClosest =  mPrimCand[itr].helix.at(spath);
       StThreeVectorD XMomAtClosest =  mPrimCand[itr].helix.momentumAt(spath,mBfield*tesla );
-
       double xp   = XClosest.x(); double yp= XClosest.y(); double zp= XClosest.z();  
       // printf("itr=%d  DCA x=%f y=%f z=%f  sig=%f\n",itr,xp,yp,zp,mPrimCand[itr].sigma);
       
@@ -606,80 +608,6 @@ int  StppLMVVertexFinder::NCtbMatches() {
 
 /*
  * $Log: StppLMVVertexFinder.cxx,v $
- * Revision 1.28  2016/08/18 17:46:14  smirnovd
- * Squashed commit of the following refactoring changes:
- *
- * Date:   Wed Jul 27 18:31:18 2016 -0400
- *
- *     Removed unused arguments in UseVertexConstraint()
- *
- *     In StiPPVertexFinder and StvPPVertexFinder this method does nothing
- *
- * Date:   Wed Jul 27 16:47:58 2016 -0400
- *
- *     Make old UseVertexConstraint private virtual and call it from its public replacement in the base class
- *
- *     also mark methods as private explicitly
- *
- * Date:   Wed Jul 27 16:52:02 2016 -0400
- *
- *     Removed unused private data member mWeight
- *
- * Date:   Wed Jul 27 16:50:42 2016 -0400
- *
- *     Prefer base class static beamline parameters rather than this class private members
- *
- * Date:   Wed Jul 27 16:21:49 2016 -0400
- *
- *     StPPVertexFinder: Got rid of unused private beamline parameters
- *
- *     The equivalent measurements are available from the base class
- *     StGenericVertexFinder
- *
- * Date:   Wed Jul 27 16:19:19 2016 -0400
- *
- *     StPPVertexFinder: For beamline position use equivalent static methods from parent class
- *
- * Date:   Wed Jul 27 16:05:50 2016 -0400
- *
- *     StGenericVertexMaker: Assigning once is enough
- *
- * Date:   Mon Aug 15 10:43:49 2016 -0400
- *
- *     StGenericVertexFinder: Print out beamline parameters
- *
- *     Print beamline values as extracted from the database before any modification.
- *
- * Date:   Wed Jul 6 15:33:02 2016 -0400
- *
- *     Stylistic changes and minor refactoring
- *
- *     Whitespace and comments for improved readability
- *     s/track/stiKalmanTrack/
- *
- * Date:   Wed Jul 6 15:28:16 2016 -0400
- *
- *     StPPVertexFinder: Switched to cleaner c++11 range loop syntax
- *
- * Date:   Wed Jul 6 15:22:14 2016 -0400
- *
- *     StPPVertexFinder: Minor c++ refactoring
- *
- *     - Removed unused counter
- *     - c-style array to std::array
- *
- * Date:   Wed Jul 6 15:20:11 2016 -0400
- *
- *     Deleted commented out code
- *
- *     Removed unused #include's StMinuitVertexFinder
- *
- * Revision 1.27  2016/04/28 18:17:38  smirnovd
- * [Cosmetic] Whitespace, doxygen, comments, and readability changes only
- *
- * Revision 1.26  2016/04/15 19:24:14  smirnovd
- * Got rid of unused variables reported by compiler
- *
  * Revision 1.25  2014/07/28 18:07:59  jeromel
  * Cst for C++11 and added comment for cov elements as per StVertex
  *

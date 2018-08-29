@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * $Id: StDbConfigNodeImpl.cc,v 1.11 2016/05/25 20:40:01 dmitry Exp $
+ * $Id: StDbConfigNodeImpl.cc,v 1.9 2011/11/28 17:03:08 dmitry Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -11,12 +11,6 @@
  ***************************************************************************
  *
  * $Log: StDbConfigNodeImpl.cc,v $
- * Revision 1.11  2016/05/25 20:40:01  dmitry
- * coverity - reverse_inull
- *
- * Revision 1.10  2016/05/24 20:26:48  dmitry
- * coverity - unreachable delete loop suppression
- *
  * Revision 1.9  2011/11/28 17:03:08  dmitry
  * dbv override support in StDbLib,StDbBroker,St_db_Maker
  *
@@ -226,16 +220,14 @@ StDbConfigNodeImpl::addDbTable(const char* tableName, const char* version){
 StDbTable*
 StDbConfigNodeImpl::addTable(const char* tableName, const char* version){
 
-  StDbTable* table = 0;
-  table = StDbManager::Instance()->newDbTable(mdbName,tableName);
-  if (table) { 
-	mTables.push_back(table);
-	table->setVersion((char*)version);
- 	table->setNodeType("table");
-  }
+  StDbTable* table = StDbManager::Instance()->newDbTable(mdbName,tableName);
+  if(table) mTables.push_back(table);
+  table->setVersion((char*)version);
+  table->setNodeType("table");
+
   StDataBaseI* db = StDbManager::Instance()->findDb(mdbType, mdbDomain);
-  if(db && table && db->QueryDb((StDbNode*)table)) { mhasData = true; }
-  return table;
+  if(db && table && db->QueryDb((StDbNode*)table))mhasData=true;
+return table;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -391,8 +383,16 @@ buildTree(opt);
 ////////////////////////////////////////////////////////////////
 void
 StDbConfigNodeImpl::deleteTables(){
-  for( auto &it : mTables ) delete it;
-  mTables.clear();
+
+  TableList::iterator itr;
+  StDbTable* table;
+  do {  for(itr = mTables.begin(); itr!=mTables.end(); ++itr){
+            table=*itr;
+            mTables.erase(itr);
+            delete table;
+            break;
+         }
+  } while (mTables.begin() != mTables.end());
   mhasData=false;
 }
 

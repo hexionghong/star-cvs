@@ -1,11 +1,5 @@
-// $Id: StHistUtil.cxx,v 2.99 2016/06/13 20:31:10 genevb Exp $
+// $Id: StHistUtil.cxx,v 2.97 2016/03/16 20:39:21 genevb Exp $
 // $Log: StHistUtil.cxx,v $
-// Revision 2.99  2016/06/13 20:31:10  genevb
-// Resolve Coverity BUFFER_SIZE_WARNING with careful copy function
-//
-// Revision 2.98  2016/06/10 02:55:54  genevb
-// Coverity: memory leaks, possible null pointer dereferences, over-write character buffers
-//
 // Revision 2.97  2016/03/16 20:39:21  genevb
 // remove accidental extraneous line
 //
@@ -435,11 +429,6 @@ StHistUtil::StHistUtil(){
   m_PntrToMaker = 0;
   m_PntrToPlainFile = 0;
 
-  m_PadColumns = 0;
-  m_PadRows = 0;
-  m_PaperWidth = 0;
-  m_PaperHeight = 0;
-
   m_Detectors = "";
 }
 //_____________________________________________________________________________
@@ -461,10 +450,9 @@ StHistUtil::~StHistUtil(){
     m_ListOfPrint->Delete();
     SafeDelete(m_ListOfPrint);
   }
-  if (newHist) {
-    for (int ijk=0; ijk<maxHistCopy; ijk++) delete newHist[ijk];
-    delete [] newHist;
-  }
+//   if (newHist){
+//     delete [] newHist;
+//   }
 }
 //_____________________________________________________________________________
 void StHistUtil::SetOutFile(const Char_t *fileName, const Char_t* type) {
@@ -731,7 +719,7 @@ Int_t StHistUtil::DrawHists(const Char_t *dirName) {
 
   // Now find the histograms
   // get the TList pointer to the histograms:
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
   TList* dirList = (m_PntrToMaker ? FindHists(m_dirName) : FindHists(m_PntrToPlainFile));
   if (!dirList) { LOG_INFO << " DrawHists - histograms not available! " << endm; }
 
@@ -970,7 +958,7 @@ Int_t StHistUtil::DrawHists(const Char_t *dirName) {
               oName.EndsWith("trkGoodTTS")) {
             Float_t mean = hobj->GetMean(1);
             Float_t window = hobj->GetRMS(1);
-            Float_t bwid = hobj->GetXaxis()->GetBinWidth(1);
+            Float_t bwid = hobj->GetBinWidth(1);
             if (window < bwid) window = bwid;
             hobj->SetAxisRange(mean-5*window,mean+5*window,"X");
           }
@@ -981,7 +969,7 @@ Int_t StHistUtil::DrawHists(const Char_t *dirName) {
             Float_t mean2 = hobj->GetMean(2);
             Float_t window1 = hobj->GetRMS(1);
             Float_t window2 = hobj->GetRMS(2);
-            Float_t bwid = hobj->GetXaxis()->GetBinWidth(1);
+            Float_t bwid = hobj->GetBinWidth(1);
             if (window1 < bwid) window1  = bwid;
             if (window2 < bwid) window2  = bwid;
             Float_t lo = TMath::Min(mean1-5*window1,mean2-5*window2);
@@ -1388,7 +1376,7 @@ TList* StHistUtil::FindHists(const Char_t *dirName, const Char_t *withPrefix)
 //     have to check if there's really anything there (so use First method)
 
 //
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
   StMaker *temp = m_PntrToMaker->GetMaker(m_dirName);
     if (temp) {
       LOG_INFO << "FindHists - found pointer to maker" << endm;
@@ -1635,7 +1623,7 @@ Int_t StHistUtil::CopyHists(TList *dirList)
          TH1** temp1 = new TH1ptr[newMaxHistCopy];
          memset(temp1,0,newMaxHistCopy*sizeOfTH1Ptr);
          memcpy(temp1,newHist,maxHistCopy*sizeOfTH1Ptr);
-         delete [] newHist;
+         delete newHist;
          newHist = temp1;
          maxHistCopy = newMaxHistCopy;
        } // if ijk
@@ -1719,7 +1707,7 @@ Int_t StHistUtil::AddHists(TList *dirList,Int_t numHistCopy)
             TH1** temp1 = new TH1ptr[newMaxHistCopy];
             memset(temp1,0,newMaxHistCopy*sizeOfTH1Ptr);
             memcpy(temp1,newHist,maxHistCopy*sizeOfTH1Ptr);
-            delete [] newHist;
+            delete newHist;
             newHist = temp1;
             maxHistCopy = newMaxHistCopy;
           } // if imk
@@ -1985,12 +1973,9 @@ Int_t StHistUtil::RemoveFromLogYList(const Char_t *HistName){
       LOG_INFO << " RemoveLogYList: " << HistName << " not on list - not removing" <<endm;
     }
 
-    // return using a method of TList (inherits GetSize from TCollection)
-    return m_ListOfLogY->GetSize();
-  }
-
-  LOG_INFO << " RemoveLogYList: " << HistName << " not on list - not removing" <<endm;
-  return 0;
+  } 
+// return using a method of TList (inherits GetSize from TCollection)
+ return m_ListOfLogY->GetSize();
 }
 
 
@@ -2021,12 +2006,9 @@ Int_t StHistUtil::RemoveFromLogXList(const Char_t *HistName){
       LOG_INFO << " RemoveLogXList: " << HistName << " not on list - not removing" <<endm;
     }
 
-    // return using a method of TList (inherits GetSize from TCollection)
-    return m_ListOfLogX->GetSize();
   } 
-
-  LOG_INFO << " RemoveLogXList: " << HistName << " not on list - not removing" <<endm;
-  return 0;
+// return using a method of TList (inherits GetSize from TCollection)
+ return m_ListOfLogX->GetSize();
 }
 
 
@@ -2057,12 +2039,9 @@ Int_t StHistUtil::RemoveFromPrintList(const Char_t *HistName){
       LOG_INFO << " RemovePrintList: " << HistName << " not on list - not removing" <<endm;
     }
 
-    // return using a method of TList (inherits GetSize from TCollection)
-    return m_ListOfPrint->GetSize();
   } 
-
-  LOG_INFO << " RemovePrintList: " << HistName << " not on list - not removing" <<endm;
-  return 0;
+// return using a method of TList (inherits GetSize from TCollection)
+ return m_ListOfPrint->GetSize();
 }
 
 
@@ -2080,7 +2059,7 @@ void StHistUtil::SetDefaultLogYList(const Char_t *dirName)
   }
 
 
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
   TString type;
   if (!strcmp(m_dirName,"QA"))
     type = "Tab";
@@ -2125,7 +2104,7 @@ void StHistUtil::SetDefaultLogXList(const Char_t *dirName)
     LOG_INFO << " **** Now in StHistUtil::SetDefaultLogXList  **** " << endm;
   }
 
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
   TString type;
   if (!strcmp(m_dirName,"QA"))
     type = "Tab";
@@ -2173,9 +2152,8 @@ void StHistUtil::SetDefaultPrintList(const Char_t *dirName, const Char_t *analTy
 
   const Char_t **sdefList=0;
   Int_t lengofList = 0;
-  bool mustDeleteList = false;
 
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
   TString type;
   if (!strcmp(m_dirName,"QA"))
     type = "Tab";
@@ -2285,7 +2263,6 @@ void StHistUtil::SetDefaultPrintList(const Char_t *dirName, const Char_t *analTy
     if (analFile.good()) {
       LOG_INFO << "Reading print list from: " << analType << endm;
       sdefList = new charptr[4096];
-      mustDeleteList = true;
       char analBuffer[256];
       TString analString;
       Bool_t commenting = kFALSE;
@@ -2325,7 +2302,6 @@ void StHistUtil::SetDefaultPrintList(const Char_t *dirName, const Char_t *analTy
   Int_t ilg = 0;
   for (ilg=0;ilg<lengofList;ilg++) {
     TString ilgString = sdefList[ilg];
-    if (mustDeleteList) delete [] sdefList[ilg];
     Bool_t addIt = kTRUE;
     if (ilgString.BeginsWith(":")) {
       Ssiz_t endDetSpec = ilgString.Index(":",1) + 1;
@@ -2349,7 +2325,6 @@ void StHistUtil::SetDefaultPrintList(const Char_t *dirName, const Char_t *analTy
       }
     }
   }
-  if (mustDeleteList) delete [] sdefList;
   
   LOG_INFO <<  " !!!  StHistUtil::SetDefaultPrintList, # histogram put in list " << numPrt << endm;
 
@@ -2366,7 +2341,7 @@ Int_t StHistUtil::Overlay1D(Char_t *dirName,Char_t *inHist1,
   LOG_INFO << " **** Now in StHistUtil::Overlay1D **** " << endm;
 
   Int_t n1dHists = 0;
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
 
 // get the TList pointer to the histograms
   TList* dirList = (m_PntrToMaker ? FindHists(m_dirName) : FindHists(m_PntrToPlainFile));
@@ -2487,7 +2462,7 @@ Int_t StHistUtil::Overlay2D(Char_t *dirName,Char_t *inHist1,
   LOG_INFO << " **** Now in StHistUtil::Overlay2D **** " << endm;
 
   Int_t n2dHists = 0;
-  PathCopy(m_dirName,dirName);
+  if (dirName && strcmp(m_dirName,dirName)) strcpy(m_dirName,dirName);
 
 // get the TList pointer to the histograms
   TList* dirList = (m_PntrToMaker ? FindHists(m_dirName) : FindHists(m_PntrToPlainFile));
@@ -2634,7 +2609,7 @@ void StHistUtil::SetRefAnalysis(const Char_t* refOutFile, const Char_t* refResul
 
   if (refInFile && strlen(refInFile)) {
     LOG_INFO << "StHistUtil: Using reference histogram file " << refInFile << endm;
-    m_refInFile = new TFile(refInFile);
+    m_refInFile = ( refInFile ? new TFile(refInFile) : 0 );
     if (!m_refInFile) {LOG_ERROR << "file not found: " << refInFile << endm;}
   }
   if (refCutsFile && strlen(refCutsFile)) {
@@ -2664,9 +2639,9 @@ void StHistUtil::SetRefAnalysis(const Char_t* refOutFile, const Char_t* refResul
   }
 
   // refOutFile will not be used if no reference histograms are found
-  PathCopy(m_refResultsFile,refResultsFile);
+  strcpy(m_refResultsFile,refResultsFile);
   // refOutFile will not be used if already writing hists to a ROOT file
-  PathCopy(m_refOutFile,refOutFile);
+  strcpy(m_refOutFile,refOutFile);
 }
 
 //_____________________________________________________________________________
@@ -2749,20 +2724,6 @@ TH1* StHistUtil::FlipAxes(TH1* hist) {
   newhist->SetMinimum(hist->GetMinimumStored());
   newhist->SetMaximum(hist->GetMaximumStored());
   return newhist;
-}
-
-//_____________________________________________________________________________
-
-void StHistUtil::PathCopy(char* destination, const char* source) {
-  // carefully copy path strings to avoid buffer over-writes or over-reads
-  if (source && strcmp(destination,source)) {
-    if (strlen(source) < maxPathLen) {
-      strncpy(destination,source,maxPathLen-1);
-      destination[maxPathLen-1] = 0;
-    } else {
-      LOG_ERROR << " source path too long: " << source << endm;
-    }
-  }
 }
 
 //_____________________________________________________________________________

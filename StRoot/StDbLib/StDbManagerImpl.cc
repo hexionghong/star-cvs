@@ -1,6 +1,6 @@
 /***************************************************************************
  *   
- * $Id: StDbManagerImpl.cc,v 1.48 2016/05/24 20:26:48 dmitry Exp $
+ * $Id: StDbManagerImpl.cc,v 1.47 2015/04/13 19:43:43 dmitry Exp $
  *
  * Author: R. Jeff Porter
  ***************************************************************************
@@ -10,9 +10,6 @@
  ***************************************************************************
  *
  * $Log: StDbManagerImpl.cc,v $
- * Revision 1.48  2016/05/24 20:26:48  dmitry
- * coverity - unreachable delete loop suppression
- *
  * Revision 1.47  2015/04/13 19:43:43  dmitry
  * added new db domain: SST
  *
@@ -518,20 +515,38 @@ StDbManagerImpl::newDbDomain(const char* domainName){
 void
 StDbManagerImpl::deleteServers() {  
 
-  if ( !mhasServerList ) return;
+  if(!mhasServerList)return;
+  ServerList::iterator itr;
+  StDbServer* server;
 
-  for( auto &it : mservers ) delete it;
-  mservers.clear();
+  do {
+      for(itr = mservers.begin(); itr != mservers.end(); ++itr){
+         server = *itr;
+         mservers.erase(itr);
+         delete server;
+         break;
+        }
+     } while( mservers.begin() != mservers.end() );
 
 }
+
 
 ////////////////////////////////////////////////////////////////
 
 void
 StDbManagerImpl::deleteDomains(){
 
-  for( auto &it : mDomains ) delete it;
-  mDomains.clear();
+  dbDomains::iterator itr;
+  dbDomain* domain;
+
+  do {
+    for(itr = mDomains.begin(); itr!=mDomains.end(); ++itr){
+        domain=*itr;
+        mDomains.erase(itr);
+        delete domain;
+        break;
+    }
+  } while (mDomains.begin() != mDomains.end());
 
 }
 
@@ -540,8 +555,17 @@ StDbManagerImpl::deleteDomains(){
 void
 StDbManagerImpl::deleteTypes(){
 
-  for( auto &it : mTypes ) delete it;
-  mTypes.clear();
+  dbTypes::iterator itr;
+  dbType* type;
+
+  do {
+    for(itr = mTypes.begin(); itr!=mTypes.end(); ++itr){
+        type=*itr;
+        mTypes.erase(itr);
+        delete type;
+        break;
+    }
+  } while (mTypes.begin() != mTypes.end());
 
 }
 

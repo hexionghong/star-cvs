@@ -43,10 +43,6 @@ struct SetHitUsed
 {
     void operator() (StiTrackNode&);
 };
-struct SetHitUnused
-{
-    void operator() (StiTrackNode&);
-};
 
 #endif
 

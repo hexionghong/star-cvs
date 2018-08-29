@@ -240,10 +240,18 @@ int StiDetector::insideG(const double xl[3],int mode,double fakt) const
   return insideL(&xg[0],mode,fakt);
 }
 //______________________________________________________________________________
-void StiDetector::getDetPlane(double plane[4]) const 
+double StiDetector::getCenterX() const 
 {
-  plane[0] = - getPlacement()->getNormalRadius();
-  plane[1] = _cos;
-  plane[2] = _sin;
-  plane[3] = 0.;
+  int shapeCode = shape->getShapeCode();
+  switch(shapeCode) {
+  
+    case kPlanar: 		return placement->getNormalRadius()-shape->getThickness()/2;
+    case kCylindrical: 	return 0;
+    case kSector: {
+      double rn = placement->getNormalRadius()-shape->getThickness()/2;
+      double ang = shape->getOpeningAngle();
+      return rn*cos(ang);}
+    default: assert(0 && "WrongShape");
+  }
+  return 0;
 }

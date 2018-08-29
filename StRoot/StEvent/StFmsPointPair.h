@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * $Id: StFmsPointPair.h,v 2.3 2016/06/07 15:51:34 akio Exp $
+ * $Id: StFmsPointPair.h,v 2.2 2015/10/21 14:52:54 ullrich Exp $
  *
  * Author: Akio Ogawa, Sep 2015
  **************************************************************************
@@ -10,9 +10,6 @@
  **************************************************************************
  *
  * $Log: StFmsPointPair.h,v $
- * Revision 2.3  2016/06/07 15:51:34  akio
- * Making code better based on Coverity reports
- *
  * Revision 2.2  2015/10/21 14:52:54  ullrich
  * Added methods x() and y()
  *
@@ -36,7 +33,7 @@ public:
     StFmsPointPair(StFmsPoint* p1, StFmsPoint* p2);
     ~StFmsPointPair();
         
-    int nPoints() const;
+    const int nPoints() const;
     void addPoint(StFmsPoint* p);
     vector<StFmsPoint*>& points();
     StFmsPoint* point(int v);
@@ -73,7 +70,7 @@ private:
     ClassDef(StFmsPointPair, 1)
 };
 
-inline int StFmsPointPair::nPoints() const {return mPoints.size();}
+inline const int StFmsPointPair::nPoints() const {return mPoints.size();}
 inline vector<StFmsPoint*>& StFmsPointPair::points() {return mPoints;}
 inline const StLorentzVectorF& StFmsPointPair::fourMomentum() const { return mFourMomentum; }
 inline float StFmsPointPair::energy() const { return mFourMomentum.e(); }
