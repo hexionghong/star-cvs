@@ -64,7 +64,7 @@ my @inputExt = ();
 
   &StDbProdConnect();
 
-  $sql="SELECT distinct prodTag, datasetName, inputFileName, date_format(submissionTime, '%Y-%m-%d') as SDATE, submitAttempt, daqSizeOnSite, jobProgress, globusError, jobState, recoStatus, muDstStatus, logFileState, overallJobStates, site, date_format(carouselSubTime, '%Y-%m-%d') as CDATE, inputFileExists  from $JobStatusT where  overallJobStates <> 'done' order by SDATE ";
+  $sql="SELECT distinct prodTag, datasetName, inputFileName, date_format(submissionTime, '%Y-%m-%d') as SDATE, submitAttempt, daqSizeOnSite, jobProgress, globusError, jobState, recoStatus, outputStatus, logFileState, overallJobStates, site, date_format(carouselSubTime, '%Y-%m-%d') as CDATE, inputFileExists  from $JobStatusT where  overallJobStates <> 'done' order by SDATE ";
 
 
             $cursor =$dbh->prepare($sql)
