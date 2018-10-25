@@ -114,7 +114,7 @@ if ($result =~ m/\/panasas/ && $ARGV[0] ne "" && -e $PEXEC){
     }
     $items[1] = join(" ",@vals);
 
-    print $result;
+    #print $result;
     print "$items[0]\n";
     print "$items[1]\n";    
 
