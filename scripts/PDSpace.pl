@@ -24,7 +24,7 @@ $MAIN  = "/star/data";                                    # default base path
 # An array of disks to add to the $MAIN pattern - entries can also be wildcarded patterns
 # which will be used in a glob() statement or sunngle disk entries
 @ADDD  = (
-          "/star/institutions/*",
+          #"/star/institutions/*",
           "/star/subsys/*",
 	  "/star/u",
 	  "/star/simu",
@@ -151,7 +151,8 @@ $BREAK{"06"}   =  "Assigned TEMPORARY space for sub-systems and Core-Activities"
 $BREAK{"19"}   =  "Data Production Disks";
 
 # Addiitonal header based on patterns
-$BHEAD{"inst"} =  "Institution or specialized usage disks";
+#$BHEAD{"inst"} =  "Institution or specialized usage disks";
+$BHEAD{"inst"} =  "Specialized usage disks";
 $BEND          =  "#terminate header#" ;  # a random header pattern indicating it will not be re-used
 
 # A generic tag for addiitonal intremediate markers
