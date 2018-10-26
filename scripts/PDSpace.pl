@@ -29,6 +29,7 @@ $MAIN  = "/star/data";                                    # default base path
 	  "/star/u",
 	  "/star/simu",
 	  "/star/grid",
+	  "/star/embed",
 	  "/star/scratch",
 	  "/star/rcf",
 	  "/star/xrootd",
@@ -47,6 +48,7 @@ $MAIN  = "/star/data";                                    # default base path
           "/gpfs01/star/scratch"   => 1,
           "/gpfs01/star/pwg_tasks" => 1,
           "/gpfs01/star/pwg"       => 1,
+          "/gpfs01/star/embed"     => 1,
 
           "/star/subsys/*"         => 2,
           "/gpfs01/star/subsys"    => 2,
@@ -56,7 +58,7 @@ $MAIN  = "/star/data";                                    # default base path
           "/star/data14-17"        => 2,
           "/gpfs01/star/data18"    => 2,   # embedding - appears before a wildcard is OK
 
-          "/star/institutions/*"   => 3,
+          #"/star/institutions/*"   => 3,
 
           "/gpfs01/star/data*"     => 4, # a link reading will be done, duplicate removed
           "/gpfs03/star/data*"     => 4, # a link reading will be done, duplicate removed
@@ -73,7 +75,7 @@ $MAIN  = "/star/data";                                    # default base path
 %TITLES = (
             1 => "General space for users",
 	    2 => "Project reserved spaces",
-	    3 => "Institution disk space",
+	    #3 => "Institution disk space",
             4 => "Production",
 	    5 => "Miscellaneous space"
           );
