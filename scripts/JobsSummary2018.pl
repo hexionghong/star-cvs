@@ -318,10 +318,10 @@ print HTML "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n";
 
 print HTML "<html>\n";
 print HTML "    <head>\n";
-print HTML "          <title>Summary of production jobs for run 2017</title>\n"; 
+print HTML "          <title>Summary of production jobs for run 2018</title>\n"; 
 print HTML "    </head>\n";
 print HTML "   <body BGCOLOR=\"cornsilk\">\n";
-print HTML " <h2 ALIGN=CENTER> <B>Summary of production jobs status for<font color=\"blue\"> run 2017 </font>data  </B></h2>\n";
+print HTML " <h2 ALIGN=CENTER> <B>Summary of production jobs status for<font color=\"blue\"> run 2018 </font>data  </B></h2>\n";
 print HTML " <h3 ALIGN=CENTER> Generated on $todate</h3>\n";
 print HTML "<h4 ALIGN=LEFT><font color=\"red\">Ongoing production is in red color</font></h4>\n";
 print HTML "<TABLE ALIGN=CENTER BORDER=5 CELLSPACING=1 CELLPADDING=2 bgcolor=\"#ffdc9f\">\n";
