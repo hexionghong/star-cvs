@@ -38,6 +38,11 @@ my $mondif;
 my $pyear;
 
 my %collHash = (
+                 27GeV_production_2018 => 'auau27',
+                 production_isobar_2018 => 'ZrZr/RuRu200',
+                 production_27GeV_fixedTarget_2018 => 'Au27',
+                 production_3p85GeV_fixedTarget_2018 => 'Au3.85',
+                 production_26p5GeV_fixedTarget_2018 => 'Au26.5',  
                  pp500_production_2017 => 'pp510',
                  pp500_production_rhicf_2017 => 'pp510',
                  AuAu54_production_2017 => 'auau54',
@@ -224,6 +229,11 @@ my %collHash = (
 	      );
              
 my %yrHash = (
+                 27GeV_production_2018 => 'year2018',
+                 production_isobar_2018 => 'year2018',
+                 production_27GeV_fixedTarget_2018 => 'year2018',
+                 production_3p85GeV_fixedTarget_2018 => 'year2018',
+                 production_26p5GeV_fixedTarget_2018 => 'year2018',
                  pp500_production_2017 => 'year2017',
                  pp500_production_rhicf_2017 => 'year2017',
                  AuAu54_production_2017 => 'year2017',
