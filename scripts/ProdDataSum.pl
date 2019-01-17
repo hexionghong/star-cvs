@@ -37,8 +37,7 @@ my $daydif;
 my $mondif;
 my $pyear;
 
-my %collHash = (
-                 27GeV_production_2018 => 'auau27',
+my %collHash = ( 
                  production_isobar_2018 => 'ZrZr/RuRu200',
                  production_27GeV_fixedTarget_2018 => 'Au27',
                  production_3p85GeV_fixedTarget_2018 => 'Au3.85',
@@ -229,7 +228,6 @@ my %collHash = (
 	      );
              
 my %yrHash = (
-                 27GeV_production_2018 => 'year2018',
                  production_isobar_2018 => 'year2018',
                  production_27GeV_fixedTarget_2018 => 'year2018',
                  production_3p85GeV_fixedTarget_2018 => 'year2018',
@@ -431,7 +429,9 @@ $yrHash{"ppLong-1"} = "year2003";
 $yrHash{"testJPsi-3"} = "year2003";
 $yrHash{"ProductionMinBias"} = "year2001";
 $yrHash{"productionMinBias"} = "year2004";
+$yrHash{"27GeV_production_2018"} = "year2018";
 
+$collHash{"27GeV_production_2018"} = "auau27";
 $collHash{"2007ProductionMinBias"} = "auau200";
 $collHash{"2007Production2"} = "auau200";
 $collHash{"2007TestProduction"} = "auau200";
