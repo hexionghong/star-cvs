@@ -259,8 +259,12 @@ if ("$node" == "") then
 	    set pool="-pool onlam3.starp.bnl.gov:9618";     
  	else
 	    # RCF
-	    set node="rcas6+"
-	    set pool="-pool  condor02.rcf.bnl.gov:9664" 
+            set node="rcas6+"
+            set pool="RANDOM"
+            set rhost="rcas"
+            set rdomain="rcf.bnl.gov"
+            set rstart=6005
+            set rrange=6
         endif
 	breaksw;
 
@@ -315,7 +319,11 @@ else
 	breaksw;
 
        case "rcas6*":
-        set pool="-pool condor02.rcf.bnl.gov:9664"
+        set pool="RANDOM"
+        set rhost="rcas"
+        set rdomain="rcf.bnl.gov"
+        set rstart=6005
+        set rrange=6
         breaksw;
 
        case "rcas4*":
