@@ -1292,7 +1292,7 @@ my $ynum = 14;
      $max_y = 100 ;
      $ynum = 20; 
  }elsif($qprod eq "P18ih" ) {
-    $max_y = 100 ;
+    $max_y = 40 ;
     $ynum = 20;
 
  }else{
@@ -1437,9 +1437,13 @@ if($qprod eq "P14ia" or $qprod eq "P14ig" ) {
      $max_y = 60 ;
      $ynum = 15;
 
- }elsif($qprod eq "P18ic" or $qprod eq "P18ib" ) {
+ }elsif($qprod eq "P18ic" or $qprod eq "P18ib" or $qprod eq "P18if" ) {
      $max_y = 30 ;
      $ynum = 15;
+ }elsif($qprod eq "P18ih"  ) {
+    $max_y = 15 ;
+    $ynum = 15;
+
  }else{
      $max_y = 28 ;
      $ynum = 14;
@@ -1482,7 +1486,7 @@ if($qprod eq "P14ia" or $qprod eq "P14ig" ) {
      $max_y = 1000000000 ;
      $ynum = 20;
   }elsif($qprod eq "P18ih") {
-    $max_y = 1000000000 ;
+    $max_y = 200000000 ;
   $ynum = 20;
  }else{ 
      $max_y = 42000000 ;
