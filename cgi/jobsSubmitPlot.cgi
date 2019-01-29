@@ -50,7 +50,7 @@ my @arrprod = ();
 my $npr = 0;
 my $mpr;
 
-my $pryear = "2017";
+my $pryear = "2018";
 
 my @ndate = ();
 my $ndt = 0;
@@ -132,6 +132,21 @@ $JobStatusT = "JobStatus2017";
        }
     $cursor->finish();
 
+$JobStatusT = "JobStatus2018";
+
+
+$sql="SELECT DISTINCT prodSeries  FROM $JobStatusT where runDay >= '2019-01-10' order by runDay ";
+
+      $cursor =$dbh->prepare($sql)
+    || die "Cannot prepare statement: $DBI::errstr\n";
+$cursor->execute();
+
+while( $mpr = $cursor->fetchrow() ) {
+    $arrprod[$npr] = $mpr;
+    $npr++;
+}
+$cursor->finish();
+
 
 my @arperiod = ("1_month","2_months","3_months","4_months","5_months","6_months","8_months","10_months","12_months");
 
@@ -176,7 +191,7 @@ END
     print "<h4 align=center>";
     print  $query->scrolling_list(-name=>'prod',
 	                          -values=>\@arrprod,
-	                          -default=>P18ib,
+	                          -default=>P18ih,
       			          -size =>1);
 
     print "<p>";
@@ -225,8 +240,9 @@ END
   }elsif($qprod eq "P17ii" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
    $JobStatusT = "JobStatus2017";   
 
+  }elsif($qprod eq "P18ih") {
+      $JobStatusT = "JobStatus2018";
   }
-
 
 my @ardays = ();
 my @prt = ();
