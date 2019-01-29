@@ -22,7 +22,7 @@ $dbname="operation";
 
 
 my @reqperiod = ("day","week","1_month","2_months","3_months","4_months","5_months","6_months","7_months","8_months","9_months","10_months","11_months","12_months");
-my @prodyear = ("2013","2014","2015","2016","2017","2018");
+my @prodyear = ("2013","2014","2015","2016","2017","2018","2019");
 my @plotview = ("numbers","percentage");
 
 my $query = new CGI;
