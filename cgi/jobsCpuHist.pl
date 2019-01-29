@@ -542,7 +542,7 @@ END
        $lastdate = $mxtime;
 
 
-    if($pryear eq "2013" or $pryear eq "2014" or $pryear eq "2015" or $pryear eq "2016") {
+    if($pryear eq "2013" or $pryear eq "2014" or $pryear eq "2015" or $pryear eq "2016" or $pryear eq "2017") {
         $nowdate = $lastdate;
     } else {
         $nowdate = $todate;
@@ -770,7 +770,7 @@ END
 
 ###########
 
- if($qprod eq "P14ia" or $qprod eq "P14ig" or $qprod eq "P14ii" or $qprod eq "P15ik" or $qprod eq "P15il" or $qprod eq "P16id"  or $qprod eq "P16ic" or $qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib" ) {
+ if($qprod eq "P14ia" or $qprod eq "P14ig" or $qprod eq "P14ii" or $qprod eq "P15ik" or $qprod eq "P15il" or $qprod eq "P16id"  or $qprod eq "P16ic" or $qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib"  or $qprod eq "P18if" or $qprod eq "P18ih") {
      $maxvalue = 120;
 
      if($qprodt eq "P16id.2014"){
@@ -1070,7 +1070,7 @@ END
 
  if($qprod eq "P14ia" or $qprod eq "P14ig" or $qprod eq "P14ii" ) {
      $maxcpuval = 110;
- }elsif($qprod eq "P15ik" or $qprod eq "P15il" or $qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib" ) {
+ }elsif($qprod eq "P15ik" or $qprod eq "P15il" or $qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib"  or $qprod eq "P18if"  or $qprod eq "P18ih" ) {
      $maxcpuval = 110;
 # }elsif($qprod eq "P17ii" or $qprod eq "P18ic") {
 #     $maxcpuval = 55;
@@ -1291,6 +1291,9 @@ my $ynum = 14;
   }elsif($qprod eq "P18ic" ) { 
      $max_y = 100 ;
      $ynum = 20; 
+ }elsif($qprod eq "P18ih" ) {
+    $max_y = 100 ;
+    $ynum = 20;
 
  }else{
      $max_y = 28 ;
@@ -1478,6 +1481,9 @@ if($qprod eq "P14ia" or $qprod eq "P14ig" ) {
  }elsif($qprod eq "P18ic") {
      $max_y = 1000000000 ;
      $ynum = 20;
+  }elsif($qprod eq "P18ih") {
+    $max_y = 1000000000 ;
+  $ynum = 20;
  }else{ 
      $max_y = 42000000 ;
      $ynum = 14;
