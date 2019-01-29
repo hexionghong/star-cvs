@@ -52,7 +52,7 @@ my @arrprod = ();
 my $npr = 0;
 my $mpr;
 
-my $pryear = "2017";
+my $pryear = "2018";
 
 my @ndate = ();
 my $ndt = 0;
@@ -263,11 +263,14 @@ END
 
   $JobStatusT = "JobStatus2016";
 
-  }elsif($qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib") {
+  }elsif($qprod eq "P17ii" or $qprod eq "P18ic" or $qprod eq "P18ib" or $qprod eq "P18if") {
 
  $JobStatusT = "JobStatus2017";
 
-  }
+  }elsif($qprod eq "P18ih" ){
+   $JobStatusT = "JobStatus2018";
+
+  } 
 
 my @ardays = ();
 my @prt = ();
