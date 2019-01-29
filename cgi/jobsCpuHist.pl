@@ -87,7 +87,7 @@ my @submjobs = ();
 my @submjob1 = ();
 my @submjob2 = ();
 
-my $pryear = "2017";
+my $pryear = "2018";
 
 my $rte = 0;
 
@@ -287,6 +287,21 @@ $JobStatusT = "JobStatus2017";
        }
     $cursor->finish();
 
+$JobStatusT = "JobStatus2018";
+
+$sql="SELECT DISTINCT prodSeries  FROM $JobStatusT where runDay >= '2019-01-10' order by runDay ";
+
+      $cursor =$dbh->prepare($sql)
+    || die "Cannot prepare statement: $DBI::errstr\n";
+$cursor->execute();
+
+while( $mpr = $cursor->fetchrow() ) {
+
+    $arrprod[$npr] = $mpr;
+    $npr++;
+}
+$cursor->finish();
+
 
 my @arperiod = ("1_month","2_months","3_months","4_months","5_months","6_months","7_months","8_months","9_months","10_months","11_months","12_months");
 
@@ -333,7 +348,7 @@ END
     print "<h4 align=center>";
     print  $query->scrolling_list(-name=>'prod',
 	                          -values=>\@arrprod,
-	                          -default=>P18ib,
+	                          -default=>P18ih,
       			          -size =>1);
 
   
@@ -403,7 +418,8 @@ END
     };
   if( $qprod =~ /P16ig/) {$pryear = "2013"};
   if( $qprod =~ /P16ij/ or $qprod =~ /P16ik/ or $qprod =~ /P17ib/ ) {$pryear = "2016"};
-  if( $qprod =~ /P17ii/ or  $qprod =~ /P18ic/  or  $qprod =~ /P18ib/ ) {$pryear = "2017"};
+  if( $qprod =~ /P17ii/ or  $qprod =~ /P18ic/  or  $qprod =~ /P18ib/ or $qprod =~ /P18if/ ) {$pryear = "2017"};
+  if( $qprod =~ /P18ih/) {$pryear = "2018"};
 
 
     $JobStatusT = "JobStatus".$pryear;
