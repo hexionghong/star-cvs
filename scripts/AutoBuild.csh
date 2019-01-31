@@ -1,7 +1,7 @@
 #!/bin/csh
 #
 # Wrapper to autobuild
-# J.Lauret 2001 - 2011
+# J.Lauret 2001 - 2019
 #
 # Current target for this script
 #
@@ -50,7 +50,9 @@
 #
 
 # Grab it from env
-if ( ! $?AFS_RHIC ) setenv AFS_RHIC /afs/rhic.bnl.gov
+if ( ! $?AFS_RHIC ) setenv AFS_RHIC  /afs/rhic.bnl.gov
+if ( ! $?STARCVMFS) setenv STARCVMFS /cvmfs/star.sdcc.bnl.gov
+
 
 # In case of token failure, send an Email to
 set EMAIL="jeromel@bnl.gov,didenko@bnl.gov"
@@ -59,7 +61,10 @@ set EMAIL="jeromel@bnl.gov,didenko@bnl.gov"
 set SCRIPTD=$AFS_RHIC/star/packages/scripts
 
 # Loading of the star environment etc ...
-setenv GROUP_DIR $AFS_RHIC/star/group
+if ( ! $?GROUP_DIR ) then
+    setenv GROUP_DIR $AFS_RHIC/star/group
+endif
+
 if ( -r  $GROUP_DIR/star_login.csh ) then
 	source $GROUP_DIR/star_login.csh
 
@@ -167,8 +172,14 @@ if ( -r  $GROUP_DIR/star_login.csh ) then
 	    case "gprof":
 	    case "gcc":
 	    case "icc":
-		set LPATH=$AFS_RHIC/star/packages/adev
+		set LPATH=$STAR_PATH/adev
 		set SPATH=$AFS_RHIC/star/doc/www/comp/prod/Sanity
+
+		# check if path exists, use save fall back
+		if ( ! -d $SPATH ) then
+		    if ( ! -d $HOME/Sanity ) /bin/mkdir $HOME/Sanity
+		    setenv SPATH $HOME/Sanity
+                endif
 		
 		# this is only for double checking. AutoBuild.pl is
 		# impermeable to external env changes (start a new process)
