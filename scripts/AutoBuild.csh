@@ -17,7 +17,7 @@
 #   SL53
 #   SL64
 #   new        a generic target for new systems
-#   
+#
 #              <--- all of those targets were consolidated into one block
 #
 #   64bits     build 64 bits verison of dev, whatever the OS
@@ -29,7 +29,7 @@
 #
 #   Insure     Builds Insure++ compilation
 #   gprof      Builds with gprof options
-# 
+#
 #   inter      Builds as per the default target but do not perform
 #              post compilation tasks (and do not send Email if
 #              failure) and do NOT perform cvs co either (-s -i)
@@ -180,7 +180,7 @@ if ( -r  $GROUP_DIR/star_login.csh ) then
 		    if ( ! -d $HOME/Sanity ) /bin/mkdir $HOME/Sanity
 		    setenv SPATH $HOME/Sanity
                 endif
-		
+
 		# this is only for double checking. AutoBuild.pl is
 		# impermeable to external env changes (start a new process)
 		# so modifications has to be passed at command line level
@@ -202,9 +202,9 @@ if ( -r  $GROUP_DIR/star_login.csh ) then
 		if ( $OKBUILD ) then
 		    setenv AutoBuild_setup_cmd "setup $1 $2"
 		    if ("$3" == "") then
-			$SCRIPTD/AutoBuild.pl -1 -k -i -R -t -T $1$2 -B -p $LPATH 
+			$SCRIPTD/AutoBuild.pl -1 -k -i -R -t -T $1$2 -B -p $LPATH
 		    else
-			$SCRIPTD/AutoBuild.pl $3 -k -i -R -t -T $1$2 -B -p $LPATH 
+			$SCRIPTD/AutoBuild.pl $3 -k -i -R -t -T $1$2 -B -p $LPATH
 		    endif
 		    if( -e $HOME/AutoBuild-linux-$1$2.html) then
 			/bin/mv -f $HOME/AutoBuild-linux-$1$2.html $SPATH/AutoBuild-$1$2.html
@@ -253,7 +253,7 @@ if ( -r  $GROUP_DIR/star_login.csh ) then
 		endif
 		cd $LPATH
 		echo "Cleaning older libraries"
-		mgr/CleanLibs obj 1	
+		mgr/CleanLibs obj 1
 		if ( ! $?XTRACMD ) then
 		    echo "Cleaning emacs flc files"
 		    /usr/bin/find StRoot/ -name '*.flc' -exec rm -f {} \;
