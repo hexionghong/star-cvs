@@ -1,5 +1,5 @@
 #!/bin/csh
-#       $Id: group_env.csh,v 1.262 2018/06/22 13:38:38 jeromel Exp $
+#       $Id: group_env.csh,v 1.263 2019/01/31 15:34:25 jeromel Exp $
 #	Purpose:	STAR group csh setup
 #
 # Revisions & notes
@@ -55,22 +55,27 @@ if ( $?DECHO) echo "$self :: READ_AFS is [$READ_AFS]"
 
 if (! $?STAR_ROOT) then
     if ( $?DECHO) echo "$self :: checking STAR_ROOT"
-    if ( "$READ_AFS" == "") then
-	if ( $?DECHO) echo "$self ::  Defining STAR_ROOT as AFS based if -d checks"
-	if ( -d ${AFS_RHIC}/star ) then
-	    setenv STAR_ROOT ${AFS_RHIC}/star
-        endif
+    if ( $STAR_BASE_PATH != "" ) then
+	# totaly bypass any AFS version
+	setenv STAR_ROOT ${STAR_BASE_PATH}
     else
-       if ( -d /usr/local/star ) then
-	    # this is valid
-	    if ( $?DECHO) echo "$self ::  Defining STAR_ROOT as /usr/local/star"
-	    setenv STAR_ROOT /usr/local/star
-       else
-	    # We will fail (we know that)
-	    echo "$self ::  Did not find a valid STAR_ROOT"
-	    setenv STAR_ROOT /Path_Not_Found_STAR_Login_Failure
-	    set FAIL="$FAIL STAR_ROOT"
-       endif
+	if ( "$READ_AFS" == "") then
+	    if ( $?DECHO) echo "$self ::  Defining STAR_ROOT as AFS based if -d checks"
+	    if ( -d ${AFS_RHIC}/star ) then
+		setenv STAR_ROOT ${AFS_RHIC}/star
+	    endif
+	else
+	    if ( -d /usr/local/star ) then
+		# this is valid
+		if ( $?DECHO) echo "$self ::  Defining STAR_ROOT as /usr/local/star"
+		setenv STAR_ROOT /usr/local/star
+	    else
+		# We will fail (we know that)
+		echo "$self ::  Did not find a valid STAR_ROOT"
+		setenv STAR_ROOT /Path_Not_Found_STAR_Login_Failure
+		set FAIL="$FAIL STAR_ROOT"
+	    endif
+	endif
     endif
 endif
 
@@ -78,10 +83,23 @@ endif
 # Define /opt/star (or equivalent)
 # X indicates points to the AFS reference
 if ( ! $?XOPTSTAR ) then
-    # keep a reference to the AFS one
+    # keep a reference to the base one
     # this -e test may fail - don't do it
-    if ( "$READ_AFS" == "" ) then
-	setenv XOPTSTAR ${AFS_RHIC}/opt/star
+    if ( $STAR_BASE_PATH != "" ) then
+	# the reference n this case will be  ...
+	if ( $?DECHO ) echo "$self :: STAR_BASE_PATH defined, using it for XOPTSTAR, STAR_SYS"
+	if ( $?STAR_SYS ) then
+	    setenv XOPTSTAR ${STAR_BASE_PATH}/${STAR_SYS}/opt/star
+        else
+	    # cannot really emulate AFS's @sys so this may work through
+	    # a default soft-link but not supported
+	    setenv XOPTSTAR ${STAR_BASE_PATH}/opt/star
+	endif
+	setenv OPTSTAR ${XOPTSTAR}
+    else
+	if ( "$READ_AFS" == "" ) then
+	    setenv XOPTSTAR ${AFS_RHIC}/opt/star
+	endif
     endif
 endif
 
@@ -97,7 +115,7 @@ if ( ! $?OPTSTAR ) then
     set IS_OPTSTAR_AFS=""
     set TEST=""
 
-    if ( -d /opt ) then
+    if ( -d /opt && ! $?NOGUESS ) then
         set TEST=`/bin/ls /opt/ | $GREP star`
 	if ( "$TEST" == "star" )  then
             set IS_OPTSTAR_AFS=`/bin/ls -ld /opt/star | $GREP afs`

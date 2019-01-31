@@ -216,9 +216,9 @@ switch ($pkg)
 	    if ( ! $?CERN ) then
 		# Define one value - some of the path below are historical
 		if ( $USE_64BITS == 1) then
-		    set x="/cern64 /cern ${AFS_RHIC}/asis/@sys/cern64 ${AFS_RHIC}/asis/@sys/cern /usr/local/cern64 /usr/local/cern /common/star/cern64 /common/star/cern"
+		    set x="${STAR_BASE_PATH}/cern64 ${STAR_BASE_PATH}/cern ${AFS_RHIC}/asis/@sys/cern64 ${AFS_RHIC}/asis/@sys/cern /usr/local/cern64 /usr/local/cern /common/star/cern64 /common/star/cern"
 		else
-		    set x="/cern ${AFS_RHIC}/asis/@sys/cern /usr/local/cern /common/star/cern"
+		    set x="${STAR_BASE_PATH}/cern ${AFS_RHIC}/asis/@sys/cern /usr/local/cern /common/star/cern"
 		endif
             else
 		# Either it was set before by the search above or there is an 
@@ -251,7 +251,7 @@ switch ($pkg)
 	    if ( ! $?CERN ) then
 		# this can happen only when the full search path finds nothing
 		if ( $?DECHO ) echo "Could not find a valid path for defining CERN, default to /cern"
-		setenv CERN /cern
+		setenv CERN ${STAR_BASE_PATH}/cern
 	    endif
         endif
 	
