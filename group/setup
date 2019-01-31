@@ -461,11 +461,6 @@ switch ($pkg)
 	starver $STAR_LEVEL
 	breaksw
 
-    case "Dsv":
-    case "dsv":
-    case "DSV":
-	if (-r $AFS_RHIC/star/packages/Dsv/Dsvenv.csh) source $AFS_RHIC/star/packages/Dsv/Dsvenv.csh
-      breaksw
     case "KCC":
     case "kcc":
       setenv USE_KCC;  starver $STAR_LEVEL
