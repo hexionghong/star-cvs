@@ -70,6 +70,7 @@ my $ProdSizeT = "ProductionSize";
 my $ProdSize2016T = "ProductionSize2016";
 
 my $ProdSize2017T = "ProductionSize2017";
+my $ProdSize2018T = "ProductionSize2018";
 
  &StDbProdConnect();
 
@@ -115,6 +116,21 @@ my $ProdSize2017T = "ProductionSize2017";
         }
     $cursor->finish();
 
+
+  $sql="SELECT DISTINCT prodtag  FROM ProductionSize2018";
+
+        $cursor =$dbh->prepare($sql)
+      || die "Cannot prepare statement: $DBI::errstr\n";
+   $cursor->execute();
+
+   while( my $mpr = $cursor->fetchrow() ) {
+
+    $arrprod[$npr] = $mpr;
+    $npr++;
+}
+    $cursor->finish();
+
+
    $arrprod[$npr] = "all2015";
    $arrprod[$npr+1] = "all2016";
 
@@ -152,6 +168,19 @@ my $ProdSize2017T = "ProductionSize2017";
        while( my $mpr = $cursor->fetchrow() ) {
           $trigs[$ntr] = $mpr;
           $ntr++;
+       }
+    $cursor->finish();
+
+
+      $sql="SELECT DISTINCT Trigset  FROM ProductionSize2018 ";
+
+          $cursor =$dbh->prepare($sql)
+         || die "Cannot prepare statement: $DBI::errstr\n";
+      $cursor->execute();
+
+      while( my $mpr = $cursor->fetchrow() ) {
+         $trigs[$ntr] = $mpr;
+         $ntr++;
        }
     $cursor->finish();
 
@@ -199,7 +228,7 @@ END
     print "<h4 align=center>";
     print  $query->scrolling_list(-name=>'prod',
                                   -values=>\@arrprod,
-                                  -default=>P18ib,
+                                  -default=>P18ih,
                                   -size =>1);
 
     print "<p>";
@@ -260,10 +289,14 @@ my $qperiod = $qqr->param('period');
   
    $ProdSizeT = "ProductionSize2016";
 
-  }elsif($qprod eq "P17ii" or $qprod eq "P18ia" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
+  }elsif($qprod eq "P17ii" or $qprod eq "P18ia" or $qprod eq "P18ib" or $qprod eq "P18ic" or $qprod eq "P18if" ) {
 
  $ProdSizeT = "ProductionSize2017";
 
+
+  }elsif($qprod eq "P18ih"  ) {
+
+      $ProdSizeT = "ProductionSize2018";
   }else{
 
     $ProdSizeT = "ProductionSize";
