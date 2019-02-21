@@ -79,7 +79,7 @@ use RunDAQ;
 use CRSQueues;
 
 
-$ThisYear = 2018;                 # Block to consider. Completely artificial
+$ThisYear = 2019;                 # Block to consider. Completely artificial
                                   # and used to preserve older options in if
                                   # block along with current option.
 $HPSS     = 1;                    # turn to 0 for UNIX staging only
@@ -612,10 +612,14 @@ if ( $ThisYear == 2005 ){
    } elsif ($ThisYear == 2018) {
         $DCHAIN{"AuAu"} = $DCHAIN{"AuZr"} = $DCHAIN{"ZrZr"} = $DCHAIN{"RuRu"} = "P2018a,StiCA,btof,mtd,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeak3D,-hitfilt";
 
-   } else {
-        $DCHAIN{"PPPP"} =
-            "P2016,btof,mtd,BEmcChkStat,Corr4,OSpaceZ2,OGridLeak3D,-hitfilt";
-        $DCHAIN{"AuAu"} = "P2016,btof,mtd,BEmcChkStat,CorrX,OSpaceZ2,OGridLeak3D,-hitfilt";
+   } elsif ($ThisYear == 2019) {
+       # can eventualy move btof/mtd to the base chain later
+       $DCHAIN{"AuAu"} = "P2019a,StiCA,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeak3D,-hitfilt";
+
+   #} else {
+   #     $DCHAIN{"PPPP"} =
+   #         "P2016,btof,mtd,BEmcChkStat,Corr4,OSpaceZ2,OGridLeak3D,-hitfilt";
+   #     $DCHAIN{"AuAu"} = "P2016,btof,mtd,BEmcChkStat,CorrX,OSpaceZ2,OGridLeak3D,-hitfilt";
     }
 
 
