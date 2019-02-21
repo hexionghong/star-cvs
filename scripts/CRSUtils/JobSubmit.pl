@@ -614,7 +614,7 @@ if ( $ThisYear == 2005 ){
 
    } elsif ($ThisYear == 2019) {
        # can eventualy move btof/mtd to the base chain later
-       $DCHAIN{"AuAu"} = "P2019a,StiCA,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeak3D,-hitfilt";
+       $DCHAIN{"AuAu"} = "P2019a,StiCA,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeakFull,-OPr13,OPr40,-hitfilt";
 
    #} else {
    #     $DCHAIN{"PPPP"} =
