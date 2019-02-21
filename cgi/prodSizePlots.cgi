@@ -650,9 +650,13 @@ $ndt = 0;
 
     $max_y = 112000;
 
-  }elsif ($qprod eq "P18ia" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
+  }elsif ($qprod eq "P18ia" or $qprod eq "P18ib" or $qprod eq "P18ic" or $qprod eq "P18if"  ) {
 
       $max_y = 84000;
+
+  }elsif ($qprod eq "P18ih" ) {
+
+      $max_y = 48000;
 
    }else{
 
