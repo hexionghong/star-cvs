@@ -656,7 +656,7 @@ $ndt = 0;
 
   }elsif ($qprod eq "P18ih" ) {
 
-      $max_y = 48000;
+      $max_y = 42000;
 
    }else{
 
