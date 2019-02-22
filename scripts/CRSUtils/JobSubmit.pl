@@ -484,7 +484,8 @@ if ( $ThisYear == 2005 ){
           $ThisYear == 2015 ||
           $ThisYear == 2016 ||  
           $ThisYear == 2017 ||
-          $ThisYear == 2018 ) {
+          $ThisYear == 2018 ||
+          $ThisYear == 2019 ) {
     $TREEMODE= 1;
     $LIB     = "dev";
 
@@ -614,7 +615,7 @@ if ( $ThisYear == 2005 ){
 
    } elsif ($ThisYear == 2019) {
        # can eventualy move btof/mtd to the base chain later
-       $DCHAIN{"AuAu"} = "P2019a,StiCA,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeakFull,-OPr13,OPr40,-hitfilt";
+       $DCHAIN{"AuAu"} = "P2019a,StiCA,PicoVtxDefault,BEmcChkStat,OSpaceZ2,OGridLeakFull,-OPr13,OPr40,-hitfilt,QAalltrigs";
 
    #} else {
    #     $DCHAIN{"PPPP"} =
@@ -1971,7 +1972,7 @@ sub Submit
     }
 
     # little hack for BES in 2018 
-    if ( $trgsn =~ m/fixedtarget/i && $ThisYear == 2018){
+    if ( $trgsn =~ m/fixedtarget/i && $ThisYear >= 2018){
 	$chain .= ",-beamline3D";
 	print "$SELF : Altering chain to $chain\n";
     }
@@ -2246,7 +2247,7 @@ __EOF__
                 `/bin/mv $jfile ../archive`; 
 		    # Mark it so we can set status 1 later
 #		    print "$SELF : Successful submission of $file ($queue,$spill) on ".
-			localtime()."\n";
+#			localtime()."\n";
 
 		    rdaq_set_execdate($obj,undef,$file);  # set execdate, more or less meaning submit
 		    rdaq_set_message($SSELF,"Submitted",$file);
