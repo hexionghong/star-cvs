@@ -103,7 +103,9 @@ sub ToFromCache
     }
     if ( ! defined($SPDR::XSELF) ){
 	$SPDR::XSELF  = $SPDR::SELF;
-	$SPDR::XSELF .= $SPDR::SCAND if ( $SPDR::XSELF !~ m/$SPDR::SCAND/);
+	if ( defined($SPDR::SCAND) ){
+	    $SPDR::XSELF .= $SPDR::SCAND if ( $SPDR::XSELF !~ m/$SPDR::SCAND/);
+	}
 	$SPDR::XSELF  =~ s/[+\/\*]/_/g; 
     }
     if ( ! defined($SPDR::CACHELM) ){  $SPDR::CACHELM = 10;} # cache limit
