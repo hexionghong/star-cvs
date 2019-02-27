@@ -23,6 +23,7 @@ if ( $?USE_CVMFS ) then
 	source ${GROUP_DIR}/STAR_SYS
 	if ( $?DECHO ) echo "$self :: setting STAR_SYS to ${STAR_SYS}"
     else
+	unsetenv USE_CVMFS
 	# this is an issue so we should display a message
 	#if ( $?ECHO ) then
 	    echo " ******************************************************"
