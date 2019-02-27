@@ -53,13 +53,24 @@ switch ($pkg)
     case "cvmfs":
     case "afs":
       if ( -e $HOME/.login ) then
-	set saved_home=$HOME
-	unsetenv *
-	setenv HOME $saved_home
+	#set saved_home=$HOME
+	#set saved_display=$DISPLAY
+	#unsetenv *
+	#setenv HOME     $saved_home
+	#setenv DISPLAY  $saved_display
+	unsetenv star_login_csh star_cshrc_csh 
+	unsetenv STAR OPTSTAR XOPTSTAR optstar xoptstar
+	unsetenv PATH LD_LIBRARY_PATH GROUP_DIR GROUP_PATH GROUPPATH
+	unsetenv ROOT ROOTSYS
+	unsetenv STAF* STAR_* 
+	unsetenv CERN CVSROOT WNOSG QTDIR CLHEP_BASE_DIR
+	unsetenv XROOTDSYS XrdSecPWDALOGFILE XrdSecPWDSRVPUK
 	if ( $pkg == "cvmfs") then
-	    setenv USE_CVMFS 1
+	    setenv    USE_CVMFS 1
+	else
+	    unsetenv  USE_CVMFS
         endif
-	source $saved_home/.login
+	source $HOME/.login
       endif
       breaksw
 
