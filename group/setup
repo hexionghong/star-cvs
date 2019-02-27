@@ -63,7 +63,7 @@ switch ($pkg)
 	unsetenv PATH LD_LIBRARY_PATH GROUP_DIR GROUP_PATH GROUPPATH
 	unsetenv ROOT ROOTSYS
 	unsetenv STAF* STAR_* 
-	unsetenv CERN CVSROOT WNOSG QTDIR CLHEP_BASE_DIR
+	unsetenv CERN WNOSG QTDIR CLHEP_BASE_DIR
 	unsetenv XROOTDSYS XrdSecPWDALOGFILE XrdSecPWDSRVPUK
 	if ( $pkg == "cvmfs") then
 	    setenv    USE_CVMFS 1
