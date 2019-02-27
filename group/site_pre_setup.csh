@@ -22,6 +22,14 @@ if ( $?USE_CVMFS ) then
 	# Assume Linux only? but this logic is in STAR_SYS
 	source ${GROUP_DIR}/STAR_SYS
 	if ( $?DECHO ) echo "$self :: setting STAR_SYS to ${STAR_SYS}"
+    else
+	# this is an issue so we should display a message
+	#if ( $?ECHO ) then
+	    echo " ******************************************************"
+	    echo " *** CVMFS on but /cvmfs/star.sdcc.bnl.gov not seen ***"
+	    echo " ***     Falling back to AFS based installation     ***"
+	    echo " ******************************************************"	
+	#endif
     endif
 endif
 
