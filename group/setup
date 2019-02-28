@@ -63,8 +63,19 @@ switch ($pkg)
 	unsetenv PATH LD_LIBRARY_PATH GROUP_DIR GROUP_PATH GROUPPATH
 	unsetenv ROOT ROOTSYS
 	unsetenv STAF* STAR_* 
-	unsetenv CERN WNOSG QTDIR CLHEP_BASE_DIR
 	unsetenv XROOTDSYS XrdSecPWDALOGFILE XrdSecPWDSRVPUK
+	unsetenv CERN QTDIR CLHEP_BASE_DIR
+	set test1=`echo $WNOSG | $GREP afs`
+	set test2=`echo $WNOSG | $GREP cvmfs`
+	# if defined as AFS and we we asked for cvmfs, undefine
+	if ( "$test1" != "" && $pkg == "cvmfs") then
+	    unsetenv WNOSG
+	endif	
+	# if defined as CVMFS and we we asked for afs, undefine
+	if ( "$test2" != "" && $pkg == "afs") then
+	    unsetenv WNOSG
+	endif
+
 	if ( $pkg == "cvmfs") then
 	    setenv    USE_CVMFS 1
 	else
