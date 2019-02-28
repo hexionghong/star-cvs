@@ -81,7 +81,7 @@ switch ($pkg)
 	else
 	    unsetenv  USE_CVMFS
         endif
-	source $HOME/.login
+	source $HOME/.cshrc
       endif
       breaksw
 
