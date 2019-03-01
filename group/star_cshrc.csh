@@ -26,7 +26,7 @@ if ( ! $?star_login_csh ) then
     if ( $?DECHO ) echo "$self :: star_login_csh not defined, trying"
 
     # in case this is installed locally, check path
-    if( ! $?AFS_RHIC) then
+    if( ! $?AFS_RHIC && ! $?USE_CVMFS ) then
 	if( $?GROUP_DIR ) then
 	    if ( $?DECHO ) echo "$self :: GROUP_DIR is defined"
 	    if ( -x $GROUP_DIR/chkread ) then
