@@ -66,10 +66,12 @@ if ( "${STAR_SYS}" == "") then
 	#setnenv STAR_SYS i386_redhat61
 	# Creating a sys name like <architecture>_<sysname><sysversion>
 	### 2019, trying to emulate x8664_sl7 or x8664_rh7 if exists
+	set redhat = ""
 	set architecture =  `/bin/uname -m | /bin/sed -e 's/_//g'`
 	set sysname = `/bin/uname -s | /usr/bin/tr '[A-Z]' '[a-z]'`
 	if ( "$sysname" == "linux") then
 	    if ( -e "/etc/redhat-release") then
+		if ( $?DECHO ) echo "$self :: -> using redhat-release to set arch"
 		set redhat = `$AWK '{print $5}' /etc/redhat-release`
 	    endif
 	endif
@@ -83,19 +85,24 @@ if ( "${STAR_SYS}" == "") then
 
      case "OSF1V32":
      case "OSF1V40":
+	if ( $?DECHO ) echo "$self :: Alpha OSF1 logic branch"
 	setenv STAR_SYS alpha_osf32c
 	breaksw
      case "OSF1*":
+	if ( $?DECHO ) echo "$self :: OSF1 logic branch"
 	setenv STAR_SYS osf1
 	breaksw
 
      case "SunOS54"
         setenv STAR_SYS sun4x_54
+	if ( $?DECHO ) echo "$self :: SunOSx454 logic branch (historical)"
 	breaksw
      case "SunOS551"
+	if ( $?DECHO ) echo "$self :: SunOSx455 logic branch (historical)"
         setenv STAR_SYS sun4x_55
 	breaksw
      case "SunOS5*":
+	if ( $?DECHO ) echo "$self :: SunOS generic logic branch"
 	switch ("`/bin/uname -p`")
 	    case "*86":
 		setenv STAR_SYS sunx86_55
@@ -277,6 +284,9 @@ endif
 
 
 #  $Log: STAR_SYS,v $
+#  Revision 1.59  2019/04/08 19:43:43  jeromel
+#  More debug info
+#
 #  Revision 1.58  2019/04/08 19:31:57  jeromel
 #  Added debugging + change STAR_SYS logic (VM)
 #
@@ -462,5 +472,5 @@ endif
 #
 #  Revision 1.1.1.1  1997/12/31 14:35:23  fisyak
 #
-#             Last modification $Date: 2019/04/08 19:31:57 $
+#             Last modification $Date: 2019/04/08 19:43:43 $
 #
