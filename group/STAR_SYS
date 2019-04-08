@@ -72,7 +72,8 @@ if ( "${STAR_SYS}" == "") then
 	if ( "$sysname" == "linux") then
 	    if ( -e "/etc/redhat-release") then
 		if ( $?DECHO ) echo "$self :: -> using redhat-release to set arch"
-		set redhat = `$AWK '{print $5}' /etc/redhat-release`
+		set redhat = `$AWK '{print $1 $2}' /etc/redhat-release | /bin/sed "s/[a-z]//g" | $AWK '{print tolower($1)}'`
+		set redhat   = $redhat`$AWK '{for (i=1;i<=NF;i++) if ($i == "release" || $i == "Release") print $(i+1)}' /etc/redhat-release | /bin/sed "s/\..*//"`
 	    endif
 	endif
 	if ( "$redhat" != "") then
@@ -284,6 +285,9 @@ endif
 
 
 #  $Log: STAR_SYS,v $
+#  Revision 1.60  2019/04/08 20:01:22  jeromel
+#  Nope, not the same (fixed)
+#
 #  Revision 1.59  2019/04/08 19:43:43  jeromel
 #  More debug info
 #
@@ -472,5 +476,5 @@ endif
 #
 #  Revision 1.1.1.1  1997/12/31 14:35:23  fisyak
 #
-#             Last modification $Date: 2019/04/08 19:43:43 $
+#             Last modification $Date: 2019/04/08 20:01:22 $
 #
