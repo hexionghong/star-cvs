@@ -51,19 +51,33 @@ if ( $?DECHO ) echo "$self :: STAR_SYS is now $STAR_SYS"
 # Sort it out otherwise via uname command
 #
 if ( "${STAR_SYS}" == "") then
+    if ( $?DECHO ) echo "$self :: STAR_SYS still empty - trying uname"
     # selection using uname -sr
     set mach_os = `/bin/uname -sr | /bin/sed -e 's/ //g' -e 's/\.//g' -e 's/(.*//'`
 
     switch ($mach_os)
      case "Linux222":
+	if ( $?DECHO ) echo "$self :: Linux222 logic branching"
 	setenv STAR_SYS i386_redhat51
 	breaksw
+
      case "Linux*":
+	if ( $?DECHO ) echo "$self :: any Linux logic branching"
 	#setnenv STAR_SYS i386_redhat61
 	# Creating a sys name like <architecture>_<sysname><sysversion>
-	set sysname = `/bin/uname -s | /usr/bin/tr '[A-Z]' '[a-z]'`
+	### 2019, trying to emulate x8664_sl7 or x8664_rh7 if exists
 	set architecture =  `/bin/uname -m | /bin/sed -e 's/_//g'`
-	set sysversion = `/bin/uname -r | $AWK -F- '{print $1}' | /bin/sed -e 's/\.//g'`
+	set sysname = `/bin/uname -s | /usr/bin/tr '[A-Z]' '[a-z]'`
+	if ( "$sysname" == "linux") then
+	    if ( -e "/etc/redhat-release") then
+		set redhat = `$AWK '{print $5}' /etc/redhat-release`
+	    endif
+	endif
+	if ( "$redhat" != "") then
+	  set sysversion = ${redhat}
+	else
+	  set sysversion = `/bin/uname -r | $AWK -F- '{print $1}' | /bin/sed -e 's/\.//g'`
+        endif
 	setenv STAR_SYS ${architecture}_${sysname}${sysversion}
 	breaksw
 
@@ -93,10 +107,12 @@ if ( "${STAR_SYS}" == "") then
 	breaksw
 
      case "CYGWIN*":
+	if ( $?DECHO ) echo "$self :: Cygwin detected"
 	setenv STAR_SYS "$mach_os"
 	breaksw
 
      default:
+	if ( $?DECHO ) echo "$self :: Bam!! Unknown"
 	setenv STAR_SYS unknown
 	breaksw
     endsw
@@ -261,6 +277,9 @@ endif
 
 
 #  $Log: STAR_SYS,v $
+#  Revision 1.58  2019/04/08 19:31:57  jeromel
+#  Added debugging + change STAR_SYS logic (VM)
+#
 #  Revision 1.57  2018/12/14 19:03:38  jeromel
 #  Cosmetic change
 #
@@ -443,5 +462,5 @@ endif
 #
 #  Revision 1.1.1.1  1997/12/31 14:35:23  fisyak
 #
-#             Last modification $Date: 2018/12/14 19:03:38 $
+#             Last modification $Date: 2019/04/08 19:31:57 $
 #
