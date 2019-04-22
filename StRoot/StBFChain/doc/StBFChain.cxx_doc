@@ -1,5 +1,5 @@
 //_____________________________________________________________________
-// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx_doc,v 1.171 2018/10/11 03:50:58 genevb Exp $
+// @(#)StRoot/StBFChain:$Name:  $:$Id: StBFChain.cxx_doc,v 1.172 2019/04/22 20:47:08 genevb Exp $
 //_____________________________________________________________________
 #include "TROOT.h"
 #include "TPRegexp.h"
@@ -14,7 +14,6 @@
 #include "St_db_Maker/St_db_Maker.h"
 #include "StTreeMaker/StTreeMaker.h"
 #include "StIOMaker/StIOMaker.h"
-#include "StDbUtilities/StMagUtilities.h"
 #include "StMessMgr.h"
 #include "StEnumerations.h"
 #include "TTree.h"
@@ -997,6 +996,11 @@ Bfc_st BFC[] = {
   {"P2018a","" ,"",
    "B2018a,ITTF,UseXgeom,BAna,hitfilt,VFMinuit,beamline3D,l3onl,emcDY2,epdHit,fpd,trgd,ZDCvtx,analysis"
    , "","","Base chain for year 2018 AA data - no Corr (+ l3, bcc/fpd, e/b-emc)",kFALSE},
+  {"B2019a" ,"","","ry2019a,in,tpcX,UseXgeom,iTpcIT,CorrX,AgML,tpcDB,TpcHitMover,Idst,tags,Tree,picoWrite",
+   "","", "Base chain for run 2019 data (tpc)",kFALSE},
+  {"P2019a","" ,"",
+   "B2019a,ITTF,BAna,iTpcIT,hitfilt,VFMinuit,beamline3D,etofa,btof,mtd,l3onl,emcDY2,epdHit,trgd,ZDCvtx,analysis"
+   , "","", "Base chain for year 2019 AA data - no Corr (+ l3, epd, mtd, b/etof, b-emc)",kFALSE},
   {"LaserCal0","" ,"","db,detDb,tpc_daq,tpcDb,tcl,globT,laser,LaserTest","",""
    , "Laser Calibration Chain (tcl)",kFALSE},
   {"LaserCal","" ,"","db,detDb,tpc_daq,tpcDb,fcf,globT,laser,LaserTest","",""
@@ -1092,6 +1096,7 @@ Bfc_st BFC[] = {
   {"OGGVoltErr" ,"" ,"","","" ,"","GG voltage error correction",kFALSE},
   {"OSectorAlign","" ,"","","" ,"","Sector alignment distortion correction",kFALSE},
   {"ODistoSmear" ,"" ,"","","" ,"","Distortion smearing accounting for calibration resolutions",kFALSE},
+  {"OAbortGap" ,"" ,"","","" ,"","Abort gap cleaning event distortion correction",kFALSE},
   {"AlignSectors","" ,"","","" ,"","WARNING *** Option is OBSOLETE ***",kFALSE},
   {"DbRichSca" ,"" ,"","detdb","","", "Force reading of Rich scalers from DB",kFALSE},
   {"EastOff" ,"" ,"","","" ,"","Disactivate East part of tpc",kFALSE},
@@ -1416,8 +1421,10 @@ Bfc_st BFC[] = {
    , "BTof Mixer",kFALSE},
   {"ETofDat", "etof_raw","ETofChain", "db, ETofUtil", "StETofDigiMaker", "StEvent,StETofDigiMaker",
                                                                                   "ETOF digi maker",kFALSE},
-  {"ETofQa", "", "ETofChain", "db", "StETofQAMaker", "StETofQAMaker",
-                                                                                    "ETOF QA maker",kFALSE},
+  {"ETofCalib", "", "ETofChain", "db, ETofUtil, muDst", "StETofCalibMaker", "StETofCalibMaker",
+                                                                                 "ETOF calibration",kFALSE},
+  {"ETofSim" , "", "ETofChain", "", "StETofSimMaker", "StETofSimMaker",
+                                                                                   "ETOF simulator",kFALSE},
   {"mtdSim" ,"","MtdChain","","StMtdSimMaker", "StEvent,StMtdSimMaker","MTD Simulator",kFALSE},
   {"ToF" ,"TofChain","","tofDat,tofrMatch,tofpMatch,tofCalib,geant","StMaker","StChain","ToF Chain",kFALSE},
   {"ToFx" ,"TofChain","","tofXDat,tofrMatch,tofCalib,geant" ,"StMaker","StChain","ToFx Chain",kFALSE},
@@ -1539,6 +1546,13 @@ Bfc_st BFC[] = {
   {"btofMatch" ,"","","db,BTofUtil,vpdCalib,btofCalib","StBTofMatchMaker","StBTofMatchMaker"
    , "TPC-BTOF track matching",kFALSE},
   {"btofCalib","","","db,BTofUtil", "StBTofCalibMaker","StBTofCalibMaker","BTOF calibration",kFALSE},
+  {"ETofHit", "", "ETofChain", "db, ETofUtil, muDst", "StETofHitMaker", "StETofHitMaker",
+                                                                                   "ETOF hit maker",kFALSE},
+  {"ETofMatch", "", "ETofChain", "db, ETofUtil, muDst", "StETofMatchMaker", "StETofMatchMaker",
+                                                                                 "ETOF match maker",kFALSE},
+  {"ETofQa", "", "ETofChain", "db, ETofUtil, muDst", "StETofQAMaker", "StETofQAMaker",
+                                                                                    "ETOF QA maker",kFALSE},
+  {"ETofA", "", "","etofdat,ETofCalib,etofhit,ETofMatch","","... ETOF chain options for data", kFALSE},
   {"mtdMatch" ,"","","db,MtdUtil", "StMtdMatchMaker","StMtdMatchMaker","TPC-MTD track matching",kFALSE},
   {"mtdCalib" ,"","","db", "StMtdCalibMaker","StMtdCalibMaker","MTD calibration",kFALSE},
   {"mtdEvtFilt" ,"","","db", "StMtdEvtFilterMaker","StMtdEvtFilterMaker","MTD event filter" ,kFALSE},
@@ -1581,6 +1595,7 @@ Bfc_st BFC[] = {
    , "StMuDSTMaker,StPass0CalibMaker","Calibrate SpaceCharge scalers",kFALSE},
   {"compend" ,"","","event,detDb","StEventCompendiumMaker","StEventCompendiumMaker"
    , "Fill event summary in ITTF Chain",kFALSE},
+  {"shadow" ,"","","event,compend" ,"StShadowMaker","StShadowMaker","",kFALSE},
   {"TpcAligner" ,"","","Alignment" ,"StTpcAlignerMaker","StTpcAlignerMaker","TpcAligner",kFALSE},
   {"pec" ,"PeC","","Event" ,"StPeCMaker","StPeCMaker","PCollAnalysis",kFALSE},
   {"RichSpectra" ,"","","" ,"","","WARNING *** Option is OBSOLETE ***",kFALSE},
@@ -1608,6 +1623,8 @@ Bfc_st BFC[] = {
   {"PicoVtxVpd" ,"","","-PicoVtxDefault" ,"" ,"","pico Vtx cut on Tof and VPD mode",kFALSE},
   {"PicoCovMtxSkip" ,"","","" ,"" ,"","Do not write covariance matrices to picoDst (default)",kFALSE},
   {"PicoCovMtxWrite","","","-PicoCovMtxSkip" ,"" ,"","Write track covariance matrices to picoDst",kFALSE},
+  {"PicoBEmcSmdSkip" ,"","","" ,"" ,"","Do not write BSMD to picoDst (default)",kFALSE},
+  {"PicoBEmcSmdWrite","","","-PicoBEmcSmdSkip" ,"" ,"","Write BSMD to picoDst",kFALSE},
   {"St_geom" ,"" ,"","" , "St_geom_Maker","St_geom_Maker","",kFALSE},
   {"Display" ,"","","", "","","WARNING *** Option is OBSOLETE *** use Ed.C macro instead",kFALSE},
   {"Mc" ,"McChain","McEvent","sim_T,globT,McAss,McAna" ,"StMaker","StChain","",kFALSE},
@@ -2635,6 +2652,11 @@ Bfc_st BFC[] = {
   {"P2018a","" ,"",
    "B2018a,ITTF,UseXgeom,BAna,hitfilt,VFMinuit,beamline3D,l3onl,emcDY2,epdHit,fpd,trgd,ZDCvtx,analysis"
    , "","","Base chain for year 2018 AA data - no Corr (+ l3, bcc/fpd, e/b-emc)",kFALSE},
+  {"B2019a" ,"","","ry2019a,in,tpcX,UseXgeom,iTpcIT,CorrX,AgML,tpcDB,TpcHitMover,Idst,tags,Tree,picoWrite",
+   "","", "Base chain for run 2019 data (tpc)",kFALSE},
+  {"P2019a","" ,"",
+   "B2019a,ITTF,BAna,iTpcIT,hitfilt,VFMinuit,beamline3D,etofa,btof,mtd,l3onl,emcDY2,epdHit,trgd,ZDCvtx,analysis"
+   , "","", "Base chain for year 2019 AA data - no Corr (+ l3, epd, mtd, b/etof, b-emc)",kFALSE},
   {"LaserCal0","" ,"","db,detDb,tpc_daq,tpcDb,tcl,globT,laser,LaserTest","",""
    , "Laser Calibration Chain (tcl)",kFALSE},
   {"LaserCal","" ,"","db,detDb,tpc_daq,tpcDb,fcf,globT,laser,LaserTest","",""
@@ -2730,6 +2752,7 @@ Bfc_st BFC[] = {
   {"OGGVoltErr" ,"" ,"","","" ,"","GG voltage error correction",kFALSE},
   {"OSectorAlign","" ,"","","" ,"","Sector alignment distortion correction",kFALSE},
   {"ODistoSmear" ,"" ,"","","" ,"","Distortion smearing accounting for calibration resolutions",kFALSE},
+  {"OAbortGap" ,"" ,"","","" ,"","Abort gap cleaning event distortion correction",kFALSE},
   {"AlignSectors","" ,"","","" ,"","WARNING *** Option is OBSOLETE ***",kFALSE},
   {"DbRichSca" ,"" ,"","detdb","","", "Force reading of Rich scalers from DB",kFALSE},
   {"EastOff" ,"" ,"","","" ,"","Disactivate East part of tpc",kFALSE},
@@ -3054,8 +3077,10 @@ Bfc_st BFC[] = {
    , "BTof Mixer",kFALSE},
   {"ETofDat", "etof_raw","ETofChain", "db, ETofUtil", "StETofDigiMaker", "StEvent,StETofDigiMaker",
                                                                                   "ETOF digi maker",kFALSE},
-  {"ETofQa", "", "ETofChain", "db", "StETofQAMaker", "StETofQAMaker",
-                                                                                    "ETOF QA maker",kFALSE},
+  {"ETofCalib", "", "ETofChain", "db, ETofUtil, muDst", "StETofCalibMaker", "StETofCalibMaker",
+                                                                                 "ETOF calibration",kFALSE},
+  {"ETofSim" , "", "ETofChain", "", "StETofSimMaker", "StETofSimMaker",
+                                                                                   "ETOF simulator",kFALSE},
   {"mtdSim" ,"","MtdChain","","StMtdSimMaker", "StEvent,StMtdSimMaker","MTD Simulator",kFALSE},
   {"ToF" ,"TofChain","","tofDat,tofrMatch,tofpMatch,tofCalib,geant","StMaker","StChain","ToF Chain",kFALSE},
   {"ToFx" ,"TofChain","","tofXDat,tofrMatch,tofCalib,geant" ,"StMaker","StChain","ToFx Chain",kFALSE},
@@ -3177,6 +3202,13 @@ Bfc_st BFC[] = {
   {"btofMatch" ,"","","db,BTofUtil,vpdCalib,btofCalib","StBTofMatchMaker","StBTofMatchMaker"
    , "TPC-BTOF track matching",kFALSE},
   {"btofCalib","","","db,BTofUtil", "StBTofCalibMaker","StBTofCalibMaker","BTOF calibration",kFALSE},
+  {"ETofHit", "", "ETofChain", "db, ETofUtil, muDst", "StETofHitMaker", "StETofHitMaker",
+                                                                                   "ETOF hit maker",kFALSE},
+  {"ETofMatch", "", "ETofChain", "db, ETofUtil, muDst", "StETofMatchMaker", "StETofMatchMaker",
+                                                                                 "ETOF match maker",kFALSE},
+  {"ETofQa", "", "ETofChain", "db, ETofUtil, muDst", "StETofQAMaker", "StETofQAMaker",
+                                                                                    "ETOF QA maker",kFALSE},
+  {"ETofA", "", "","etofdat,ETofCalib,etofhit,ETofMatch","","... ETOF chain options for data", kFALSE},
   {"mtdMatch" ,"","","db,MtdUtil", "StMtdMatchMaker","StMtdMatchMaker","TPC-MTD track matching",kFALSE},
   {"mtdCalib" ,"","","db", "StMtdCalibMaker","StMtdCalibMaker","MTD calibration",kFALSE},
   {"mtdEvtFilt" ,"","","db", "StMtdEvtFilterMaker","StMtdEvtFilterMaker","MTD event filter" ,kFALSE},
@@ -3219,6 +3251,7 @@ Bfc_st BFC[] = {
    , "StMuDSTMaker,StPass0CalibMaker","Calibrate SpaceCharge scalers",kFALSE},
   {"compend" ,"","","event,detDb","StEventCompendiumMaker","StEventCompendiumMaker"
    , "Fill event summary in ITTF Chain",kFALSE},
+  {"shadow" ,"","","event,compend" ,"StShadowMaker","StShadowMaker","",kFALSE},
   {"TpcAligner" ,"","","Alignment" ,"StTpcAlignerMaker","StTpcAlignerMaker","TpcAligner",kFALSE},
   {"pec" ,"PeC","","Event" ,"StPeCMaker","StPeCMaker","PCollAnalysis",kFALSE},
   {"RichSpectra" ,"","","" ,"","","WARNING *** Option is OBSOLETE ***",kFALSE},
@@ -3246,6 +3279,8 @@ Bfc_st BFC[] = {
   {"PicoVtxVpd" ,"","","-PicoVtxDefault" ,"" ,"","pico Vtx cut on Tof and VPD mode",kFALSE},
   {"PicoCovMtxSkip" ,"","","" ,"" ,"","Do not write covariance matrices to picoDst (default)",kFALSE},
   {"PicoCovMtxWrite","","","-PicoCovMtxSkip" ,"" ,"","Write track covariance matrices to picoDst",kFALSE},
+  {"PicoBEmcSmdSkip" ,"","","" ,"" ,"","Do not write BSMD to picoDst (default)",kFALSE},
+  {"PicoBEmcSmdWrite","","","-PicoBEmcSmdSkip" ,"" ,"","Write BSMD to picoDst",kFALSE},
   {"St_geom" ,"" ,"","" , "St_geom_Maker","St_geom_Maker","",kFALSE},
   {"Display" ,"","","", "","","WARNING *** Option is OBSOLETE *** use Ed.C macro instead",kFALSE},
   {"Mc" ,"McChain","McEvent","sim_T,globT,McAss,McAna" ,"StMaker","StChain","",kFALSE},
@@ -3938,6 +3973,8 @@ Int_t StBFChain::Instantiate()
       else if ( GetOption("PicoVtxDefault"))  mk->SetAttr("PicoVtxMode", "PicoVtxDefault");
       if ( GetOption("PicoCovMtxWrite"))      mk->SetAttr("PicoCovMtxMode", "PicoCovMtxWrite");
       else if ( GetOption("PicoCovMtxSkip"))  mk->SetAttr("PicoCovMtxMode", "PicoCovMtxSkip"); // Default mode
+      if ( GetOption("PicoBEmcSmdWrite"))      mk->SetAttr("PicoBEmcSmdMode", "PicoBEmcSmdWrite");
+      else if ( GetOption("PicoBEmcSmdSkip"))  mk->SetAttr("PicoBEmcSmdMode", "PicoBEmcSmdSkip"); // Default mode
       
     }
 
@@ -4038,6 +4075,8 @@ Int_t StBFChain::Instantiate()
 	if( GetOption("OGridLeakFull")) mk->SetAttr("OGridLeakFull", kTRUE);
 	if( GetOption("OGGVoltErr") ) mk->SetAttr("OGGVoltErr" , kTRUE);
 	if( GetOption("OSectorAlign"))mk->SetAttr("OSectorAlign",kTRUE);
+	if( GetOption("ODistoSmear")) mk->SetAttr("ODistoSmear", kTRUE);
+	if( GetOption("OAbortGap"))   mk->SetAttr("OAbortGap"  , kTRUE);
       }
       mk->PrintAttr();
     }
