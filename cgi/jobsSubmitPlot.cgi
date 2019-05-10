@@ -191,7 +191,7 @@ END
     print "<h4 align=center>";
     print  $query->scrolling_list(-name=>'prod',
 	                          -values=>\@arrprod,
-	                          -default=>P18ih,
+	                          -default=>P19ib,
       			          -size =>1);
 
     print "<p>";
@@ -240,7 +240,7 @@ END
   }elsif($qprod eq "P17ii" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
    $JobStatusT = "JobStatus2017";   
 
-  }elsif($qprod eq "P18ih") {
+  }elsif($qprod eq "P18ih" or $qprod eq "P19ib") {
       $JobStatusT = "JobStatus2018";
   }
 
