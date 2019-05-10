@@ -348,7 +348,7 @@ END
     print "<h4 align=center>";
     print  $query->scrolling_list(-name=>'prod',
 	                          -values=>\@arrprod,
-	                          -default=>P18ih,
+	                          -default=>P19ib,
       			          -size =>1);
 
   
@@ -419,7 +419,7 @@ END
   if( $qprod =~ /P16ig/) {$pryear = "2013"};
   if( $qprod =~ /P16ij/ or $qprod =~ /P16ik/ or $qprod =~ /P17ib/ ) {$pryear = "2016"};
   if( $qprod =~ /P17ii/ or  $qprod =~ /P18ic/  or  $qprod =~ /P18ib/ or $qprod =~ /P18if/ ) {$pryear = "2017"};
-  if( $qprod =~ /P18ih/) {$pryear = "2018"};
+  if( $qprod =~ /P18ih/ or  $qprod =~ /P19ib/ ) {$pryear = "2018"};
 
 
     $JobStatusT = "JobStatus".$pryear;
@@ -1291,7 +1291,7 @@ my $ynum = 14;
   }elsif($qprod eq "P18ic" ) { 
      $max_y = 100 ;
      $ynum = 20; 
- }elsif($qprod eq "P18ih" ) {
+ }elsif($qprod eq "P18ih" or $qprod eq "P19ib") {
     $max_y = 40 ;
     $ynum = 20;
 
@@ -1440,7 +1440,7 @@ if($qprod eq "P14ia" or $qprod eq "P14ig" ) {
  }elsif($qprod eq "P18ic" or $qprod eq "P18ib" or $qprod eq "P18if" ) {
      $max_y = 30 ;
      $ynum = 15;
- }elsif($qprod eq "P18ih"  ) {
+ }elsif($qprod eq "P18ih"  or $qprod eq "P19ib" ) {
     $max_y = 15 ;
     $ynum = 15;
 
@@ -1485,7 +1485,7 @@ if($qprod eq "P14ia" or $qprod eq "P14ig" ) {
  }elsif($qprod eq "P18ic") {
      $max_y = 1000000000 ;
      $ynum = 20;
-  }elsif($qprod eq "P18ih") {
+  }elsif($qprod eq "P18ih" or $qprod eq "P19ib") {
     $max_y = 200000000 ;
   $ynum = 20;
  }else{ 
