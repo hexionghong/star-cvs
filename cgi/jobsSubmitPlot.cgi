@@ -282,6 +282,10 @@ if ( $qperiod =~ /month/) {
    $JobStatusT = "JobStatus2015";
  }elsif($qprod eq "P16ij" or $qprod eq "P16ik" or $qprod eq "P17ib") {
    $JobStatusT = "JobStatus2016";
+ }elsif($qprod eq "P17ii" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
+     $JobStatusT = "JobStatus2017";
+ }elsif($qprod eq "P18ih" or $qprod eq "P19ib") {
+     $JobStatusT = "JobStatus2018";
  }
 
 
@@ -367,9 +371,12 @@ $ndt = 0;
    $JobStatusT = "JobStatus2015";
 
  }elsif($qprod eq "P16ij"  or $qprod eq "P16ik" or $qprod eq "P17ib" ) {
-   $JobStatusT = "JobStatus2016";   
-
-  }
+   $JobStatusT = "JobStatus2016";  
+}elsif($qprod eq "P17ii" or $qprod eq "P18ib" or $qprod eq "P18ic" ) {
+     $JobStatusT = "JobStatus2017";
+ }elsif($qprod eq "P18ih" or $qprod eq "P19ib") {
+     $JobStatusT = "JobStatus2018";
+   }
 
 
   foreach my $tdate (@ardays) {
@@ -463,6 +470,10 @@ $ndt = 0;
  }elsif($qprod eq "P18ic" or $qprod eq "P18ib"){
 
  $max_y = 28000 ;
+
+ }elsif($qprod eq "P18ih" or $qprod eq "P19ib"){
+
+    $max_y = 28000 ;
 
  }
 
