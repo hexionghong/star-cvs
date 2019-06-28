@@ -364,6 +364,9 @@ foreach  $file (@ALL){
     chop($path);
     $hpath= $path;
 
+    # honestly, does not matter to use -k for /home/starlib/home/starreco
+    # because of the substitution below if eq "" (besides, does not matter
+    # if it is the start of the path as well)
     if ($SUBPATH eq ""){
 	$hpath=~ s/$SCAND/$HPSSD/;
     } else {
@@ -593,7 +596,7 @@ sub Stream
     foreach $line (@lines){
 	$LOUT++;
 	chomp($line);
-	print $FO "$SELF :: $line\n";
+	print $FO "$SELF :: ".localtime()." : $line\n";
     }
 }
 
