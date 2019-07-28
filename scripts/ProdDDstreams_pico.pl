@@ -37,6 +37,16 @@ my $mondif;
 my $pyear;
 
 my %collHash = (
+                 production_14p5GeV_2019 => 'auau14.5',
+                 production_lzr_7p7GeV_2019 => 'auau7.7',
+                 production_7p7GeV_2019 => 'auau7.7',
+                 production_AuAu200_2019 => 'auau200',
+                 production_19GeV_2019 => 'auau19',
+                 production_lzr_14p5GeV_2019 => 'auau14.5',
+                 production_3p85GeV_fixedTarget_2019 => 'Au3.85',
+                 production_4p59GeV_fixedTarget_2019 => 'Au4.59',
+                 production_7.3GeV_fixedTarget_2019 => 'Au7.3',
+                 production_31GeV_fixedTarget_2019 => 'Au31',
                  production_isobar_2018 => 'ZrZr/RuRu200',
                  production_27GeV_fixedTarget_2018 => 'Au27',
                  production_3p85GeV_fixedTarget_2018 => 'Au3.85',
@@ -227,6 +237,16 @@ my %collHash = (
 	      );
              
 my %yrHash = (
+                 production_14p5GeV_2019 => 'year2019',
+                 production_lzr_7p7GeV_2019 => 'year2019',
+                 production_lzr_14p5GeV_2019 => 'year2019',
+                 production_7p7GeV_2019 => 'year2019',
+                 production_AuAu200_2019 => 'year2019',
+                 production_19GeV_2019 => 'year2019',
+                 production_3p85GeV_fixedTarget_2019 => 'year2019',
+                 production_4p59GeV_fixedTarget_2019 => 'year2019',
+                 production_7.3GeV_fixedTarget_2019 => 'year2019',
+                 production_31GeV_fixedTarget_2019 => 'year2019',
                  production_isobar_2018 => 'year2018',
                  production_27GeV_fixedTarget_2018 => 'year2018',
                  production_3p85GeV_fixedTarget_2018 => 'year2018',

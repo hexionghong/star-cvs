@@ -38,6 +38,11 @@ my $mondif;
 my $pyear;
 
 my %collHash = ( 
+                 production_14p5GeV_2019 => 'auau14.5',
+                 production_lzr_7p7GeV_2019 => 'auau7.7',
+                 production_7p7GeV_2019 => 'auau7.7',
+                 production_AuAu200_2019 => 'auau200',
+                 production_19GeV_2019 => 'auau19',
                  production_isobar_2018 => 'ZrZr/RuRu200',
                  production_27GeV_fixedTarget_2018 => 'Au27',
                  production_3p85GeV_fixedTarget_2018 => 'Au3.85',
@@ -228,6 +233,11 @@ my %collHash = (
 	      );
              
 my %yrHash = (
+                 production_14p5GeV_2019 => 'year2019',
+                 production_lzr_7p7GeV_2019 => 'year2019',
+                 production_7p7GeV_2019 => 'year2019',
+                 production_AuAu200_2019 => 'year2019',
+                 production_19GeV_2019 => 'year2019',
                  production_isobar_2018 => 'year2018',
                  production_27GeV_fixedTarget_2018 => 'year2018',
                  production_3p85GeV_fixedTarget_2018 => 'year2018',
