@@ -14,8 +14,7 @@ my $query = new CGI;
 my $this_script= $query->url();
 
 
-$PATH     = "/afs/rhic.bnl.gov/star/doc/www/html/tmp/pub";
-$title    = "Batch queue information at BNL";
+$title    = "Batch queue information at BNL - DISABLED";
 $TEXTCOL  = "black";
 $LINKCOL  = "navy";
 $BGCOLOR  = "cornsilk"; 
@@ -30,35 +29,8 @@ print
                        -LINK=>$LINKCOL),"\n",
     $query->h1($title)."\n";
 
-#
-# Begin --> 
-#
-# Since we want to preserve separatyon of privileges i.e.
-# hide a bit the "nova" specific (protected) info, let's
-# make this is as simple as showing an already formatted
-# file in HTML.
-#
-# But we could use marker files for actions
-#  
-#
-#
-if ( -e "$PATH/QueueInfo.html"){
-    if ( open(FI,"$PATH/QueueInfo.html") ){
-	while (defined($line = <FI>) ){
-	    print $line;
-	}
-	close(FI);
-    } else {
-	print "&MsgHdr().Problem opening result - please try again\n";
-    }
-} else {
-    print &MsgHdr()."Sorry, no information so far, try again later";
-}
+print &MsgHdr()."As the farm expanded to a pool mechanism (all nodes shared across experiments), this script has been disabled. Please consult the <A HREF=\"/STAR/comp/sofi\">infrastructure page</A> for a new interface monitoring user NFS IO load.";
 
-
-#
-# <-- Ends here 
-#
 print $query->end_html;
 
 
