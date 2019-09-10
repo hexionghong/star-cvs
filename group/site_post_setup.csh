@@ -36,8 +36,9 @@ switch ($DOMAINNAME)
     #setenv ftp_proxy    "http://proxy.sec.bnl.local:3128/"
     # try to get an AFS token out of a Kerberos one
     if ( -x /usr/bin/klist && -x /usr/bin/aklog ) then
-	set test=`/usr/bin/klist -A | $GREP  afs`
-	if ( "$test" != "") then
+	set test1=`/usr/bin/klist -A | $GREP  afs`
+	set test2=`/usr/bin/klist -A | $GREP  krbtgt`
+	if ( "$test1" == "" && "$test2" != "") then
 	    /usr/bin/aklog
 	endif
     endif
