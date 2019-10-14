@@ -9,7 +9,7 @@
 #echo $PWD | grep '/\/cvmfs/'
 
 onintr ERROR
-
+unset noclobber
 
 set ISAFS   = `echo $PWD | grep '/afs/'`
 set ISCVMFS = `echo $PWD | grep '/cvmfs/'`
